@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Green circle -->
+  <circle cx="100" cy="100" r="100" fill="#22A86B"/>
+  <!-- Crescent cutout -->
+  <circle cx="132" cy="82" r="87" fill="white"/>
+
+  <!-- Emoji-style plane in crescent gap -->
+  <g transform="translate(72, 32) rotate(-20)">
+    <!-- Fuselage -->
+    <path d="M0,16 Q2,12 10,11 L50,9 Q60,8 68,10 L72,12.5 Q74,14.5 74,16.5 Q74,18.5 72,20.5 L68,22 Q60,24 50,23 L10,21 Q2,20 0,16 Z" fill="#22A86B"/>
+    <!-- Top wing -->
+    <path d="M22,12 L18,11 L30,0 Q33,-1 36,0 L38,2 Q36,3 32,5 L22,12 Z" fill="#22A86B"/>
+    <!-- Bottom wing -->
+    <path d="M22,20 L18,21 L30,32 Q33,33 36,32 L38,30 Q36,29 32,27 L22,20 Z" fill="#22A86B"/>
+    <!-- Tail top -->
+    <path d="M4,14 L0,5 Q0,3 2,3 L6,4 Q7,5 6,8 L4,14 Z" fill="#22A86B"/>
+    <!-- Tail bottom -->
+    <path d="M4,18 L0,27 Q0,29 2,29 L6,28 Q7,27 6,24 L4,18 Z" fill="#22A86B"/>
+    <!-- Cockpit window -->
+    <ellipse cx="66" cy="16" rx="4" ry="2.5" fill="white" opacity="0.35"/>
+    <!-- Passenger windows -->
+    <circle cx="50" cy="15" r="1.2" fill="white" opacity="0.2"/>
+    <circle cx="45" cy="15.2" r="1.2" fill="white" opacity="0.2"/>
+    <circle cx="40" cy="15.5" r="1.2" fill="white" opacity="0.2"/>
+    <circle cx="35" cy="15.7" r="1.2" fill="white" opacity="0.2"/>
+  </g>
+</svg>
