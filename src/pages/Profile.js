@@ -4,12 +4,19 @@ import { doc, getDoc, updateDoc, collection, getDocs, deleteDoc } from 'firebase
 import { useNavigate } from 'react-router-dom';
 import TabBar from '../components/TabBar';
 
+const parseDate = (dateStr) => {
+  if (!dateStr) return new Date();
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(y, m - 1, d);
+};
+
 function Profile() {
   const navigate = useNavigate();
   const [userData, setUserData] = useState(null);
   const [connections, setConnections] = useState([]);
   const [connectionRequests, setConnectionRequests] = useState([]);
   const [showConnections, setShowConnections] = useState(false);
+  const [previewUser, setPreviewUser] = useState(null);
 
   useEffect(() => {
     loadUserData();
@@ -38,9 +45,35 @@ function Profile() {
       const currentUser = auth.currentUser;
       if (!currentUser) return;
       const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
-      if (userDoc.exists()) {
-        setConnections(userDoc.data().connections || []);
+      if (!userDoc.exists()) return;
+      const connList = userDoc.data().connections || [];
+
+      // Fetch live data for each connection
+      const liveConnections = [];
+      for (const conn of connList) {
+        try {
+          const liveDoc = await getDoc(doc(db, 'users', conn.userId));
+          if (liveDoc.exists()) {
+            const liveData = liveDoc.data();
+            liveConnections.push({
+              ...conn,
+              upcomingTrips: liveData.upcomingTrips || [],
+              whatsapp: liveData.whatsapp,
+              instagram: liveData.instagram,
+              bio: liveData.bio || conn.bio,
+              interests: liveData.interests || conn.interests,
+              photoURL: liveData.photoURL || conn.photoURL,
+              name: liveData.name || conn.name,
+              age: liveData.age || conn.age,
+            });
+          } else {
+            liveConnections.push(conn);
+          }
+        } catch {
+          liveConnections.push(conn);
+        }
       }
+      setConnections(liveConnections);
     } catch (error) {
       console.error('Error loading connections:', error);
     }
@@ -350,8 +383,20 @@ function Profile() {
                     No connections yet. Explore destinations to connect with travelers!
                   </div>
                 ) : (
-                  connections.map((conn, index) => (
-                    <div key={index} style={styles.connectionCard}>
+                  connections.map((conn, index) => {
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const trips = (conn.upcomingTrips || []).map(trip => {
+                      const start = parseDate(trip.startDate);
+                      const end = parseDate(trip.endDate);
+                      const isHereNow = today >= start && today <= end;
+                      const isUpcoming = today < start;
+                      return { ...trip, start, end, isHereNow, isUpcoming };
+                    }).filter(t => t.isHereNow || t.isUpcoming)
+                      .sort((a, b) => a.isHereNow === b.isHereNow ? a.start - b.start : a.isHereNow ? -1 : 1);
+
+                    return (
+                    <div key={index} style={styles.connectionCard} onClick={() => setPreviewUser(conn)}>
                       <div style={styles.connBackdrop}>
                         {conn.photoURL ? (
                           <img src={conn.photoURL} alt={conn.name} style={styles.connBackdropImg} />
@@ -374,33 +419,112 @@ function Profile() {
                           </div>
                         )}
 
-                        {conn.upcomingTrips && conn.upcomingTrips.length > 0 && (
+                        {trips.length > 0 && (
                           <div style={styles.connTrips}>
-                            {conn.upcomingTrips.map((trip, i) => (
-                              <div key={i} style={styles.connTrip}>
-                                📍 {trip.destination} • {new Date(trip.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                              </div>
-                            ))}
+                            {trips.map((trip, i) => {
+                              const fmt = { month: 'short', day: 'numeric' };
+                              const dateRange = `${trip.start.toLocaleDateString('en-US', fmt)} – ${trip.end.toLocaleDateString('en-US', fmt)}`;
+                              return (
+                                <div key={i} style={{
+                                  ...styles.connTrip,
+                                  color: trip.isHereNow ? '#6ee7b7' : 'rgba(255,255,255,0.7)'
+                                }}>
+                                  {trip.isHereNow ? '📍' : '✈️'} {trip.destination} • {dateRange}
+                                </div>
+                              );
+                            })}
                           </div>
                         )}
 
                         <div style={styles.contactButtons}>
                           {conn.whatsapp && (
-                            <button style={styles.whatsappBtn} onClick={() => openWhatsApp(conn.whatsapp)}>
+                            <button style={styles.whatsappBtn} onClick={(e) => { e.stopPropagation(); openWhatsApp(conn.whatsapp); }}>
                               WhatsApp
                             </button>
                           )}
                           {conn.instagram && (
-                            <button style={styles.instagramBtn} onClick={() => openInstagram(conn.instagram)}>
+                            <button style={styles.instagramBtn} onClick={(e) => { e.stopPropagation(); openInstagram(conn.instagram); }}>
                               Instagram
                             </button>
                           )}
                         </div>
                       </div>
                     </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Profile Preview Modal */}
+      {previewUser && (
+        <div style={styles.modalOverlay} onClick={() => setPreviewUser(null)}>
+          <div style={styles.previewModal} onClick={(e) => e.stopPropagation()}>
+            <button style={styles.modalClose} onClick={() => setPreviewUser(null)}>✕</button>
+            <div style={styles.previewHeader}>
+              {previewUser.photoURL ? (
+                <img src={previewUser.photoURL} alt={previewUser.name} style={styles.previewPhoto} />
+              ) : (
+                <div style={styles.previewPhotoPlaceholder}>
+                  {previewUser.name?.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div style={styles.previewName}>{previewUser.name}, {previewUser.age}</div>
+            </div>
+
+            {previewUser.bio && <p style={styles.previewBio}>{previewUser.bio}</p>}
+
+            {previewUser.interests && previewUser.interests.length > 0 && (
+              <div style={styles.previewInterests}>
+                {previewUser.interests.map((interest, i) => (
+                  <span key={i} style={styles.previewInterestTag}>{interest}</span>
+                ))}
+              </div>
+            )}
+
+            {(() => {
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              const trips = (previewUser.upcomingTrips || []).map(trip => {
+                const start = parseDate(trip.startDate);
+                const end = parseDate(trip.endDate);
+                const isHereNow = today >= start && today <= end;
+                const isUpcoming = today < start;
+                return { ...trip, start, end, isHereNow, isUpcoming };
+              }).filter(t => t.isHereNow || t.isUpcoming)
+                .sort((a, b) => a.isHereNow === b.isHereNow ? a.start - b.start : a.isHereNow ? -1 : 1);
+
+              return trips.length > 0 ? (
+                <div style={styles.previewTrips}>
+                  <div style={styles.previewTripsTitle}>Trips</div>
+                  {trips.map((trip, i) => {
+                    const fmt = { month: 'short', day: 'numeric' };
+                    const dateRange = `${trip.start.toLocaleDateString('en-US', fmt)} – ${trip.end.toLocaleDateString('en-US', fmt)}`;
+                    return (
+                      <div key={i} style={styles.previewTrip}>
+                        <span>{trip.isHereNow ? '📍' : '✈️'} {trip.destination}</span>
+                        <span style={{ color: '#6b7280', fontSize: '13px' }}>{dateRange}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : null;
+            })()}
+
+            <div style={styles.previewActions}>
+              {previewUser.whatsapp && (
+                <button style={styles.whatsappBtn} onClick={() => openWhatsApp(previewUser.whatsapp)}>
+                  WhatsApp
+                </button>
+              )}
+              {previewUser.instagram && (
+                <button style={styles.instagramBtn} onClick={() => openInstagram(previewUser.instagram)}>
+                  Instagram
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -495,6 +619,19 @@ const styles = {
   instagramBtn: { flex: 1, padding: '10px', background: 'linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' },
   emptyState: { padding: '40px 20px', textAlign: 'center', color: '#9ca3af', fontSize: '14px' },
 
+  // Preview Modal
+  previewModal: { background: '#fff', borderRadius: '20px 20px 0 0', padding: '24px', width: '100%', maxWidth: '500px', maxHeight: '85vh', overflowY: 'auto', position: 'relative' },
+  previewHeader: { textAlign: 'center', marginBottom: '16px' },
+  previewPhoto: { width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover', marginBottom: '12px' },
+  previewPhotoPlaceholder: { width: '80px', height: '80px', borderRadius: '50%', background: '#059669', color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px', fontWeight: '700', marginBottom: '12px' },
+  previewName: { fontSize: '20px', fontWeight: '800', color: '#1f2937' },
+  previewBio: { fontSize: '14px', color: '#4b5563', lineHeight: 1.6, margin: '0 0 16px 0', textAlign: 'center' },
+  previewInterests: { display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center', marginBottom: '16px' },
+  previewInterestTag: { padding: '6px 14px', background: '#f0fdf4', color: '#059669', borderRadius: '16px', fontSize: '13px', fontWeight: '600' },
+  previewTrips: { marginBottom: '16px' },
+  previewTripsTitle: { fontSize: '14px', fontWeight: '700', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' },
+  previewTrip: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: '#f9fafb', borderRadius: '10px', marginBottom: '6px', fontSize: '14px', fontWeight: '600', color: '#1f2937' },
+  previewActions: { display: 'flex', gap: '8px', marginTop: '8px' },
 };
 
 export default Profile;

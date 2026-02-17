@@ -44,6 +44,12 @@ function Destinations() {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
+      // Parse "YYYY-MM-DD" as local date to avoid timezone issues
+      const parseDate = (dateStr) => {
+        const [y, m, d] = dateStr.split('-').map(Number);
+        return new Date(y, m - 1, d);
+      };
+
       const myGender = currentUserData?.gender || '';
       const myVisibility = currentUserData?.profileVisibility || 'both';
 
@@ -68,10 +74,8 @@ function Destinations() {
 
           userData.upcomingTrips.forEach((trip) => {
             const dest = trip.destination;
-            const startDate = new Date(trip.startDate);
-            const endDate = new Date(trip.endDate);
-            startDate.setHours(0, 0, 0, 0);
-            endDate.setHours(23, 59, 59, 999);
+            const startDate = parseDate(trip.startDate);
+            const endDate = parseDate(trip.endDate);
 
             const isTripNow = today >= startDate && today <= endDate;
 
@@ -106,10 +110,8 @@ function Destinations() {
 
             const alreadyCounted = userData.upcomingTrips?.some(trip => {
               if (trip.destination !== dest) return false;
-              const start = new Date(trip.startDate);
-              const end = new Date(trip.endDate);
-              start.setHours(0, 0, 0, 0);
-              end.setHours(23, 59, 59, 999);
+              const start = parseDate(trip.startDate);
+              const end = parseDate(trip.endDate);
               return today >= start && today <= end;
             });
 
@@ -140,19 +142,17 @@ function Destinations() {
       setTravelerCounts(counts);
       setFeaturedFullNames(fullNames);
 
-      // Build connections going list — one entry per connection, most relevant trip
+      // Build connections list — show all connections with current/future trips, one per person
       if (currentUserData && currentUserData.connections) {
-        const connMap = {}; // userId -> best trip entry
+        const connMap = {};
 
         currentUserData.connections.forEach(conn => {
           const connUser = allUsersMap[conn.userId];
           if (!connUser || !connUser.upcomingTrips) return;
 
           connUser.upcomingTrips.forEach(trip => {
-            const startDate = new Date(trip.startDate);
-            const endDate = new Date(trip.endDate);
-            startDate.setHours(0, 0, 0, 0);
-            endDate.setHours(23, 59, 59, 999);
+            const startDate = parseDate(trip.startDate);
+            const endDate = parseDate(trip.endDate);
             if (endDate < today) return; // skip past trips
 
             const isThere = today >= startDate && today <= endDate;
@@ -170,23 +170,30 @@ function Destinations() {
             if (!existing) {
               connMap[conn.userId] = entry;
             } else if (isThere && !existing.isThere) {
-              // "there now" takes priority over upcoming
               connMap[conn.userId] = entry;
-            } else if (!existing.isThere && !isThere && new Date(trip.startDate) < new Date(existing.startDate)) {
-              // soonest upcoming takes priority
+            } else if (!existing.isThere && !isThere && parseDate(trip.startDate) < parseDate(existing.startDate)) {
               connMap[conn.userId] = entry;
             }
           });
         });
 
         const connTrips = Object.values(connMap);
-        // Sort: there now first, then by start date
         connTrips.sort((a, b) => {
           if (a.isThere && !b.isThere) return -1;
           if (!a.isThere && b.isThere) return 1;
-          return new Date(a.startDate) - new Date(b.startDate);
+          return parseDate(a.startDate) - parseDate(b.startDate);
         });
         setConnectionsGoing(connTrips);
+      }
+
+      // Include current user's destinations so they always appear
+      if (currentUserData?.upcomingTrips) {
+        currentUserData.upcomingTrips.forEach(trip => {
+          const dest = trip.destination;
+          if (!destinationMap[dest]) {
+            destinationMap[dest] = { name: dest, planningCount: 0, thereNowCount: 0 };
+          }
+        });
       }
 
       const destinationsArray = Object.values(destinationMap).sort((a, b) => {
@@ -242,7 +249,7 @@ function Destinations() {
           <div style={styles.horizontalScroll}>
             {connectionsGoing.map((conn, index) => (
               <div
-                key={`${conn.userId}-${conn.destination}-${index}`}
+                key={`${conn.userId}-${index}`}
                 style={styles.storyItem}
               >
                 <div
@@ -322,77 +329,78 @@ function Destinations() {
       </div>
 
       {/* Profile Preview Modal */}
-      {previewUser && (() => {
-        const allTrips = previewUser.upcomingTrips || [];
-        return (
-          <div style={styles.modalOverlay} onClick={() => setPreviewUser(null)}>
-            <div style={styles.modalContent} onClick={e => e.stopPropagation()}>
-              <button style={styles.modalClose} onClick={() => setPreviewUser(null)}>×</button>
-              <div style={styles.modalPhotoWrap}>
-                {previewUser.photoURL ? (
-                  <img src={previewUser.photoURL} alt={previewUser.name} style={styles.modalPhoto} />
-                ) : (
-                  <div style={styles.modalPhotoPlaceholder}>
-                    {previewUser.name?.charAt(0)}
-                  </div>
+      {previewUser && (
+        <div style={styles.modalOverlay} onClick={() => setPreviewUser(null)}>
+          <div style={styles.modalContent} onClick={e => e.stopPropagation()}>
+            <button style={styles.modalClose} onClick={() => setPreviewUser(null)}>×</button>
+            <div style={styles.modalPhotoWrap}>
+              {previewUser.photoURL ? (
+                <img src={previewUser.photoURL} alt={previewUser.name} style={styles.modalPhoto} />
+              ) : (
+                <div style={styles.modalPhotoPlaceholder}>
+                  {previewUser.name?.charAt(0)}
+                </div>
+              )}
+            </div>
+            <h2 style={styles.modalName}>{previewUser.name}{previewUser.age ? `, ${previewUser.age}` : ''}</h2>
+
+            {previewUser.bio && (
+              <p style={styles.modalBio}>{previewUser.bio}</p>
+            )}
+
+            {previewUser.interests && previewUser.interests.length > 0 && (
+              <div style={styles.modalInterests}>
+                {previewUser.interests.map(interest => (
+                  <span key={interest} style={styles.modalInterestChip}>{interest}</span>
+                ))}
+              </div>
+            )}
+
+            {(previewUser.whatsapp || previewUser.instagram) && (
+              <div style={styles.modalSocials}>
+                {previewUser.whatsapp && (
+                  <a href={`https://wa.me/${previewUser.whatsapp.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" style={styles.modalSocialBtn}>
+                    💬 WhatsApp
+                  </a>
+                )}
+                {previewUser.instagram && (
+                  <a href={`https://instagram.com/${previewUser.instagram}`} target="_blank" rel="noopener noreferrer" style={styles.modalSocialBtn}>
+                    📷 @{previewUser.instagram}
+                  </a>
                 )}
               </div>
-              <h2 style={styles.modalName}>{previewUser.name}{previewUser.age ? `, ${previewUser.age}` : ''}</h2>
+            )}
 
-              {previewUser.interests && previewUser.interests.length > 0 && (
-                <div style={styles.modalInterests}>
-                  {previewUser.interests.map(interest => (
-                    <span key={interest} style={styles.modalInterestChip}>{interest}</span>
-                  ))}
-                </div>
-              )}
-
-              {(previewUser.whatsapp || previewUser.instagram) && (
-                <div style={styles.modalSocials}>
-                  {previewUser.whatsapp && (
-                    <a href={`https://wa.me/${previewUser.whatsapp.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" style={styles.modalSocialBtn}>
-                      💬 WhatsApp
-                    </a>
-                  )}
-                  {previewUser.instagram && (
-                    <a href={`https://instagram.com/${previewUser.instagram}`} target="_blank" rel="noopener noreferrer" style={styles.modalSocialBtn}>
-                      📷 @{previewUser.instagram}
-                    </a>
-                  )}
-                </div>
-              )}
-
-              {allTrips.length > 0 && (
-                <div style={styles.modalTripsSection}>
-                  <div style={styles.modalTripsTitle}>Trips</div>
-                  {allTrips.map((trip, i) => {
-                    const start = new Date(trip.startDate);
-                    const end = new Date(trip.endDate);
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    const isThere = today >= start && today <= end;
-                    const isUpcoming = today < start;
-                    return (
-                      <div key={i} style={styles.modalTripItem}>
-                        <span style={styles.modalTripIcon}>{isThere ? '📍' : isUpcoming ? '✈️' : '✓'}</span>
-                        <div style={styles.modalTripInfo}>
-                          <div style={styles.modalTripDest}>{trip.destination.split(',')[0]}</div>
-                          <div style={styles.modalTripDates}>
-                            {start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                          </div>
+            {previewUser.upcomingTrips && previewUser.upcomingTrips.length > 0 && (
+              <div style={styles.modalTripsSection}>
+                <div style={styles.modalTripsTitle}>Trips</div>
+                {previewUser.upcomingTrips.map((trip, i) => {
+                  const start = new Date(trip.startDate.replace(/-/g, '/'));
+                  const end = new Date(trip.endDate.replace(/-/g, '/'));
+                  const now = new Date();
+                  now.setHours(0, 0, 0, 0);
+                  const isThere = now >= start && now <= end;
+                  const isUpcoming = now < start;
+                  return (
+                    <div key={i} style={styles.modalTripItem}>
+                      <span style={styles.modalTripIcon}>{isThere ? '📍' : isUpcoming ? '✈️' : '✓'}</span>
+                      <div style={styles.modalTripInfo}>
+                        <div style={styles.modalTripDest}>{trip.destination.split(',')[0]}</div>
+                        <div style={styles.modalTripDates}>
+                          {start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                         </div>
-                        {isThere && <span style={styles.modalTripBadge}>There now</span>}
                       </div>
-                    );
-                  })}
-                </div>
-              )}
+                      {isThere && <span style={styles.modalTripBadge}>There now</span>}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
 
-              <div style={styles.modalConnectedBadge}>Connected</div>
-            </div>
+            <div style={styles.modalConnectedBadge}>Connected</div>
           </div>
-        );
-      })()}
+        </div>
+      )}
 
       {/* More Destinations Section */}
       {(() => {
@@ -564,74 +572,6 @@ const styles = {
     fontSize: '13px',
   },
 
-  // Stories-style connection items
-  storyItem: {
-    flexShrink: 0,
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    width: '76px',
-    gap: '6px',
-  },
-  storyRing: {
-    width: '64px',
-    height: '64px',
-    borderRadius: '50%',
-    padding: '3px',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  storyRingActive: {
-    background: 'linear-gradient(135deg, #059669, #10b981)',
-  },
-  storyRingUpcoming: {
-    background: 'linear-gradient(135deg, #d1d5db, #9ca3af)',
-  },
-  storyImg: {
-    width: '56px',
-    height: '56px',
-    borderRadius: '50%',
-    objectFit: 'cover',
-    border: '3px solid #fff',
-  },
-  storyPlaceholder: {
-    width: '56px',
-    height: '56px',
-    borderRadius: '50%',
-    background: '#f3f4f6',
-    border: '3px solid #fff',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '20px',
-    fontWeight: '700',
-    color: '#6b7280',
-  },
-  storyDest: {
-    fontSize: '11px',
-    fontWeight: '700',
-    color: '#059669',
-    textDecoration: 'none',
-    textAlign: 'center',
-    lineHeight: 1.2,
-    maxWidth: '76px',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
-  },
-  storyName: {
-    fontSize: '11px',
-    color: '#6b7280',
-    fontWeight: '600',
-    textAlign: 'center',
-    maxWidth: '76px',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
-  },
-
   // Profile Preview Modal
   modalOverlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' },
   modalContent: { background: '#fff', borderRadius: '24px', padding: '32px 24px', maxWidth: '380px', width: '100%', maxHeight: '85vh', overflowY: 'auto', position: 'relative', textAlign: 'center' },
@@ -655,6 +595,16 @@ const styles = {
   modalTripDates: { fontSize: '12px', color: '#6b7280', marginTop: '2px' },
   modalTripBadge: { fontSize: '11px', fontWeight: '700', color: '#059669', background: '#f0fdf4', padding: '4px 8px', borderRadius: '6px', flexShrink: 0 },
   modalConnectedBadge: { width: '100%', padding: '14px', background: '#f0fdf4', color: '#059669', border: '2px solid #bbf7d0', borderRadius: '14px', fontSize: '16px', fontWeight: '700', textAlign: 'center' },
+
+  // Stories-style connection items
+  storyItem: { flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', width: '76px', gap: '6px' },
+  storyRing: { width: '64px', height: '64px', borderRadius: '50%', padding: '3px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  storyRingActive: { background: 'linear-gradient(135deg, #059669, #10b981)' },
+  storyRingUpcoming: { background: 'linear-gradient(135deg, #d1d5db, #9ca3af)' },
+  storyImg: { width: '56px', height: '56px', borderRadius: '50%', objectFit: 'cover', border: '3px solid #fff' },
+  storyPlaceholder: { width: '56px', height: '56px', borderRadius: '50%', background: '#f3f4f6', border: '3px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', fontWeight: '700', color: '#6b7280' },
+  storyDest: { fontSize: '11px', fontWeight: '700', color: '#059669', textDecoration: 'none', textAlign: 'center', lineHeight: 1.2, maxWidth: '76px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  storyName: { fontSize: '11px', color: '#6b7280', fontWeight: '600', textAlign: 'center', maxWidth: '76px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
 
   // FAB
   fab: {

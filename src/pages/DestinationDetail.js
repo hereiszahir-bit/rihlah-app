@@ -319,6 +319,12 @@ function DestinationDetail() {
     return filtered;
   };
 
+  // Parse "YYYY-MM-DD" as local date to avoid timezone issues
+  const parseDate = (dateStr) => {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  };
+
   // Split all users into here now / going soon (unfiltered)
   const splitUsers = () => {
     const today = new Date();
@@ -327,19 +333,22 @@ function DestinationDetail() {
     const soon = [];
 
     destinationUsers.forEach(user => {
-      const trip = user.upcomingTrips.find(t => t.destination === destinationName);
-      if (trip) {
-        const startDate = new Date(trip.startDate);
-        const endDate = new Date(trip.endDate);
-        startDate.setHours(0, 0, 0, 0);
-        endDate.setHours(0, 0, 0, 0);
+      // Check ALL trips to this destination — hereNow takes priority over planning
+      let status = null;
+      user.upcomingTrips.forEach(trip => {
+        if (trip.destination !== destinationName) return;
+        const startDate = parseDate(trip.startDate);
+        const endDate = parseDate(trip.endDate);
 
         if (today >= startDate && today <= endDate) {
-          now.push(user);
-        } else if (today < startDate) {
-          soon.push(user);
+          status = 'hereNow';
+        } else if (today < startDate && status !== 'hereNow') {
+          status = 'planning';
         }
-      }
+      });
+
+      if (status === 'hereNow') now.push(user);
+      else if (status === 'planning') soon.push(user);
     });
 
     return { allHereNow: now, allGoingSoon: soon };
@@ -426,40 +435,44 @@ function DestinationDetail() {
   };
 
   const renderPersonCard = (user) => {
-    const trip = user.upcomingTrips.find(t => t.destination === destinationName);
-    const hasPhoto = !!user.photoURL;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const matchingTrips = user.upcomingTrips.filter(t => t.destination === destinationName);
+    const trip = matchingTrips.find(t => {
+      const s = parseDate(t.startDate);
+      const e = parseDate(t.endDate);
+      return today >= s && today <= e;
+    }) || matchingTrips.find(t => parseDate(t.startDate) > today) || matchingTrips[0];
+    const isConnected = (currentUserData?.connections || []).some(c => c.userId === user.id);
+    const isPending = sentRequests.includes(user.id);
+    const fmt = { month: 'short', day: 'numeric' };
     return (
-      <div key={user.id} style={styles.personCard}>
-        {/* Full backdrop photo */}
-        <div style={styles.personBackdrop}>
-          {hasPhoto ? (
-            <img src={user.photoURL} alt={user.name} style={styles.personBackdropImg} />
+      <div key={user.id} style={styles.personRow} onClick={() => setPreviewUser(user)}>
+        <div style={{
+          ...styles.personAvatar,
+          border: isConnected ? '2px solid #059669' : '2px solid #d1d5db',
+        }}>
+          {user.photoURL ? (
+            <img src={user.photoURL} alt={user.name} style={styles.personAvatarImg} />
           ) : (
-            <div style={styles.personBackdropPlaceholder}>
-              {user.name?.charAt(0)}
-            </div>
+            <div style={styles.personAvatarPlaceholder}>{user.name?.charAt(0)}</div>
           )}
-          <div style={styles.personGradientOverlay} />
         </div>
-
-        {/* Overlaid details */}
-        <div style={styles.personOverlay}>
-          <h4 style={styles.personName}>{user.name}, {user.age}</h4>
-          {user.bio && <p style={styles.personBio}>"{user.bio.substring(0, 60)}..."</p>}
+        <div style={styles.personInfo}>
+          <div style={styles.personName}>{user.name}{user.age ? `, ${user.age}` : ''}</div>
           <div style={styles.personDates}>
-            {new Date(trip.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {new Date(trip.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+            {parseDate(trip.startDate).toLocaleDateString('en-US', fmt)} – {parseDate(trip.endDate).toLocaleDateString('en-US', fmt)}
           </div>
-
-          {(currentUserData?.connections || []).some(c => c.userId === user.id) ? (
-            <div style={styles.connectedLabel}>Connected</div>
-          ) : sentRequests.includes(user.id) ? (
-            <div style={styles.pendingLabel}>Request Pending</div>
-          ) : (
-            <button style={styles.connectBtn} onClick={() => handleSendConnectionRequest(user)}>
-              Connect
-            </button>
-          )}
         </div>
+        {isConnected ? (
+          <div style={styles.personConnectedTag}>Connected</div>
+        ) : isPending ? (
+          <div style={styles.personPendingTag}>Pending</div>
+        ) : (
+          <button style={styles.personConnectBtn} onClick={(e) => { e.stopPropagation(); handleSendConnectionRequest(user); }}>
+            Connect
+          </button>
+        )}
       </div>
     );
   };
@@ -749,7 +762,7 @@ function DestinationDetail() {
                     )}
 
                     {hereNow.length > 0 ? (
-                      <div style={styles.peopleGrid}>
+                      <div style={styles.peopleList}>
                         {hereNow.map(renderPersonCard)}
                       </div>
                     ) : (
@@ -840,7 +853,7 @@ function DestinationDetail() {
                     )}
 
                     {goingSoon.length > 0 ? (
-                      <div style={styles.peopleGrid}>
+                      <div style={styles.peopleList}>
                         {goingSoon.map(renderPersonCard)}
                       </div>
                     ) : (
@@ -862,84 +875,94 @@ function DestinationDetail() {
         )}
       </div>
 
-      {/* Profile Preview Modal */}
+      {/* Profile Preview Modal — Backdrop Photo */}
       {previewUser && (() => {
         const isConnected = (currentUserData?.connections || []).some(c => c.userId === previewUser.id);
         const isPending = sentRequests.includes(previewUser.id);
         const allTrips = previewUser.upcomingTrips || [];
+        // Determine status for this destination
+        const todayModal = new Date();
+        todayModal.setHours(0, 0, 0, 0);
+        const destTrips = allTrips.filter(t => t.destination === destinationName);
+        const isThereDest = destTrips.some(t => {
+          const s = parseDate(t.startDate); const e = parseDate(t.endDate);
+          return todayModal >= s && todayModal <= e;
+        });
         return (
           <div style={styles.modalOverlay} onClick={() => setPreviewUser(null)}>
-            <div style={styles.modalContent} onClick={e => e.stopPropagation()}>
-              <button style={styles.modalClose} onClick={() => setPreviewUser(null)}>×</button>
-
-              {/* Photo */}
-              <div style={styles.modalPhotoWrap}>
+            <div style={styles.modalCard} onClick={e => e.stopPropagation()}>
+              {/* Backdrop photo */}
+              <div style={styles.modalBackdrop}>
                 {previewUser.photoURL ? (
-                  <img src={previewUser.photoURL} alt={previewUser.name} style={styles.modalPhoto} />
+                  <img src={previewUser.photoURL} alt={previewUser.name} style={styles.modalBackdropImg} />
                 ) : (
-                  <div style={styles.modalPhotoPlaceholder}>
-                    {previewUser.name?.charAt(0)}
+                  <div style={styles.modalBackdropPlaceholder}>
+                    {previewUser.name?.charAt(0).toUpperCase()}
                   </div>
                 )}
+                <div style={styles.modalBackdropGradient} />
+                <button style={styles.modalCloseBtn} onClick={() => setPreviewUser(null)}>✕</button>
+                <div style={styles.modalBackdropInfo}>
+                  <div style={styles.modalNameOverlay}>{previewUser.name}{previewUser.age ? `, ${previewUser.age}` : ''}</div>
+                  {destTrips.length > 0 && (
+                    <span style={styles.modalStatusBadge}>{isThereDest ? '📍 Here now' : '✈️ Going soon'}</span>
+                  )}
+                </div>
               </div>
 
-              {/* Name & Age */}
-              <h2 style={styles.modalName}>{previewUser.name}{previewUser.age ? `, ${previewUser.age}` : ''}</h2>
+              {/* Content below backdrop */}
+              <div style={styles.modalBody}>
+                {previewUser.bio && (
+                  <p style={styles.modalBio}>{previewUser.bio}</p>
+                )}
 
-              {/* Interests */}
-              {previewUser.interests && previewUser.interests.length > 0 && (
-                <div style={styles.modalInterests}>
-                  {previewUser.interests.map(interest => (
-                    <span key={interest} style={styles.modalInterestChip}>{interest}</span>
-                  ))}
-                </div>
-              )}
+                {previewUser.interests && previewUser.interests.length > 0 && (
+                  <div style={styles.modalInterests}>
+                    {previewUser.interests.map(interest => (
+                      <span key={interest} style={styles.modalInterestChip}>{interest}</span>
+                    ))}
+                  </div>
+                )}
 
-              {/* Socials — only for connected users */}
-              {isConnected && (previewUser.whatsapp || previewUser.instagram) && (
-                <div style={styles.modalSocials}>
-                  {previewUser.whatsapp && (
-                    <a href={`https://wa.me/${previewUser.whatsapp.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" style={styles.modalSocialBtn}>
-                      💬 WhatsApp
-                    </a>
-                  )}
-                  {previewUser.instagram && (
-                    <a href={`https://instagram.com/${previewUser.instagram}`} target="_blank" rel="noopener noreferrer" style={styles.modalSocialBtn}>
-                      📷 @{previewUser.instagram}
-                    </a>
-                  )}
-                </div>
-              )}
+                {isConnected && (previewUser.whatsapp || previewUser.instagram) && (
+                  <div style={styles.modalSocials}>
+                    {previewUser.whatsapp && (
+                      <a href={`https://wa.me/${previewUser.whatsapp.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" style={styles.modalSocialBtn}>
+                        💬 WhatsApp
+                      </a>
+                    )}
+                    {previewUser.instagram && (
+                      <a href={`https://instagram.com/${previewUser.instagram}`} target="_blank" rel="noopener noreferrer" style={styles.modalSocialBtn}>
+                        📷 @{previewUser.instagram}
+                      </a>
+                    )}
+                  </div>
+                )}
 
-              {/* All Trips */}
-              {allTrips.length > 0 && (
-                <div style={styles.modalTripsSection}>
-                  <div style={styles.modalTripsTitle}>Trips</div>
-                  {allTrips.map((trip, i) => {
-                    const start = new Date(trip.startDate);
-                    const end = new Date(trip.endDate);
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    const isThere = today >= start && today <= end;
-                    const isUpcoming = today < start;
-                    return (
-                      <div key={i} style={styles.modalTripItem}>
-                        <span style={styles.modalTripIcon}>{isThere ? '📍' : isUpcoming ? '✈️' : '✓'}</span>
-                        <div style={styles.modalTripInfo}>
-                          <div style={styles.modalTripDest}>{trip.destination.split(',')[0]}</div>
-                          <div style={styles.modalTripDates}>
-                            {start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                {allTrips.length > 0 && (
+                  <div style={styles.modalTripsSection}>
+                    <div style={styles.modalTripsTitle}>Trips</div>
+                    {allTrips.map((trip, i) => {
+                      const start = parseDate(trip.startDate);
+                      const end = parseDate(trip.endDate);
+                      const isThere = todayModal >= start && todayModal <= end;
+                      const isUpcoming = todayModal < start;
+                      return (
+                        <div key={i} style={styles.modalTripItem}>
+                          <span style={styles.modalTripIcon}>{isThere ? '📍' : isUpcoming ? '✈️' : '✓'}</span>
+                          <div style={styles.modalTripInfo}>
+                            <div style={styles.modalTripDest}>{trip.destination.split(',')[0]}</div>
+                            <div style={styles.modalTripDates}>
+                              {start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – {end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </div>
                           </div>
+                          {isThere && <span style={styles.modalTripBadge}>There now</span>}
                         </div>
-                        {isThere && <span style={styles.modalTripBadge}>There now</span>}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+                      );
+                    })}
+                  </div>
+                )}
 
-              {/* Connect action */}
-              <div style={styles.modalAction}>
                 {isConnected ? (
                   <div style={styles.modalConnectedBadge}>Connected</div>
                 ) : isPending ? (
@@ -1025,50 +1048,44 @@ const styles = {
   subTabActive: { borderColor: '#059669', color: '#059669', background: '#f0fdf4' },
   subTabDot: { width: '8px', height: '8px', borderRadius: '50%', background: '#10b981' },
 
-  // People sections
-  peopleSection: { marginBottom: '28px' },
+  // People list — simple rows
+  peopleList: { display: 'flex', flexDirection: 'column', gap: '6px' },
+  personRow: { display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', background: '#fff', borderRadius: '12px', cursor: 'pointer', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' },
+  personAvatar: { width: '44px', height: '44px', borderRadius: '50%', flexShrink: 0, overflow: 'hidden' },
+  personAvatarImg: { width: '100%', height: '100%', objectFit: 'cover' },
+  personAvatarPlaceholder: { width: '100%', height: '100%', background: '#e5e7eb', color: '#6b7280', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: '700' },
+  personInfo: { flex: 1, minWidth: 0 },
+  personName: { fontSize: '15px', fontWeight: '700', color: '#1f2937' },
+  personDates: { fontSize: '12px', color: '#6b7280', marginTop: '2px' },
+  personConnectBtn: { padding: '8px 16px', background: '#059669', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '700', cursor: 'pointer', flexShrink: 0 },
+  personConnectedTag: { padding: '6px 12px', background: '#f0fdf4', color: '#059669', border: '1px solid #bbf7d0', borderRadius: '8px', fontSize: '12px', fontWeight: '700', flexShrink: 0 },
+  personPendingTag: { padding: '6px 12px', background: '#fffbeb', color: '#d97706', border: '1px solid #fde68a', borderRadius: '8px', fontSize: '12px', fontWeight: '700', flexShrink: 0 },
 
-  // People cards — photo backdrop style
-  peopleGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' },
-  personCard: { position: 'relative', borderRadius: '20px', overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,0,0,0.15)', height: '380px' },
-  personBackdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
-  personBackdropImg: { width: '100%', height: '100%', objectFit: 'cover' },
-  personBackdropPlaceholder: { width: '100%', height: '100%', background: 'linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '96px', fontWeight: '800', color: 'rgba(255,255,255,0.4)' },
-  personGradientOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '70%', background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 50%, transparent 100%)' },
-  personOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px', zIndex: 2 },
-  personName: { fontSize: '20px', fontWeight: '700', color: '#fff', margin: '0 0 4px 0', textShadow: '0 1px 3px rgba(0,0,0,0.3)' },
-  personGender: { fontSize: '14px', color: 'rgba(255,255,255,0.8)', margin: '0 0 6px 0' },
-  personBio: { fontSize: '13px', color: 'rgba(255,255,255,0.85)', fontStyle: 'italic', margin: '0 0 8px 0', lineHeight: 1.4 },
-  personDates: { fontSize: '13px', color: '#6ee7b7', fontWeight: '600', marginBottom: '12px' },
-  connectBtn: { width: '100%', padding: '12px', background: '#059669', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: '700', cursor: 'pointer' },
-  connectedLabel: { width: '100%', padding: '12px', background: 'rgba(255,255,255,0.15)', color: '#6ee7b7', border: '1px solid rgba(110,231,183,0.4)', borderRadius: '12px', fontSize: '15px', fontWeight: '700', textAlign: 'center', backdropFilter: 'blur(4px)' },
-  pendingLabel: { width: '100%', padding: '12px', background: 'rgba(255,255,255,0.15)', color: '#fcd34d', border: '1px solid rgba(252,211,77,0.4)', borderRadius: '12px', fontSize: '15px', fontWeight: '700', textAlign: 'center', backdropFilter: 'blur(4px)' },
-
-  // Profile Preview Modal
+  // Profile Preview Modal — Backdrop style
   modalOverlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' },
-  modalContent: { background: '#fff', borderRadius: '24px', padding: '32px 24px', maxWidth: '380px', width: '100%', maxHeight: '85vh', overflowY: 'auto', position: 'relative', textAlign: 'center' },
-  modalClose: { position: 'absolute', top: '16px', right: '16px', width: '32px', height: '32px', borderRadius: '50%', background: '#f3f4f6', border: 'none', fontSize: '20px', color: '#6b7280', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  modalPhotoWrap: { marginBottom: '16px' },
-  modalPhoto: { width: '100px', height: '100px', borderRadius: '50%', objectFit: 'cover', border: '4px solid #f0fdf4' },
-  modalPhotoPlaceholder: { width: '100px', height: '100px', borderRadius: '50%', background: 'linear-gradient(135deg, #059669, #10b981)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '40px', fontWeight: '800', margin: '0 auto' },
-  modalName: { fontSize: '22px', fontWeight: '800', color: '#1f2937', margin: '0 0 4px 0' },
-  modalGender: { fontSize: '14px', color: '#6b7280', margin: '0 0 12px 0' },
-  modalBio: { fontSize: '15px', color: '#374151', fontStyle: 'italic', lineHeight: 1.5, margin: '0 0 16px 0', padding: '0 8px' },
-  modalDates: { display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 16px', background: '#f0fdf4', borderRadius: '12px', fontSize: '14px', fontWeight: '600', color: '#059669', marginBottom: '16px' },
-  modalDatesIcon: { fontSize: '16px' },
-  modalInterests: { display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center', marginBottom: '16px' },
-  modalInterestChip: { padding: '6px 14px', background: '#f3f4f6', borderRadius: '20px', fontSize: '13px', fontWeight: '600', color: '#374151' },
-  modalSocials: { display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: '16px', flexWrap: 'wrap' },
+  modalCard: { background: '#fff', borderRadius: '20px', maxWidth: '380px', width: '100%', maxHeight: '85vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', position: 'relative' },
+  modalBackdrop: { position: 'relative', width: '100%', height: '240px', flexShrink: 0 },
+  modalBackdropImg: { width: '100%', height: '100%', objectFit: 'cover' },
+  modalBackdropPlaceholder: { width: '100%', height: '100%', background: 'linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '72px', fontWeight: '800', color: 'rgba(255,255,255,0.35)' },
+  modalBackdropGradient: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '60%', background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 50%, transparent 100%)' },
+  modalCloseBtn: { position: 'absolute', top: '12px', right: '12px', width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(0,0,0,0.4)', border: 'none', fontSize: '18px', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2, backdropFilter: 'blur(4px)' },
+  modalBackdropInfo: { position: 'absolute', bottom: '16px', left: '16px', right: '16px', zIndex: 2 },
+  modalNameOverlay: { fontSize: '22px', fontWeight: '800', color: '#fff', marginBottom: '4px' },
+  modalStatusBadge: { fontSize: '12px', fontWeight: '700', color: '#fff', background: 'rgba(255,255,255,0.2)', padding: '4px 10px', borderRadius: '8px', backdropFilter: 'blur(4px)' },
+  modalBody: { padding: '20px', overflowY: 'auto', flex: 1 },
+  modalBio: { fontSize: '15px', color: '#374151', lineHeight: 1.6, margin: '0 0 16px 0' },
+  modalInterests: { display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' },
+  modalInterestChip: { padding: '6px 14px', background: '#f0fdf4', borderRadius: '20px', fontSize: '13px', fontWeight: '600', color: '#059669' },
+  modalSocials: { display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' },
   modalSocialBtn: { padding: '8px 16px', background: '#f3f4f6', borderRadius: '10px', fontSize: '13px', fontWeight: '600', color: '#374151', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' },
-  modalTripsSection: { textAlign: 'left', marginBottom: '16px' },
-  modalTripsTitle: { fontSize: '13px', fontWeight: '700', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px', textAlign: 'left' },
+  modalTripsSection: { marginBottom: '16px' },
+  modalTripsTitle: { fontSize: '13px', fontWeight: '700', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' },
   modalTripItem: { display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: '#f9fafb', borderRadius: '10px', marginBottom: '6px' },
   modalTripIcon: { fontSize: '16px', flexShrink: 0 },
   modalTripInfo: { flex: 1, minWidth: 0 },
   modalTripDest: { fontSize: '14px', fontWeight: '700', color: '#1f2937' },
   modalTripDates: { fontSize: '12px', color: '#6b7280', marginTop: '2px' },
   modalTripBadge: { fontSize: '11px', fontWeight: '700', color: '#059669', background: '#f0fdf4', padding: '4px 8px', borderRadius: '6px', flexShrink: 0 },
-  modalAction: { marginTop: '4px' },
   modalConnectBtn: { width: '100%', padding: '14px', background: '#059669', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '16px', fontWeight: '700', cursor: 'pointer' },
   modalConnectedBadge: { width: '100%', padding: '14px', background: '#f0fdf4', color: '#059669', border: '2px solid #bbf7d0', borderRadius: '14px', fontSize: '16px', fontWeight: '700', textAlign: 'center' },
   modalPendingBadge: { width: '100%', padding: '14px', background: '#fffbeb', color: '#d97706', border: '2px solid #fde68a', borderRadius: '14px', fontSize: '16px', fontWeight: '700', textAlign: 'center' },

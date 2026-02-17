@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from '../firebase';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, getDocs, addDoc } from 'firebase/firestore';
 import TabBar from '../components/TabBar';
 
 function Saved() {
@@ -14,10 +14,20 @@ function Saved() {
   const [editingTrip, setEditingTrip] = useState(null);
   const [editStart, setEditStart] = useState('');
   const [editEnd, setEditEnd] = useState('');
+  const [expandedTrips, setExpandedTrips] = useState({});
+  const [overlappingPeople, setOverlappingPeople] = useState({});
+  const [previewUser, setPreviewUser] = useState(null);
+  const [sentRequests, setSentRequests] = useState([]);
+  const [currentUserData, setCurrentUserData] = useState(null);
 
   useEffect(() => {
     loadUserData();
   }, []);
+
+  const parseDate = (dateStr) => {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  };
 
   const loadUserData = async () => {
     try {
@@ -27,15 +37,119 @@ function Saved() {
         return;
       }
       const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
-        setTrips(userData.upcomingTrips || []);
-        setConnections(userData.connections || []);
-      }
+      if (!userDoc.exists()) return;
+
+      const userData = userDoc.data();
+      setTrips(userData.upcomingTrips || []);
+      setConnections(userData.connections || []);
+      setCurrentUserData(userData);
+
+      const myGender = userData.gender || '';
+      const myVisibility = userData.profileVisibility || 'both';
+      const myConnections = (userData.connections || []).map(c => c.userId);
+      const myTrips = userData.upcomingTrips || [];
+
+      // Fetch all users for overlapping people
+      const usersSnapshot = await getDocs(collection(db, 'users'));
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const peopleByTrip = {};
+
+      myTrips.forEach((trip, idx) => {
+        const myStart = parseDate(trip.startDate);
+        const myEnd = parseDate(trip.endDate);
+        const people = [];
+
+        usersSnapshot.forEach((docSnap) => {
+          if (docSnap.id === currentUser.uid) return;
+          const u = docSnap.data();
+
+          // Visibility checks
+          const theirVis = u.profileVisibility || 'both';
+          if (theirVis !== 'both' && theirVis !== myGender) return;
+          if (myVisibility !== 'both' && u.gender !== myVisibility) return;
+          if (!u.upcomingTrips) return;
+
+          u.upcomingTrips.forEach(ut => {
+            if (ut.destination !== trip.destination) return;
+            const uStart = parseDate(ut.startDate);
+            const uEnd = parseDate(ut.endDate);
+            if (uStart <= myEnd && uEnd >= myStart) {
+              const isThere = today >= uStart && today <= uEnd;
+              people.push({
+                id: docSnap.id,
+                ...u,
+                tripStart: ut.startDate,
+                tripEnd: ut.endDate,
+                isThere,
+                isConnected: myConnections.includes(docSnap.id),
+              });
+            }
+          });
+        });
+
+        // Deduplicate by userId
+        const seen = {};
+        people.forEach(p => {
+          if (!seen[p.id] || (p.isThere && !seen[p.id].isThere)) {
+            seen[p.id] = p;
+          }
+        });
+        const deduped = Object.values(seen).sort((a, b) => {
+          if (a.isConnected && !b.isConnected) return -1;
+          if (!a.isConnected && b.isConnected) return 1;
+          if (a.isThere && !b.isThere) return -1;
+          if (!a.isThere && b.isThere) return 1;
+          return 0;
+        });
+        peopleByTrip[idx] = deduped;
+      });
+
+      setOverlappingPeople(peopleByTrip);
+
+      // Fetch sent requests
+      const requestsSnapshot = await getDocs(collection(db, 'connectionRequests'));
+      const pending = [];
+      requestsSnapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        if (data.fromUserId === currentUser.uid && data.status === 'pending') {
+          pending.push(data.toUserId);
+        }
+      });
+      setSentRequests(pending);
     } catch (error) {
       console.error('Error loading user data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSendConnectionRequest = async (toUser) => {
+    try {
+      const currentUser = auth.currentUser;
+      if (!currentUser || !currentUserData) return;
+      if ((currentUserData.connections || []).some(c => c.userId === toUser.id)) return;
+      if (sentRequests.includes(toUser.id)) return;
+
+      setSentRequests(prev => [...prev, toUser.id]);
+      await addDoc(collection(db, 'connectionRequests'), {
+        fromUserId: currentUser.uid,
+        fromUserName: currentUserData.name,
+        fromUserAge: currentUserData.age,
+        fromUserGender: currentUserData.gender,
+        fromUserBio: currentUserData.bio || '',
+        fromUserPhotoURL: currentUserData.photoURL || '',
+        fromUserInterests: currentUserData.interests || [],
+        fromUserUpcomingTrips: currentUserData.upcomingTrips || [],
+        fromUserWhatsapp: currentUserData.whatsapp || '',
+        fromUserInstagram: currentUserData.instagram || '',
+        toUserId: toUser.id,
+        status: 'pending',
+        createdAt: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Error sending request:', error);
     }
   };
 
@@ -139,25 +253,32 @@ function Saved() {
   const upcomingGrouped = groupByYear(upcomingTrips);
   const pastGrouped = groupByYear(pastTrips);
 
-  // Auto-expand the current/nearest year on first render
+  // Auto-expand the current/nearest year and first trip on first render
   useEffect(() => {
     if (!loading && Object.keys(expandedYears).length === 0) {
       const initial = {};
       if (upcomingGrouped.sortedYears.length > 0) {
-        // For upcoming, expand the nearest year (last in desc sort = smallest)
         const nearestYear = upcomingGrouped.sortedYears[upcomingGrouped.sortedYears.length - 1];
         initial[`upcoming-${nearestYear}`] = true;
       }
       if (pastGrouped.sortedYears.length > 0) {
-        // For past, expand the most recent year (first in desc sort)
         initial[`past-${pastGrouped.sortedYears[0]}`] = true;
       }
       setExpandedYears(initial);
+
+      // Auto-expand the first upcoming trip
+      if (upcomingTrips.length > 0) {
+        setExpandedTrips({ [upcomingTrips[0].originalIndex]: true });
+      }
     }
   }, [loading]);
 
   const toggleYear = (key) => {
     setExpandedYears(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const toggleTrip = (tripIndex) => {
+    setExpandedTrips(prev => ({ ...prev, [tripIndex]: !prev[tripIndex] }));
   };
 
   const getConnectionsForDestination = (destination) => {
@@ -175,156 +296,192 @@ function Saved() {
   };
 
   const renderUpcomingTrip = (trip) => {
-    const destConnections = getConnectionsForDestination(trip.destination);
+    const isExpanded = expandedTrips[trip.originalIndex];
+    const people = overlappingPeople[trip.originalIndex] || [];
+    const startDate = parseDate(trip.startDate);
+    const endDate = parseDate(trip.endDate);
+    const isThere = today >= startDate && today <= endDate;
+    const expCount = trip.experiences?.length || 0;
+
     return (
       <div key={trip.originalIndex} style={styles.tripCard}>
-        <div style={styles.tripHeader}>
-          <div style={styles.tripDestination}>{trip.destination}</div>
-          {editingTrip === trip.originalIndex ? (
-            <div style={styles.editDatesRow}>
-              <input
-                type="date"
-                value={editStart}
-                onChange={(e) => setEditStart(e.target.value)}
-                style={styles.dateInput}
-              />
-              <span style={{ color: '#fff' }}>—</span>
-              <input
-                type="date"
-                value={editEnd}
-                onChange={(e) => setEditEnd(e.target.value)}
-                style={styles.dateInput}
-              />
-              <button
-                style={styles.dateSaveBtn}
-                onClick={() => handleSaveDates(trip.originalIndex)}
-              >
-                Save
-              </button>
-              <button
-                style={styles.dateCancelBtn}
-                onClick={() => setEditingTrip(null)}
-              >
-                ✕
-              </button>
+        {/* Collapsed header — always visible */}
+        <div
+          style={{
+            ...styles.tripHeader,
+            ...(isThere ? styles.tripHeaderThere : {}),
+          }}
+          onClick={() => toggleTrip(trip.originalIndex)}
+        >
+          <div style={styles.tripHeaderLeft}>
+            <div style={styles.tripDestination}>
+              {trip.destination.split(',')[0]}
             </div>
-          ) : (
-            <div
-              style={styles.tripDatesClickable}
-              onClick={() => handleStartEditDates(trip.originalIndex, trip.startDate, trip.endDate)}
-            >
-              {formatDate(trip.startDate)} - {formatDate(trip.endDate)}
-              <span style={styles.editIcon}>✏️</span>
+            <div style={styles.tripHeaderMeta}>
+              <span style={styles.tripDatesInline}>
+                {formatDate(trip.startDate)} - {formatDate(trip.endDate)}
+              </span>
+              {isThere && <span style={styles.thereBadge}>📍 There now</span>}
             </div>
-          )}
+            {!isExpanded && (expCount > 0 || people.length > 0) && (
+              <div style={styles.tripHeaderSummary}>
+                {expCount > 0 && <span>{expCount} experience{expCount !== 1 ? 's' : ''}</span>}
+                {expCount > 0 && people.length > 0 && <span> · </span>}
+                {people.length > 0 && <span>{people.length} {people.length === 1 ? 'person' : 'people'}</span>}
+              </div>
+            )}
+          </div>
+          <span style={{
+            ...styles.tripChevron,
+            transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+          }}>▾</span>
         </div>
 
-        <div style={styles.tripBody}>
-          {trip.experiences && trip.experiences.length > 0 && (
-            <div style={styles.expSection}>
-              <div style={styles.expSectionLabel}>
-                Experiences ({trip.experiences.length})
-              </div>
-              {trip.experiences.map((exp, expIndex) => (
-                <div key={expIndex} style={styles.expCard}>
-                  <div style={styles.expIcon}>{exp.icon || '🎯'}</div>
-                  <div style={styles.expDetails}>
-                    <div style={styles.expName}>{exp.name}</div>
-                    <div style={styles.expPrice}>${exp.price}</div>
-                  </div>
-                  <div style={styles.expActions}>
-                    {exp.bookingUrl && (
-                      <button
-                        style={styles.bookNowBtn}
-                        onClick={() => window.open(exp.bookingUrl, '_blank')}
-                      >
-                        Book
-                      </button>
-                    )}
-                    <button
-                      style={styles.removeExpBtn}
-                      onClick={() => handleRemoveExperience(trip.originalIndex, expIndex)}
-                    >
-                      ✕
-                    </button>
-                  </div>
+        {/* Expanded body */}
+        {isExpanded && (
+          <div style={styles.tripBody}>
+            {/* Editable dates */}
+            {editingTrip === trip.originalIndex ? (
+              <div style={styles.editDatesSection}>
+                <div style={styles.editDatesRow}>
+                  <input type="date" value={editStart} onChange={(e) => setEditStart(e.target.value)} style={styles.dateInput} />
+                  <span style={{ color: '#6b7280' }}>—</span>
+                  <input type="date" value={editEnd} onChange={(e) => setEditEnd(e.target.value)} style={styles.dateInput} />
+                  <button style={styles.dateSaveBtn} onClick={() => handleSaveDates(trip.originalIndex)}>Save</button>
+                  <button style={styles.dateCancelBtn} onClick={() => setEditingTrip(null)}>✕</button>
                 </div>
-              ))}
-            </div>
-          )}
-
-          {destConnections.length > 0 && (
-            <div style={styles.connectionsSection}>
-              <div style={styles.connectionsSectionLabel}>
-                Connections Going ({destConnections.length})
               </div>
-              <div style={styles.connectionAvatars}>
-                {destConnections.map((conn, i) => (
-                  <div key={i} style={styles.avatarItem}>
-                    {conn.photoURL ? (
-                      <img src={conn.photoURL} alt={conn.name} style={styles.avatarImg} />
-                    ) : (
-                      <div style={styles.avatarPlaceholder}>
-                        {conn.name?.charAt(0)}
-                      </div>
-                    )}
-                    <div style={styles.avatarName}>{conn.name?.split(' ')[0]}</div>
+            ) : (
+              <div
+                style={styles.editDatesTrigger}
+                onClick={() => handleStartEditDates(trip.originalIndex, trip.startDate, trip.endDate)}
+              >
+                ✏️ Edit dates
+              </div>
+            )}
+
+            {/* Experiences */}
+            {expCount > 0 && (
+              <div style={styles.expSection}>
+                <div style={styles.expSectionLabel}>Experiences ({expCount})</div>
+                {trip.experiences.map((exp, expIndex) => (
+                  <div key={expIndex} style={styles.expCard}>
+                    <div style={styles.expIcon}>{exp.icon || '🎯'}</div>
+                    <div style={styles.expDetails}>
+                      <div style={styles.expName}>{exp.name}</div>
+                      <div style={styles.expPrice}>${exp.price}</div>
+                    </div>
+                    <div style={styles.expActions}>
+                      {exp.bookingUrl && (
+                        <button style={styles.bookNowBtn} onClick={() => window.open(exp.bookingUrl, '_blank')}>Book</button>
+                      )}
+                      <button style={styles.removeExpBtn} onClick={() => handleRemoveExperience(trip.originalIndex, expIndex)}>✕</button>
+                    </div>
                   </div>
                 ))}
               </div>
-            </div>
-          )}
+            )}
 
-          <div style={styles.tripActions}>
-            <button
-              style={styles.addExpBtn}
-              onClick={() => navigate(`/destination/${encodeURIComponent(trip.destination)}`)}
-            >
-              + Add Experiences
-            </button>
-            <button
-              style={styles.removeTripBtn}
-              onClick={() => handleRemoveTrip(trip.originalIndex)}
-            >
-              🗑️
-            </button>
+            {/* Overlapping people */}
+            {people.length > 0 && (
+              <div style={styles.connectionsSection}>
+                <div style={styles.connectionsSectionLabel}>
+                  {people.length} {people.length === 1 ? 'person' : 'people'} during your dates
+                </div>
+                <div style={styles.peopleList}>
+                  {people.map((person) => (
+                    <div key={person.id} style={styles.personRow} onClick={() => setPreviewUser(person)}>
+                      <div style={{
+                        ...styles.personAvatar,
+                        border: person.isConnected ? '2px solid #059669' : '2px solid #d1d5db',
+                      }}>
+                        {person.photoURL ? (
+                          <img src={person.photoURL} alt={person.name} style={styles.personAvatarImg} />
+                        ) : (
+                          <div style={styles.personAvatarPlaceholder}>{person.name?.charAt(0)}</div>
+                        )}
+                      </div>
+                      <div style={styles.personInfo}>
+                        <div style={styles.personName}>{person.name?.split(' ')[0]}{person.age ? `, ${person.age}` : ''}</div>
+                        <div style={styles.personDates}>
+                          {formatDate(person.tripStart)} – {formatDate(person.tripEnd)}
+                        </div>
+                      </div>
+                      <div style={styles.personStatus}>
+                        {person.isThere ? '📍' : '✈️'}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div style={styles.tripActions}>
+              <button style={styles.addExpBtn} onClick={() => navigate(`/destination/${encodeURIComponent(trip.destination)}`)}>
+                + Add Experiences
+              </button>
+              <button style={styles.removeTripBtn} onClick={() => handleRemoveTrip(trip.originalIndex)}>
+                🗑️
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     );
   };
 
-  const renderPastTrip = (trip) => (
-    <div key={trip.originalIndex} style={styles.pastTripCard}>
-      <div style={styles.pastTripHeader}>
-        <div style={styles.pastTripDestination}>{trip.destination}</div>
-        <div style={styles.completedBadge}>Completed</div>
-      </div>
-      <div style={styles.pastTripBody}>
-        <div style={styles.pastTripDates}>
-          {formatDate(trip.startDate)} - {formatDate(trip.endDate)}
-        </div>
-        {trip.experiences && trip.experiences.length > 0 && (
-          <div style={styles.pastExpList}>
-            {trip.experiences.map((exp, i) => (
-              <div key={i} style={styles.pastExpItem}>
-                <span>{exp.icon || '🎯'} {exp.name}</span>
-                <span style={styles.pastExpPrice}>${exp.price}</span>
-                {exp.bookingUrl && (
-                  <button
-                    style={styles.rebookBtn}
-                    onClick={() => window.open(exp.bookingUrl, '_blank')}
-                  >
-                    Rebook
-                  </button>
-                )}
+  const renderPastTrip = (trip) => {
+    const isExpanded = expandedTrips[`past-${trip.originalIndex}`];
+    const expCount = trip.experiences?.length || 0;
+
+    return (
+      <div key={trip.originalIndex} style={styles.pastTripCard}>
+        <div
+          style={styles.pastTripHeader}
+          onClick={() => setExpandedTrips(prev => ({ ...prev, [`past-${trip.originalIndex}`]: !prev[`past-${trip.originalIndex}`] }))}
+        >
+          <div style={styles.tripHeaderLeft}>
+            <div style={styles.pastTripDestination}>{trip.destination.split(',')[0]}</div>
+            <div style={styles.tripHeaderMeta}>
+              <span style={styles.pastTripDatesInline}>
+                {formatDate(trip.startDate)} - {formatDate(trip.endDate)}
+              </span>
+              <span style={styles.completedBadge}>Completed</span>
+            </div>
+            {!isExpanded && expCount > 0 && (
+              <div style={styles.tripHeaderSummary}>
+                <span>{expCount} experience{expCount !== 1 ? 's' : ''}</span>
               </div>
-            ))}
+            )}
+          </div>
+          <span style={{
+            ...styles.tripChevron,
+            transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+            color: '#9ca3af',
+          }}>▾</span>
+        </div>
+        {isExpanded && (
+          <div style={styles.pastTripBody}>
+            {expCount > 0 && (
+              <div style={styles.pastExpList}>
+                {trip.experiences.map((exp, i) => (
+                  <div key={i} style={styles.pastExpItem}>
+                    <span>{exp.icon || '🎯'} {exp.name}</span>
+                    <span style={styles.pastExpPrice}>${exp.price}</span>
+                    {exp.bookingUrl && (
+                      <button style={styles.rebookBtn} onClick={() => window.open(exp.bookingUrl, '_blank')}>
+                        Rebook
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderYearGroups = (grouped, prefix, renderTrip) => {
     if (grouped.sortedYears.length === 0) {
@@ -422,6 +579,103 @@ function Saved() {
         {activeSubTab === 'past' && renderYearGroups(pastGrouped, 'past', renderPastTrip)}
       </div>
 
+      {/* Profile Preview Modal — Backdrop Photo */}
+      {previewUser && (() => {
+        const isConnected = (currentUserData?.connections || []).some(c => c.userId === previewUser.id);
+        const isPending = sentRequests.includes(previewUser.id);
+        const allTrips = previewUser.upcomingTrips || [];
+        return (
+          <div style={styles.modalOverlay} onClick={() => setPreviewUser(null)}>
+            <div style={styles.modalCard} onClick={e => e.stopPropagation()}>
+              {/* Backdrop photo */}
+              <div style={styles.modalBackdrop}>
+                {previewUser.photoURL ? (
+                  <img src={previewUser.photoURL} alt={previewUser.name} style={styles.modalBackdropImg} />
+                ) : (
+                  <div style={styles.modalBackdropPlaceholder}>
+                    {previewUser.name?.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div style={styles.modalBackdropGradient} />
+                <button style={styles.modalCloseBtn} onClick={() => setPreviewUser(null)}>✕</button>
+                <div style={styles.modalBackdropInfo}>
+                  <div style={styles.modalNameOverlay}>{previewUser.name}{previewUser.age ? `, ${previewUser.age}` : ''}</div>
+                  {previewUser.isThere !== undefined && (
+                    <span style={styles.modalStatusBadge}>{previewUser.isThere ? '📍 There now' : '✈️ Going soon'}</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Content below backdrop */}
+              <div style={styles.modalBody}>
+                {previewUser.bio && (
+                  <p style={styles.modalBio}>{previewUser.bio}</p>
+                )}
+
+                {previewUser.interests && previewUser.interests.length > 0 && (
+                  <div style={styles.modalInterests}>
+                    {previewUser.interests.map(interest => (
+                      <span key={interest} style={styles.modalInterestChip}>{interest}</span>
+                    ))}
+                  </div>
+                )}
+
+                {isConnected && (previewUser.whatsapp || previewUser.instagram) && (
+                  <div style={styles.modalSocials}>
+                    {previewUser.whatsapp && (
+                      <a href={`https://wa.me/${previewUser.whatsapp.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" style={styles.modalSocialBtn}>
+                        💬 WhatsApp
+                      </a>
+                    )}
+                    {previewUser.instagram && (
+                      <a href={`https://instagram.com/${previewUser.instagram}`} target="_blank" rel="noopener noreferrer" style={styles.modalSocialBtn}>
+                        📷 @{previewUser.instagram}
+                      </a>
+                    )}
+                  </div>
+                )}
+
+                {allTrips.length > 0 && (
+                  <div style={styles.modalTripsSection}>
+                    <div style={styles.modalTripsTitle}>Trips</div>
+                    {allTrips.map((trip, i) => {
+                      const start = parseDate(trip.startDate);
+                      const end = parseDate(trip.endDate);
+                      const now = new Date();
+                      now.setHours(0, 0, 0, 0);
+                      const isThere = now >= start && now <= end;
+                      const isUpcoming = now < start;
+                      return (
+                        <div key={i} style={styles.modalTripItem}>
+                          <span style={styles.modalTripIcon}>{isThere ? '📍' : isUpcoming ? '✈️' : '✓'}</span>
+                          <div style={styles.modalTripInfo}>
+                            <div style={styles.modalTripDest}>{trip.destination.split(',')[0]}</div>
+                            <div style={styles.modalTripDates}>
+                              {start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – {end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </div>
+                          </div>
+                          {isThere && <span style={styles.modalTripBadge}>There now</span>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {isConnected ? (
+                  <div style={styles.modalConnectedBadge}>Connected</div>
+                ) : isPending ? (
+                  <div style={styles.modalPendingBadge}>Request Pending</div>
+                ) : (
+                  <button style={styles.modalConnectBtn} onClick={() => { handleSendConnectionRequest(previewUser); setPreviewUser(null); }}>
+                    Connect
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       <TabBar />
     </div>
   );
@@ -464,14 +718,21 @@ const styles = {
 
   // Upcoming Trip Card
   tripCard: { background: '#fff', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' },
-  tripHeader: { background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)', padding: '16px 20px' },
-  tripDestination: { color: '#fff', fontSize: '18px', fontWeight: '700', marginBottom: '4px' },
-  tripDatesClickable: { color: 'rgba(255,255,255,0.9)', fontSize: '14px', fontWeight: '500', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' },
-  editIcon: { fontSize: '12px', opacity: 0.7 },
+  tripHeader: { display: 'flex', alignItems: 'center', padding: '16px 20px', background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)', cursor: 'pointer' },
+  tripHeaderThere: { background: 'linear-gradient(135deg, #047857 0%, #059669 100%)' },
+  tripHeaderLeft: { flex: 1 },
+  tripDestination: { color: '#fff', fontSize: '18px', fontWeight: '800', marginBottom: '4px' },
+  tripHeaderMeta: { display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' },
+  tripDatesInline: { color: 'rgba(255,255,255,0.85)', fontSize: '13px', fontWeight: '500' },
+  thereBadge: { fontSize: '11px', fontWeight: '700', color: '#fff', background: 'rgba(255,255,255,0.2)', padding: '2px 8px', borderRadius: '8px' },
+  tripHeaderSummary: { marginTop: '6px', fontSize: '12px', color: 'rgba(255,255,255,0.7)', fontWeight: '500' },
+  tripChevron: { fontSize: '20px', color: 'rgba(255,255,255,0.8)', transition: 'transform 0.2s', display: 'inline-block', flexShrink: 0 },
+  editDatesSection: { padding: '12px 0', borderBottom: '1px solid #f3f4f6', marginBottom: '12px' },
   editDatesRow: { display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' },
-  dateInput: { padding: '6px 8px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.15)', color: '#fff', fontSize: '13px', fontFamily: 'inherit', colorScheme: 'dark' },
-  dateSaveBtn: { padding: '6px 14px', background: '#fff', color: '#059669', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '700', cursor: 'pointer' },
-  dateCancelBtn: { padding: '6px 10px', background: 'rgba(255,255,255,0.2)', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' },
+  dateInput: { padding: '8px 10px', borderRadius: '8px', border: '2px solid #e5e7eb', background: '#fff', color: '#1f2937', fontSize: '13px', fontFamily: 'inherit' },
+  dateSaveBtn: { padding: '8px 14px', background: '#059669', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '700', cursor: 'pointer' },
+  dateCancelBtn: { padding: '8px 10px', background: '#f3f4f6', color: '#6b7280', border: 'none', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' },
+  editDatesTrigger: { padding: '8px 0', fontSize: '13px', color: '#059669', fontWeight: '600', cursor: 'pointer', marginBottom: '8px' },
   tripBody: { padding: '16px 20px' },
 
   // Experiences in trip
@@ -486,14 +747,18 @@ const styles = {
   bookNowBtn: { padding: '8px 14px', background: '#059669', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' },
   removeExpBtn: { width: '28px', height: '28px', background: '#fee2e2', color: '#dc2626', border: 'none', borderRadius: '50%', fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
 
-  // Connections in trip
+  // People list in trip
   connectionsSection: { marginBottom: '16px' },
   connectionsSectionLabel: { fontSize: '12px', fontWeight: '700', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '10px' },
-  connectionAvatars: { display: 'flex', gap: '16px', overflowX: 'auto', paddingBottom: '4px' },
-  avatarItem: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' },
-  avatarImg: { width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #059669' },
-  avatarPlaceholder: { width: '44px', height: '44px', borderRadius: '50%', background: 'linear-gradient(135deg, #059669, #10b981)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', fontWeight: '700' },
-  avatarName: { fontSize: '11px', color: '#6b7280', fontWeight: '500' },
+  peopleList: { display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '4px' },
+  personRow: { display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', background: '#f9fafb', borderRadius: '12px', cursor: 'pointer', flexShrink: 0, minWidth: '200px' },
+  personAvatar: { width: '40px', height: '40px', borderRadius: '50%', flexShrink: 0, overflow: 'hidden' },
+  personAvatarImg: { width: '100%', height: '100%', objectFit: 'cover' },
+  personAvatarPlaceholder: { width: '100%', height: '100%', background: '#e5e7eb', color: '#6b7280', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', fontWeight: '700' },
+  personInfo: { flex: 1, minWidth: 0 },
+  personName: { fontSize: '14px', fontWeight: '700', color: '#1f2937', whiteSpace: 'nowrap' },
+  personDates: { fontSize: '12px', color: '#6b7280', marginTop: '1px', whiteSpace: 'nowrap' },
+  personStatus: { fontSize: '16px', flexShrink: 0 },
 
   // Trip actions
   tripActions: { display: 'flex', gap: '8px' },
@@ -502,15 +767,44 @@ const styles = {
 
   // Past Trip Card
   pastTripCard: { background: '#fff', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', opacity: 0.85 },
-  pastTripHeader: { background: 'linear-gradient(135deg, #6b7280 0%, #9ca3af 100%)', padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  pastTripDestination: { color: '#fff', fontSize: '16px', fontWeight: '700' },
-  completedBadge: { background: 'rgba(255,255,255,0.25)', color: '#fff', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: '600' },
+  pastTripHeader: { display: 'flex', alignItems: 'center', background: 'linear-gradient(135deg, #6b7280 0%, #9ca3af 100%)', padding: '16px 20px', cursor: 'pointer' },
+  pastTripDestination: { color: '#fff', fontSize: '18px', fontWeight: '800', marginBottom: '4px' },
+  pastTripDatesInline: { color: 'rgba(255,255,255,0.85)', fontSize: '13px', fontWeight: '500' },
+  completedBadge: { fontSize: '11px', fontWeight: '700', color: '#fff', background: 'rgba(255,255,255,0.2)', padding: '2px 8px', borderRadius: '8px' },
   pastTripBody: { padding: '14px 20px' },
-  pastTripDates: { fontSize: '13px', color: '#6b7280', marginBottom: '10px' },
   pastExpList: { display: 'flex', flexDirection: 'column', gap: '8px' },
   pastExpItem: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#4b5563' },
   pastExpPrice: { color: '#6b7280', fontWeight: '600', marginLeft: 'auto' },
   rebookBtn: { padding: '6px 12px', background: '#f0fdf4', color: '#059669', border: '1px solid #059669', borderRadius: '6px', fontSize: '12px', fontWeight: '600', cursor: 'pointer', flexShrink: 0 },
+
+  // Profile Preview Modal — Backdrop style
+  modalOverlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' },
+  modalCard: { background: '#fff', borderRadius: '20px', maxWidth: '380px', width: '100%', maxHeight: '85vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', position: 'relative' },
+  modalBackdrop: { position: 'relative', width: '100%', height: '240px', flexShrink: 0 },
+  modalBackdropImg: { width: '100%', height: '100%', objectFit: 'cover' },
+  modalBackdropPlaceholder: { width: '100%', height: '100%', background: 'linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '72px', fontWeight: '800', color: 'rgba(255,255,255,0.35)' },
+  modalBackdropGradient: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '60%', background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 50%, transparent 100%)' },
+  modalCloseBtn: { position: 'absolute', top: '12px', right: '12px', width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(0,0,0,0.4)', border: 'none', fontSize: '18px', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2, backdropFilter: 'blur(4px)' },
+  modalBackdropInfo: { position: 'absolute', bottom: '16px', left: '16px', right: '16px', zIndex: 2 },
+  modalNameOverlay: { fontSize: '22px', fontWeight: '800', color: '#fff', marginBottom: '4px' },
+  modalStatusBadge: { fontSize: '12px', fontWeight: '700', color: '#fff', background: 'rgba(255,255,255,0.2)', padding: '4px 10px', borderRadius: '8px', backdropFilter: 'blur(4px)' },
+  modalBody: { padding: '20px', overflowY: 'auto', flex: 1 },
+  modalBio: { fontSize: '15px', color: '#374151', lineHeight: 1.6, margin: '0 0 16px 0' },
+  modalInterests: { display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' },
+  modalInterestChip: { padding: '6px 14px', background: '#f0fdf4', borderRadius: '20px', fontSize: '13px', fontWeight: '600', color: '#059669' },
+  modalSocials: { display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' },
+  modalSocialBtn: { padding: '8px 16px', background: '#f3f4f6', borderRadius: '10px', fontSize: '13px', fontWeight: '600', color: '#374151', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' },
+  modalTripsSection: { marginBottom: '16px' },
+  modalTripsTitle: { fontSize: '13px', fontWeight: '700', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' },
+  modalTripItem: { display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: '#f9fafb', borderRadius: '10px', marginBottom: '6px' },
+  modalTripIcon: { fontSize: '16px', flexShrink: 0 },
+  modalTripInfo: { flex: 1, minWidth: 0 },
+  modalTripDest: { fontSize: '14px', fontWeight: '700', color: '#1f2937' },
+  modalTripDates: { fontSize: '12px', color: '#6b7280', marginTop: '2px' },
+  modalTripBadge: { fontSize: '11px', fontWeight: '700', color: '#059669', background: '#f0fdf4', padding: '4px 8px', borderRadius: '6px', flexShrink: 0 },
+  modalConnectedBadge: { width: '100%', padding: '14px', background: '#f0fdf4', color: '#059669', border: '2px solid #bbf7d0', borderRadius: '14px', fontSize: '16px', fontWeight: '700', textAlign: 'center' },
+  modalPendingBadge: { width: '100%', padding: '14px', background: '#fffbeb', color: '#d97706', border: '2px solid #fde68a', borderRadius: '14px', fontSize: '16px', fontWeight: '700', textAlign: 'center' },
+  modalConnectBtn: { width: '100%', padding: '14px', background: '#059669', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '16px', fontWeight: '700', cursor: 'pointer' },
 };
 
 export default Saved;
