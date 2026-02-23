@@ -1,106 +1,71 @@
-import React, { useState, useEffect } from 'react';
-import { collection, getDocs, doc, getDoc, updateDoc, arrayUnion, addDoc } from 'firebase/firestore';
-import { db, auth } from '../firebase';
+import React, { useState, useMemo } from 'react';
+import { addDoc, collection } from 'firebase/firestore';
+import { db } from '../firebase';
+import { useUser } from '../context/UserContext';
+import { FiX, FiMapPin, FiMessageCircle, FiCamera } from 'react-icons/fi';
 
 function PeopleTab({ destination }) {
   const [timeFilter, setTimeFilter] = useState('now');
-  const [travelers, setTravelers] = useState([]);
   const [selectedPerson, setSelectedPerson] = useState(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
-  const [myConnections, setMyConnections] = useState([]);
-  const [sentRequests, setSentRequests] = useState([]);
+  const [localSentRequests, setLocalSentRequests] = useState([]);
 
-  useEffect(() => {
-    loadTravelers();
-    loadMyConnections();
-    loadSentRequests();
-  }, [destination, timeFilter]);
+  const { currentUserData, allUsers, currentUser, sentRequestUserIds, receivedRequestUserIds, refreshConnections } = useUser();
+  const myConnections = currentUserData?.connections || [];
 
-  const loadMyConnections = async () => {
-    try {
-      const currentUser = auth.currentUser;
-      if (!currentUser) return;
+  const allSentRequests = useMemo(() => {
+    return [...new Set([...sentRequestUserIds, ...receivedRequestUserIds, ...localSentRequests])];
+  }, [sentRequestUserIds, receivedRequestUserIds, localSentRequests]);
 
-      const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
-        setMyConnections(userData.connections || []);
-      }
-    } catch (error) {
-      console.error('Error loading connections:', error);
-    }
-  };
+  const travelers = useMemo(() => {
+    if (!currentUser || !currentUserData) return [];
+    const now = new Date();
+    const result = [];
 
-  const loadSentRequests = async () => {
-    try {
-      const currentUser = auth.currentUser;
-      if (!currentUser) return;
+    const myGender = currentUserData.gender || '';
+    const rawMyVis = currentUserData.profileVisibility || 'both';
+    const myVisibility = ['Male', 'Female', 'both'].includes(rawMyVis) ? rawMyVis : 'both';
 
-      const requestsSnapshot = await getDocs(collection(db, 'connectionRequests'));
-      const sent = [];
+    allUsers.forEach((userData) => {
+      if (userData.id === currentUser.uid) return;
 
-      requestsSnapshot.forEach((doc) => {
-        const data = doc.data();
-        if (data.fromUserId === currentUser.uid && data.status === 'pending') {
-          sent.push(data.toUserId);
+      // Visibility/gender filtering — match logic in Destinations.js & DestinationDetail.js
+      const rawTheirVis = userData.profileVisibility || 'both';
+      const theirVisibility = ['Male', 'Female', 'both'].includes(rawTheirVis) ? rawTheirVis : 'both';
+      if (theirVisibility !== 'both' && theirVisibility !== myGender) return;
+      if (myVisibility !== 'both' && userData.gender !== myVisibility) return;
+
+      const trips = userData.upcomingTrips || [];
+      trips.forEach(trip => {
+        if (trip.destination === destination) {
+          const startDate = new Date(trip.startDate);
+          const endDate = new Date(trip.endDate);
+
+          const isHereNow = now >= startDate && now <= endDate;
+          const isGoingSoon = startDate > now;
+
+          if ((timeFilter === 'now' && isHereNow) || (timeFilter === 'soon' && isGoingSoon)) {
+            result.push({
+              userId: userData.id,
+              name: userData.name,
+              age: userData.age,
+              gender: userData.gender,
+              bio: userData.bio,
+              photoURL: userData.photoURL,
+              interests: userData.interests || [],
+              whatsapp: userData.whatsapp,
+              instagram: userData.instagram,
+              tripStartDate: trip.startDate,
+              tripEndDate: trip.endDate,
+              isHereNow: isHereNow
+            });
+          }
         }
       });
+    });
 
-      setSentRequests(sent);
-    } catch (error) {
-      console.error('Error loading sent requests:', error);
-    }
-  };
-
-  const loadTravelers = async () => {
-    try {
-      const currentUser = auth.currentUser;
-      if (!currentUser) return;
-
-      const usersSnapshot = await getDocs(collection(db, 'users'));
-      const now = new Date();
-      const travelers = [];
-
-      usersSnapshot.forEach((doc) => {
-        const userData = doc.data();
-        const userId = doc.id;
-
-        if (userId === currentUser.uid) return;
-
-        const trips = userData.upcomingTrips || [];
-        trips.forEach(trip => {
-          if (trip.destination === destination) {
-            const startDate = new Date(trip.startDate);
-            const endDate = new Date(trip.endDate);
-
-            const isHereNow = now >= startDate && now <= endDate;
-            const isGoingSoon = startDate > now;
-
-            if ((timeFilter === 'now' && isHereNow) || (timeFilter === 'soon' && isGoingSoon)) {
-              travelers.push({
-                userId: userId,
-                name: userData.name,
-                age: userData.age,
-                gender: userData.gender,
-                bio: userData.bio,
-                photoURL: userData.photoURL,
-                interests: userData.interests || [],
-                whatsapp: userData.whatsapp,
-                instagram: userData.instagram,
-                tripStartDate: trip.startDate,
-                tripEndDate: trip.endDate,
-                isHereNow: isHereNow
-              });
-            }
-          }
-        });
-      });
-
-      setTravelers(travelers);
-    } catch (error) {
-      console.error('Error loading travelers:', error);
-    }
-  };
+    return result;
+  }, [allUsers, currentUser, currentUserData, destination, timeFilter]);
 
   const handleCardClick = (person) => {
     setSelectedPerson(person);
@@ -109,29 +74,22 @@ function PeopleTab({ destination }) {
 
   const handleConnect = async () => {
     try {
-      const currentUser = auth.currentUser;
-      if (!currentUser) {
+      if (!currentUser || !currentUserData) {
         alert('Please log in to send connection requests');
         return;
       }
 
-      const currentUserDoc = await getDoc(doc(db, 'users', currentUser.uid));
-      const currentUserData = currentUserDoc.data();
-
-      // Check if already connected
       const existingConnection = myConnections.find(c => c.userId === selectedPerson.userId);
       if (existingConnection) {
         alert('You are already connected!');
         return;
       }
 
-      // Check if request already sent
-      if (sentRequests.includes(selectedPerson.userId)) {
-        alert('Connection request already sent!');
+      if (allSentRequests.includes(selectedPerson.userId)) {
+        alert('Connection request already exists!');
         return;
       }
 
-      // Create connection request in separate collection
       const requestData = {
         fromUserId: currentUser.uid,
         fromUserName: currentUserData.name,
@@ -148,8 +106,8 @@ function PeopleTab({ destination }) {
 
       await addDoc(collection(db, 'connectionRequests'), requestData);
 
-      // Update sent requests list
-      setSentRequests([...sentRequests, selectedPerson.userId]);
+      setLocalSentRequests(prev => [...prev, selectedPerson.userId]);
+      refreshConnections();
 
       alert('Connection request sent! 🎉');
       setShowProfileModal(false);
@@ -168,7 +126,13 @@ function PeopleTab({ destination }) {
 
   const handleInstagram = () => {
     const username = selectedPerson.instagram?.replace('@', '');
-    window.open(`https://instagram.com/${username}`, '_blank');
+    const link = document.createElement('a');
+    link.href = `https://www.instagram.com/${username}`;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const formatDate = (dateString) => {
@@ -181,7 +145,7 @@ function PeopleTab({ destination }) {
   };
 
   const isRequestPending = (userId) => {
-    return sentRequests.includes(userId);
+    return allSentRequests.includes(userId);
   };
 
   const interestEmojis = {
@@ -229,7 +193,7 @@ function PeopleTab({ destination }) {
               {timeFilter === 'now' ? '📍' : '✈️'}
             </div>
             <div style={styles.emptyText}>
-              {timeFilter === 'now' 
+              {timeFilter === 'now'
                 ? 'No travelers here right now'
                 : 'No travelers going soon'}
             </div>
@@ -239,16 +203,16 @@ function PeopleTab({ destination }) {
           </div>
         ) : (
           travelers.map((person, index) => (
-            <div 
-              key={index} 
+            <div
+              key={index}
               style={styles.minimalCard}
               onClick={() => handleCardClick(person)}
             >
               {/* Small Photo */}
               <div style={styles.photoSection}>
                 {person.photoURL ? (
-                  <img 
-                    src={person.photoURL} 
+                  <img
+                    src={person.photoURL}
                     alt={person.name}
                     style={styles.smallPhoto}
                   />
@@ -290,18 +254,18 @@ function PeopleTab({ destination }) {
       {showProfileModal && selectedPerson && (
         <div style={styles.modalOverlay} onClick={() => setShowProfileModal(false)}>
           <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-            <button 
+            <button
               style={styles.modalClose}
               onClick={() => setShowProfileModal(false)}
             >
-              ✕
+              <FiX size={20} />
             </button>
 
             {/* Large Photo */}
             <div style={styles.largePhotoContainer}>
               {selectedPerson.photoURL ? (
-                <img 
-                  src={selectedPerson.photoURL} 
+                <img
+                  src={selectedPerson.photoURL}
                   alt={selectedPerson.name}
                   style={styles.largePhoto}
                 />
@@ -331,8 +295,8 @@ function PeopleTab({ destination }) {
               {/* Trip */}
               <div style={styles.sectionTitle}>UPCOMING TRIP:</div>
               <div style={styles.tripInfo}>
-                📍 {destination.split(',')[0]} • {formatDate(selectedPerson.tripStartDate)}
-                {selectedPerson.tripStartDate !== selectedPerson.tripEndDate && 
+                <FiMapPin size={13} style={{ marginRight: '4px', verticalAlign: '-2px' }} /> {destination.split(',')[0]} • {formatDate(selectedPerson.tripStartDate)}
+                {selectedPerson.tripStartDate !== selectedPerson.tripEndDate &&
                   ` - ${formatDate(selectedPerson.tripEndDate)}`}
               </div>
 
@@ -352,39 +316,39 @@ function PeopleTab({ destination }) {
 
               {/* Connect Button */}
               {!isConnected(selectedPerson.userId) && !isRequestPending(selectedPerson.userId) ? (
-                <button 
+                <button
                   style={styles.connectButton}
                   onClick={handleConnect}
                 >
-                  ➕ Request Connection
+                  Request Connection
                 </button>
               ) : isRequestPending(selectedPerson.userId) ? (
-                <button 
+                <button
                   style={styles.pendingButton}
                   disabled
                 >
-                  ⏳ Request Pending
+                  Request Pending
                 </button>
               ) : (
                 <div style={styles.connectedSection}>
                   <div style={styles.connectedLabel}>
-                    ✅ Already Connected
+                    Connected
                   </div>
                   <div style={styles.contactButtons}>
                     {selectedPerson.whatsapp && (
-                      <button 
+                      <button
                         style={styles.contactButton}
                         onClick={handleWhatsApp}
                       >
-                        💬 WhatsApp
+                        <FiMessageCircle size={14} style={{ marginRight: '4px', verticalAlign: '-2px' }} /> WhatsApp
                       </button>
                     )}
                     {selectedPerson.instagram && (
-                      <button 
+                      <button
                         style={styles.contactButton}
                         onClick={handleInstagram}
                       >
-                        📷 Instagram
+                        <FiCamera size={14} style={{ marginRight: '4px', verticalAlign: '-2px' }} /> Instagram
                       </button>
                     )}
                   </div>
@@ -406,13 +370,13 @@ const styles = {
     display: 'flex',
     gap: '8px',
     padding: '20px 20px 16px 20px',
-    borderBottom: '1px solid #e5e7eb',
+    borderBottom: '1px solid #e8e5e0',
   },
   subTab: {
     flex: 1,
     padding: '12px',
-    background: '#f9fafb',
-    color: '#6b7280',
+    background: '#faf9f7',
+    color: '#6b6b6b',
     border: 'none',
     borderRadius: '10px',
     fontSize: '15px',
@@ -421,7 +385,7 @@ const styles = {
     transition: 'all 0.2s',
   },
   subTabActive: {
-    background: '#059669',
+    background: '#047857',
     color: '#fff',
   },
   travelersList: {
@@ -435,7 +399,7 @@ const styles = {
     background: '#fff',
     borderRadius: '12px',
     marginBottom: '12px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+    boxShadow: '0 1px 2px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.06)',
     cursor: 'pointer',
     transition: 'all 0.2s',
     border: '2px solid transparent',
@@ -453,7 +417,7 @@ const styles = {
     width: '60px',
     height: '60px',
     borderRadius: '50%',
-    background: 'linear-gradient(135deg, #059669, #10b981)',
+    background: 'linear-gradient(135deg, #047857, #059669)',
     color: '#fff',
     display: 'flex',
     alignItems: 'center',
@@ -467,12 +431,12 @@ const styles = {
   nameAge: {
     fontSize: '16px',
     fontWeight: '700',
-    color: '#1f2937',
+    color: '#1a1a1a',
     marginBottom: '4px',
   },
   tripDates: {
     fontSize: '13px',
-    color: '#6b7280',
+    color: '#6b6b6b',
     marginBottom: '6px',
   },
   interestIcons: {
@@ -484,7 +448,7 @@ const styles = {
   },
   arrowSection: {
     fontSize: '20px',
-    color: '#9ca3af',
+    color: '#a3a3a3',
     flexShrink: 0,
   },
   empty: {
@@ -498,12 +462,12 @@ const styles = {
   emptyText: {
     fontSize: '18px',
     fontWeight: '600',
-    color: '#1f2937',
+    color: '#1a1a1a',
     marginBottom: '8px',
   },
   emptySubtext: {
     fontSize: '14px',
-    color: '#9ca3af',
+    color: '#a3a3a3',
   },
   modalOverlay: {
     position: 'fixed',
@@ -526,6 +490,7 @@ const styles = {
     maxHeight: '85vh',
     overflow: 'auto',
     position: 'relative',
+    boxShadow: '0 8px 16px rgba(0,0,0,0.06), 0 20px 40px rgba(0,0,0,0.1)',
   },
   modalClose: {
     position: 'absolute',
@@ -534,7 +499,7 @@ const styles = {
     background: 'none',
     border: 'none',
     fontSize: '24px',
-    color: '#9ca3af',
+    color: '#a3a3a3',
     cursor: 'pointer',
     width: '32px',
     height: '32px',
@@ -555,7 +520,7 @@ const styles = {
     width: '250px',
     height: '250px',
     borderRadius: '16px',
-    background: 'linear-gradient(135deg, #059669, #10b981)',
+    background: 'linear-gradient(135deg, #047857, #059669)',
     color: '#fff',
     display: 'flex',
     alignItems: 'center',
@@ -569,12 +534,12 @@ const styles = {
   profileName: {
     fontSize: '24px',
     fontWeight: '800',
-    color: '#1f2937',
+    color: '#1a1a1a',
     marginBottom: '4px',
   },
   profileGender: {
     fontSize: '14px',
-    color: '#6b7280',
+    color: '#6b6b6b',
     marginBottom: '16px',
   },
   bioSection: {
@@ -584,7 +549,7 @@ const styles = {
     lineHeight: 1.6,
     marginBottom: '20px',
     padding: '12px',
-    background: '#f9fafb',
+    background: '#faf9f7',
     borderRadius: '8px',
   },
   sectionTitle: {
@@ -612,8 +577,8 @@ const styles = {
   },
   interestTag: {
     padding: '6px 12px',
-    background: '#f0fdf4',
-    color: '#059669',
+    background: '#f0f9f4',
+    color: '#047857',
     borderRadius: '20px',
     fontSize: '13px',
     fontWeight: '600',
@@ -621,7 +586,7 @@ const styles = {
   connectButton: {
     width: '100%',
     padding: '16px',
-    background: 'linear-gradient(135deg, #059669, #10b981)',
+    background: 'linear-gradient(135deg, #047857, #059669)',
     color: '#fff',
     border: 'none',
     borderRadius: '12px',
@@ -629,14 +594,14 @@ const styles = {
     fontWeight: '700',
     cursor: 'pointer',
     marginTop: '20px',
-    boxShadow: '0 4px 16px rgba(5, 150, 105, 0.3)',
+    boxShadow: '0 2px 8px rgba(4,120,87,0.3)',
   },
   pendingButton: {
     width: '100%',
     padding: '16px',
-    background: '#f3f4f6',
+    background: '#f5f3f0',
     color: '#6b7280',
-    border: '2px solid #e5e7eb',
+    border: '1.5px solid #e8e5e0',
     borderRadius: '12px',
     fontSize: '16px',
     fontWeight: '700',
@@ -649,7 +614,7 @@ const styles = {
   connectedLabel: {
     fontSize: '14px',
     fontWeight: '600',
-    color: '#059669',
+    color: '#047857',
     marginBottom: '12px',
   },
   contactButtons: {
@@ -658,11 +623,11 @@ const styles = {
   },
   contactButton: {
     flex: 1,
-    padding: '12px',
-    background: '#f0fdf4',
-    color: '#059669',
-    border: '2px solid #059669',
-    borderRadius: '10px',
+    padding: '14px 24px',
+    background: '#f0f9f4',
+    color: '#047857',
+    border: 'none',
+    borderRadius: '12px',
     fontSize: '14px',
     fontWeight: '600',
     cursor: 'pointer',

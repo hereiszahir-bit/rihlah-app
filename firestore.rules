@@ -1,22 +1,81 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users can read/write their own data
+
+    // ── Users ──────────────────────────────────────────────
     match /users/{userId} {
       allow read: if request.auth != null;
-      allow write: if request.auth.uid == userId;
+
+      // Helper: list of every field a user document may contain
+      function allowedUserFields() {
+        return ['name', 'age', 'gender', 'profileVisibility', 'city', 'bio',
+                'interests', 'whatsapp', 'instagram', 'linkedin', 'photoURL',
+                'createdAt', 'upcomingTrips', 'pastTrips', 'connections',
+                'onboardingComplete', 'email'];
+      }
+
+      // Shared field-value validation (used by both create & update)
+      function validUserData() {
+        let d = request.resource.data;
+        return d.name is string && d.name.size() >= 1 && d.name.size() <= 100
+            && d.age is int && d.age >= 13 && d.age <= 120
+            && d.gender is string && d.gender in ['Male', 'Female']
+            && d.bio is string && d.bio.size() <= 500
+            && d.whatsapp is string && d.whatsapp.size() <= 50
+            && d.instagram is string && d.instagram.size() <= 50
+            && d.interests is list && d.interests.size() <= 20
+            && d.onboardingComplete is bool;
+      }
+
+      allow create: if request.auth.uid == userId
+                    && request.resource.data.keys().hasOnly(allowedUserFields())
+                    && validUserData();
+
+      // Own profile: full validation. Other user: only connections field.
+      allow update: if request.auth != null
+                    && request.resource.data.keys().hasOnly(allowedUserFields())
+                    && (
+                      (request.auth.uid == userId && validUserData())
+                      || (request.auth.uid != userId
+                          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['connections']))
+                    );
     }
-    
-    // Connection requests collection
+
+    // ── Connection Requests ────────────────────────────────
     match /connectionRequests/{requestId} {
-      allow read: if request.auth != null && 
-        (resource.data.fromUserId == request.auth.uid || 
-         resource.data.toUserId == request.auth.uid);
-      allow create: if request.auth != null && 
-        request.resource.data.fromUserId == request.auth.uid;
-      allow delete: if request.auth != null && 
-        (resource.data.fromUserId == request.auth.uid || 
-         resource.data.toUserId == request.auth.uid);
+      // Both sender and receiver may read
+      allow read: if request.auth != null
+                  && (resource.data.fromUserId == request.auth.uid
+                      || resource.data.toUserId == request.auth.uid);
+
+      // Only the sender can create; must be "pending", can't connect to self
+      allow create: if request.auth != null
+                    && request.resource.data.keys().hasOnly(
+                         ['fromUserId', 'fromUserName', 'fromUserAge', 'fromUserGender',
+                          'fromUserBio', 'fromUserPhotoURL', 'fromUserInterests',
+                          'toUserId', 'toUserName', 'status', 'createdAt'])
+                    && request.resource.data.fromUserId == request.auth.uid
+                    && request.resource.data.toUserId is string
+                    && request.resource.data.toUserId.size() > 0
+                    && request.resource.data.fromUserId != request.resource.data.toUserId
+                    && request.resource.data.status == 'pending';
+
+      // Only the receiver can accept / reject (change status only)
+      allow update: if request.auth != null
+                    && resource.data.toUserId == request.auth.uid
+                    && request.resource.data.status in ['accepted', 'rejected']
+                    && request.resource.data.fromUserId == resource.data.fromUserId
+                    && request.resource.data.toUserId == resource.data.toUserId
+                    && request.resource.data.createdAt == resource.data.createdAt
+                    && request.resource.data.keys().hasOnly(
+                         ['fromUserId', 'fromUserName', 'fromUserAge', 'fromUserGender',
+                          'fromUserBio', 'fromUserPhotoURL', 'fromUserInterests',
+                          'toUserId', 'toUserName', 'status', 'createdAt']);
+
+      // Sender or receiver can delete
+      allow delete: if request.auth != null
+                    && (resource.data.fromUserId == request.auth.uid
+                        || resource.data.toUserId == request.auth.uid);
     }
   }
 }

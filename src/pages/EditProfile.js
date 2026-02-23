@@ -1,14 +1,17 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { auth, db, storage } from '../firebase';
+import { useUser } from '../context/UserContext';
+import { FiArrowLeft, FiCamera, FiMessageCircle } from 'react-icons/fi';
 
 function EditProfile() {
   const navigate = useNavigate();
+  const { currentUserData, refreshCurrentUser } = useUser();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  
+
   const [name, setName] = useState('');
   const [bio, setBio] = useState('');
   const [age, setAge] = useState('');
@@ -66,34 +69,21 @@ function EditProfile() {
   };
 
   useEffect(() => {
-    loadUserData();
-  }, []);
-
-  const loadUserData = async () => {
-    try {
-      const user = auth.currentUser;
-      if (user) {
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists()) {
-          const data = userDoc.data();
-          setName(data.name || '');
-          setBio(data.bio === 'No bio yet' ? '' : (data.bio || ''));
-          setAge(data.age?.toString() || '');
-          setGender(data.gender || '');
-          setCity(data.city || '');
-          setInstagram(data.instagram || '');
-          setLinkedin(data.linkedin || '');
-          setWhatsapp(data.whatsapp || '');
-          setProfileVisibility(data.profileVisibility || 'both');
-          setPhotoURL(data.photoURL || '');
-        }
-      }
-      setLoading(false);
-    } catch (error) {
-      console.error('Error loading user data:', error);
+    if (currentUserData) {
+      const data = currentUserData;
+      setName(data.name || '');
+      setBio(data.bio === 'No bio yet' ? '' : (data.bio || ''));
+      setAge(data.age?.toString() || '');
+      setGender(data.gender || '');
+      setCity(data.city || '');
+      setInstagram(data.instagram || '');
+      setLinkedin(data.linkedin || '');
+      setWhatsapp(data.whatsapp || '');
+      setProfileVisibility(data.profileVisibility || 'both');
+      setPhotoURL(data.photoURL || '');
       setLoading(false);
     }
-  };
+  }, [currentUserData]);
 
   const handlePhotoSelect = (e) => {
     const file = e.target.files[0];
@@ -113,8 +103,8 @@ function EditProfile() {
     // Validate age
     if (age) {
       const ageNum = parseInt(age);
-      if (ageNum < 18 || ageNum > 100) {
-        alert('Please enter a valid age between 18 and 100');
+      if (isNaN(ageNum) || ageNum < 13 || ageNum > 120) {
+        alert('Please enter a valid age between 13 and 120');
         return;
       }
     }
@@ -151,6 +141,7 @@ function EditProfile() {
         profileVisibility: profileVisibility,
       });
 
+      refreshCurrentUser();
       navigate('/profile');
       
     } catch (error) {
@@ -165,7 +156,7 @@ function EditProfile() {
       <div style={styles.page}>
         <div style={styles.header}>
           <button style={styles.backBtn} onClick={() => navigate('/profile')}>
-            ← Back
+            <FiArrowLeft size={16} style={{ marginRight: '6px', verticalAlign: '-2px' }} /> Back
           </button>
           <h1 style={styles.title}>Edit Profile</h1>
         </div>
@@ -179,7 +170,7 @@ function EditProfile() {
       {/* Header */}
       <div style={styles.header}>
         <button style={styles.backBtn} onClick={() => navigate('/profile')}>
-          ← Back
+          <FiArrowLeft size={16} style={{ marginRight: '6px', verticalAlign: '-2px' }} /> Back
         </button>
         <h1 style={styles.title}>Edit Profile</h1>
       </div>
@@ -200,7 +191,7 @@ function EditProfile() {
                   <div style={{ fontSize: '13px', color: '#6b7280' }}>Add Photo</div>
                 </div>
               )}
-              <div style={styles.photoBadge}>✏️</div>
+              <div style={styles.photoBadge}><FiCamera size={14} color="#fff" /></div>
             </div>
             <input
               id="photoInput"
@@ -228,6 +219,7 @@ function EditProfile() {
               onChange={(e) => setName(e.target.value)}
               placeholder="Your name"
               required
+              maxLength={100}
             />
           </div>
 
@@ -240,8 +232,8 @@ function EditProfile() {
               value={age}
               onChange={(e) => setAge(e.target.value)}
               placeholder="25"
-              min="18"
-              max="100"
+              min="13"
+              max="120"
             />
           </div>
 
@@ -258,6 +250,7 @@ function EditProfile() {
                 onBlur={() => setTimeout(() => setShowCitySuggestions(false), 200)}
                 placeholder="Start typing a city..."
                 autoComplete="off"
+                maxLength={100}
               />
               {showCitySuggestions && citySuggestions.length > 0 && (
                 <div style={styles.suggestionsDropdown}>
@@ -284,10 +277,10 @@ function EditProfile() {
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               placeholder="Tell people about yourself..."
-              maxLength={200}
+              maxLength={500}
               rows={4}
             />
-            <div style={styles.charCount}>{bio.length}/200 characters</div>
+            <div style={styles.charCount}>{bio.length}/500 characters</div>
           </div>
 
           {/* Profile Visibility */}
@@ -328,13 +321,14 @@ function EditProfile() {
           <div style={styles.fieldGroup}>
             <label style={styles.label}>Instagram</label>
             <div style={styles.inputWithIcon}>
-              <span style={styles.inputIcon}>📷</span>
+              <span style={styles.inputIcon}><FiCamera size={16} /></span>
               <input
                 type="text"
                 style={styles.inputWithPrefix}
                 value={instagram}
                 onChange={(e) => setInstagram(e.target.value)}
                 placeholder="username"
+                maxLength={50}
               />
             </div>
           </div>
@@ -350,6 +344,7 @@ function EditProfile() {
                 value={linkedin}
                 onChange={(e) => setLinkedin(e.target.value)}
                 placeholder="username"
+                maxLength={50}
               />
             </div>
           </div>
@@ -358,13 +353,14 @@ function EditProfile() {
           <div style={styles.fieldGroup}>
             <label style={styles.label}>WhatsApp</label>
             <div style={styles.inputWithIcon}>
-              <span style={styles.inputIcon}>💬</span>
+              <span style={styles.inputIcon}><FiMessageCircle size={16} /></span>
               <input
                 type="tel"
                 style={styles.inputWithPrefix}
                 value={whatsapp}
                 onChange={(e) => setWhatsapp(e.target.value)}
                 placeholder="+1234567890"
+                maxLength={50}
               />
             </div>
           </div>
@@ -398,13 +394,13 @@ function EditProfile() {
 const styles = {
   page: {
     minHeight: '100vh',
-    background: '#fafafa',
+    background: '#faf9f7',
     paddingBottom: '40px',
   },
   header: {
     padding: '20px',
-    background: '#fff',
-    borderBottom: '1px solid #f0f0f0',
+    background: '#ffffff',
+    borderBottom: '1px solid #e8e5e0',
     position: 'sticky',
     top: 0,
     zIndex: 100,
@@ -412,17 +408,19 @@ const styles = {
   backBtn: {
     background: 'none',
     border: 'none',
-    color: '#059669',
+    color: '#047857',
     fontSize: '16px',
     fontWeight: '600',
     cursor: 'pointer',
     padding: '8px 0',
     marginBottom: '8px',
+    display: 'inline-flex',
+    alignItems: 'center',
   },
   title: {
     fontSize: '28px',
     fontWeight: '800',
-    color: '#1f2937',
+    color: '#1a1a1a',
     margin: 0,
   },
   content: {
@@ -453,7 +451,7 @@ const styles = {
   photoPlaceholder: {
     width: '100%',
     height: '100%',
-    background: '#f3f4f6',
+    background: '#f5f3f0',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
@@ -465,7 +463,7 @@ const styles = {
     right: '4px',
     width: '32px',
     height: '32px',
-    background: '#059669',
+    background: '#047857',
     borderRadius: '50%',
     display: 'flex',
     alignItems: 'center',
@@ -476,7 +474,7 @@ const styles = {
   changePhotoLink: {
     background: 'none',
     border: 'none',
-    color: '#059669',
+    color: '#047857',
     fontSize: '14px',
     fontWeight: '600',
     cursor: 'pointer',
@@ -485,7 +483,7 @@ const styles = {
   loading: {
     padding: '60px 20px',
     textAlign: 'center',
-    color: '#6b7280',
+    color: '#6b6b6b',
     fontSize: '16px',
   },
   sectionHeader: {
@@ -511,11 +509,12 @@ const styles = {
     width: '100%',
     padding: '14px 16px',
     fontSize: '16px',
-    border: '2px solid #e5e7eb',
+    border: '1.5px solid #e8e5e0',
     borderRadius: '10px',
     fontFamily: 'inherit',
     outline: 'none',
     boxSizing: 'border-box',
+    background: '#faf9f7',
   },
   cityInputWrapper: {
     position: 'relative',
@@ -526,22 +525,22 @@ const styles = {
     left: 0,
     right: 0,
     background: '#fff',
-    border: '2px solid #e5e7eb',
+    border: '1.5px solid #e8e5e0',
     borderTop: 'none',
-    borderRadius: '0 0 10px 10px',
+    borderRadius: '0 0 12px 12px',
     zIndex: 50,
     maxHeight: '200px',
     overflowY: 'auto',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+    boxShadow: '0 4px 6px rgba(0,0,0,0.04), 0 10px 24px rgba(0,0,0,0.08)',
   },
   suggestionItem: {
     width: '100%',
     padding: '12px 16px',
     background: 'none',
     border: 'none',
-    borderBottom: '1px solid #f3f4f6',
+    borderBottom: '1px solid #f5f3f0',
     fontSize: '15px',
-    color: '#1f2937',
+    color: '#1a1a1a',
     textAlign: 'left',
     cursor: 'pointer',
     fontFamily: 'inherit',
@@ -550,7 +549,7 @@ const styles = {
     width: '100%',
     padding: '14px 16px',
     fontSize: '16px',
-    border: '2px solid #e5e7eb',
+    border: '1.5px solid #e8e5e0',
     borderRadius: '10px',
     fontFamily: 'inherit',
     outline: 'none',
@@ -562,16 +561,17 @@ const styles = {
     width: '100%',
     padding: '14px 16px',
     fontSize: '16px',
-    border: '2px solid #e5e7eb',
+    border: '1.5px solid #e8e5e0',
     borderRadius: '10px',
     resize: 'vertical',
     fontFamily: 'inherit',
     outline: 'none',
     boxSizing: 'border-box',
+    background: '#faf9f7',
   },
   charCount: {
     fontSize: '13px',
-    color: '#9ca3af',
+    color: '#a3a3a3',
     textAlign: 'right',
     marginTop: '6px',
   },
@@ -590,11 +590,12 @@ const styles = {
     width: '100%',
     padding: '14px 16px 14px 48px',
     fontSize: '16px',
-    border: '2px solid #e5e7eb',
+    border: '1.5px solid #e8e5e0',
     borderRadius: '10px',
     fontFamily: 'inherit',
     outline: 'none',
     boxSizing: 'border-box',
+    background: '#faf9f7',
   },
   visibilityOptions: {
     display: 'flex',
@@ -603,10 +604,10 @@ const styles = {
   visibilityBtn: {
     flex: 1,
     padding: '12px 8px',
-    background: '#f3f4f6',
-    color: '#6b7280',
-    border: '2px solid #e5e7eb',
-    borderRadius: '10px',
+    background: '#f5f3f0',
+    color: '#6b6b6b',
+    border: '1.5px solid #e8e5e0',
+    borderRadius: '9999px',
     fontSize: '14px',
     fontWeight: '600',
     cursor: 'pointer',
@@ -614,19 +615,19 @@ const styles = {
     fontFamily: 'inherit',
   },
   visibilityBtnActive: {
-    background: '#f0fdf4',
-    color: '#059669',
-    borderColor: '#059669',
+    background: '#f0f9f4',
+    color: '#047857',
+    borderColor: '#047857',
   },
   visibilityHint: {
     fontSize: '13px',
-    color: '#9ca3af',
+    color: '#a3a3a3',
     margin: '8px 0 0 0',
   },
   saveBtn: {
     width: '100%',
     padding: '16px',
-    background: 'linear-gradient(135deg, #059669, #10b981)',
+    background: 'linear-gradient(135deg, #047857, #059669)',
     color: '#fff',
     border: 'none',
     borderRadius: '12px',
@@ -635,14 +636,15 @@ const styles = {
     cursor: 'pointer',
     marginTop: '24px',
     marginBottom: '12px',
-    boxShadow: '0 4px 16px rgba(5, 150, 105, 0.3)',
+    boxShadow: '0 2px 8px rgba(4,120,87,0.3)',
   },
   cancelBtn: {
     width: '100%',
-    padding: '14px',
-    background: 'transparent',
-    color: '#6b7280',
+    padding: '14px 24px',
+    background: '#f0f9f4',
+    color: '#047857',
     border: 'none',
+    borderRadius: '12px',
     fontSize: '15px',
     fontWeight: '600',
     cursor: 'pointer',

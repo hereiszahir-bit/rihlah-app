@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { FiCompass, FiHeart, FiUser } from 'react-icons/fi';
 import { auth, db } from '../firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 
 function TabBar() {
   const navigate = useNavigate();
@@ -13,11 +14,13 @@ function TabBar() {
       const currentUser = auth.currentUser;
       if (!currentUser) return;
 
-      const requestsSnapshot = await getDocs(collection(db, 'connectionRequests'));
+      const requestsSnapshot = await getDocs(
+        query(collection(db, 'connectionRequests'), where('toUserId', '==', currentUser.uid))
+      );
       let count = 0;
       requestsSnapshot.forEach((docSnap) => {
         const data = docSnap.data();
-        if (data.toUserId === currentUser.uid && data.status === 'pending') {
+        if (data.status === 'pending') {
           count++;
         }
       });
@@ -28,31 +31,45 @@ function TabBar() {
   }, []);
 
   const tabs = [
-    { path: '/destinations', icon: '🧭', label: 'Explore' },
-    { path: '/saved', icon: '💾', label: 'Saved' },
-    { path: '/profile', icon: '👤', label: 'Profile', badge: badgeCount }
+    { path: '/destinations', icon: FiCompass, label: 'Explore' },
+    { path: '/saved', icon: FiHeart, label: 'Saved' },
+    { path: '/profile', icon: FiUser, label: 'Profile', badge: badgeCount }
   ];
+
+  const isActive = (path) => location.pathname === path;
 
   return (
     <div style={styles.container}>
-      {tabs.map((tab) => (
-        <button
-          key={tab.path}
-          style={{
-            ...styles.tab,
-            ...(location.pathname === tab.path ? styles.tabActive : {})
-          }}
-          onClick={() => navigate(tab.path)}
-        >
-          <div style={styles.iconContainer}>
-            <div style={styles.icon}>{tab.icon}</div>
-            {tab.badge > 0 && (
-              <div style={styles.badge}>{tab.badge}</div>
-            )}
-          </div>
-          <div style={styles.label}>{tab.label}</div>
-        </button>
-      ))}
+      {tabs.map((tab) => {
+        const Icon = tab.icon;
+        const active = isActive(tab.path);
+        return (
+          <button
+            key={tab.path}
+            style={{
+              ...styles.tab,
+              ...(active ? styles.tabActive : {})
+            }}
+            onClick={() => navigate(tab.path)}
+          >
+            <div style={styles.iconContainer}>
+              <Icon
+                size={22}
+                strokeWidth={active ? 2.2 : 1.5}
+                color={active ? '#047857' : '#a3a3a3'}
+              />
+              {tab.badge > 0 && (
+                <div style={styles.badge}>{tab.badge}</div>
+              )}
+            </div>
+            <div style={{
+              ...styles.label,
+              color: active ? '#047857' : '#a3a3a3',
+              fontWeight: active ? '600' : '400',
+            }}>{tab.label}</div>
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -65,9 +82,9 @@ const styles = {
     right: 0,
     display: 'flex',
     justifyContent: 'space-around',
-    background: '#fff',
-    borderTop: '1px solid #e5e7eb',
-    padding: '8px 0',
+    background: '#ffffff',
+    borderTop: '1px solid #e8e5e0',
+    padding: '10px 0 20px',
     zIndex: 100,
   },
   tab: {
@@ -77,36 +94,31 @@ const styles = {
     alignItems: 'center',
     background: 'none',
     border: 'none',
-    padding: '8px',
+    padding: '4px',
     cursor: 'pointer',
     transition: 'all 0.2s',
   },
-  tabActive: {
-    color: '#059669',
-  },
+  tabActive: {},
   iconContainer: {
     position: 'relative',
-  },
-  icon: {
-    fontSize: '24px',
     marginBottom: '4px',
   },
   badge: {
     position: 'absolute',
     top: '-4px',
-    right: '-8px',
+    right: '-10px',
     background: '#ef4444',
     color: '#fff',
-    fontSize: '11px',
+    fontSize: '10px',
     fontWeight: '700',
-    padding: '2px 6px',
+    padding: '2px 5px',
     borderRadius: '10px',
-    minWidth: '18px',
+    minWidth: '16px',
     textAlign: 'center',
   },
   label: {
-    fontSize: '12px',
-    fontWeight: '500',
+    fontSize: '11px',
+    letterSpacing: '0.3px',
   },
 };
 

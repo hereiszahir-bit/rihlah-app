@@ -43,8 +43,7 @@ function ModernHome({ user }) {
             style={styles.logoContainer}
             whileHover={{ scale: 1.05 }}
           >
-            <img src="/logo.svg" alt="Rihlah" style={styles.logoImg} />
-            <span style={styles.logoText}>Rihlah</span>
+            <img src="/logo192.png" alt="Rihlah" style={styles.logoImg} />
           </motion.div>
 
           <nav style={styles.nav}>
@@ -105,8 +104,8 @@ function ModernHome({ user }) {
       </h2>
 
       <p style={styles.heroSubtitle}>
-        Explore the world with your values intact. Connect with fellow 
-        travelers. Book halal experiences together.
+        Travel with purpose. Explore. Learn. Grow.
+        A Muslim travel community built for those who seek more.
       </p>
 
       {!user && (
@@ -304,7 +303,7 @@ function ModernHome({ user }) {
       <footer style={styles.footer}>
         <div style={styles.footerContent}>
           <div style={styles.footerBrand}>
-            <span style={styles.footerLogo}><img src="/logo.svg" alt="Rihlah" style={{ width: '28px', height: '28px', verticalAlign: 'middle', marginRight: '8px' }} />Rihlah</span>
+            <span style={styles.footerLogo}><img src="/logo192.png" alt="Rihlah" style={{ width: '80px', height: 'auto', verticalAlign: 'middle' }} /></span>
             <p style={styles.footerTagline}>
               Where Muslims travel together
             </p>
@@ -463,7 +462,7 @@ const steps = [
 const styles = {
   container: {
     minHeight: '100vh',
-    background: '#fafafa',
+    background: '#faf9f7',
     position: 'relative',
   },
 
@@ -498,14 +497,14 @@ const styles = {
     cursor: 'pointer',
   },
   logoImg: {
-    width: '36px',
-    height: '36px',
+    width: 'min(120px, 25vw)',
+    height: 'auto',
     borderRadius: '8px',
   },
   logoText: {
     fontSize: '24px',
     fontWeight: '700',
-    color: '#059669',
+    color: '#047857',
   },
   nav: {
     display: 'flex',
@@ -530,7 +529,7 @@ const styles = {
   padding: '8px 16px',
   },
   logoutBtn: {
-    background: '#f3f4f6',
+    background: '#f5f3f0',
     color: '#374151',
     border: 'none',
     padding: '10px 20px',
@@ -552,7 +551,7 @@ const styles = {
     padding: '10px 20px',
   },
   signupBtn: {
-    background: '#059669',
+    background: '#047857',
     color: '#fff',
     border: 'none',
     padding: '12px 24px',
@@ -568,7 +567,7 @@ const styles = {
   hero: {
     paddingTop: '140px',
     paddingBottom: '100px',
-    background: 'linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%)',
+    background: 'linear-gradient(180deg, #ffffff 0%, #f5f3f0 100%)',
     position: 'relative',
     overflow: 'hidden',
   },
@@ -583,8 +582,8 @@ const styles = {
   badge: {
     display: 'inline-block',
     padding: '8px 16px',
-    background: 'rgba(5, 150, 105, 0.1)',
-    color: '#059669',
+    background: 'rgba(4, 120, 87, 0.1)',
+    color: '#047857',
     borderRadius: '100px',
     fontSize: '14px',
     fontWeight: '600',
@@ -594,19 +593,19 @@ const styles = {
     fontSize: '64px',
     fontWeight: '800',
     lineHeight: 1.1,
-    color: '#1f2937',
+    color: '#1a1a1a',
     marginBottom: '24px',
     letterSpacing: '-0.02em',
   },
   heroTitleGradient: {
-    background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+    background: 'linear-gradient(135deg, #047857 0%, #059669 100%)',
     WebkitBackgroundClip: 'text',
     WebkitTextFillColor: 'transparent',
     backgroundClip: 'text',
   },
   heroSubtitle: {
     fontSize: '20px',
-    color: '#6b7280',
+    color: '#6b6b6b',
     lineHeight: 1.6,
     marginBottom: '40px',
     maxWidth: '600px',
@@ -619,28 +618,28 @@ const styles = {
     marginBottom: '48px',
   },
   primaryBtn: {
-    background: '#059669',
+    background: '#047857',
     color: '#fff',
     padding: '16px 32px',
-    borderRadius: '14px',
+    borderRadius: '10px',
     fontSize: '16px',
     fontWeight: '600',
     textDecoration: 'none',
     display: 'inline-flex',
     alignItems: 'center',
-    boxShadow: '0 10px 30px rgba(5, 150, 105, 0.3)',
+    boxShadow: '0 2px 8px rgba(4, 120, 87, 0.25)',
   },
   secondaryBtn: {
     background: '#fff',
-    color: '#059669',
+    color: '#047857',
     padding: '16px 32px',
-    borderRadius: '14px',
+    borderRadius: '10px',
     fontSize: '16px',
     fontWeight: '600',
     textDecoration: 'none',
     display: 'inline-flex',
     alignItems: 'center',
-    border: '2px solid #059669',
+    border: '1.5px solid #047857',
   },
   trustBar: {
     display: 'flex',
@@ -656,7 +655,7 @@ const styles = {
     color: '#6b7280',
   },
   trustIcon: {
-    color: '#059669',
+    color: '#047857',
   },
 
   // Experiences Section
@@ -672,12 +671,12 @@ const styles = {
   sectionTitle: {
     fontSize: '48px',
     fontWeight: '700',
-    color: '#1f2937',
+    color: '#1a1a1a',
     marginBottom: '16px',
   },
   sectionSubtitle: {
     fontSize: '18px',
-    color: '#6b7280',
+    color: '#6b6b6b',
   },
   grid: {
     display: 'grid',
@@ -690,13 +689,13 @@ const styles = {
     background: '#fff',
     borderRadius: '20px',
     overflow: 'hidden',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+    boxShadow: '0 1px 2px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.06)',
     cursor: 'pointer',
     position: 'relative',
   },
   cardImage: {
     height: '200px',
-    background: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)',
+    background: 'linear-gradient(135deg, #e6f5ee 0%, #d1f0e0 100%)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -730,7 +729,7 @@ const styles = {
     fontWeight: '600',
     display: 'flex',
     alignItems: 'center',
-    color: '#059669',
+    color: '#047857',
   },
   cardContent: {
     padding: '24px',
@@ -738,7 +737,7 @@ const styles = {
   cardTitle: {
     fontSize: '20px',
     fontWeight: '700',
-    color: '#1f2937',
+    color: '#1a1a1a',
     marginBottom: '12px',
   },
   cardMeta: {
@@ -751,30 +750,30 @@ const styles = {
     alignItems: 'center',
     gap: '6px',
     fontSize: '14px',
-    color: '#6b7280',
+    color: '#6b6b6b',
   },
   cardFooter: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingTop: '20px',
-    borderTop: '1px solid #f3f4f6',
+    borderTop: '1px solid #f5f3f0',
   },
   price: {
     fontSize: '28px',
     fontWeight: '700',
-    color: '#059669',
+    color: '#047857',
   },
   priceLabel: {
     fontSize: '14px',
-    color: '#9ca3af',
+    color: '#a3a3a3',
   },
   bookBtn: {
-    background: '#059669',
+    background: '#047857',
     color: '#fff',
     border: 'none',
     padding: '12px 24px',
-    borderRadius: '12px',
+    borderRadius: '10px',
     fontSize: '15px',
     fontWeight: '600',
     cursor: 'pointer',
@@ -787,7 +786,7 @@ const styles = {
     left: 0,
     right: 0,
     bottom: 0,
-    background: 'rgba(5, 150, 105, 0.05)',
+    background: 'rgba(4, 120, 87, 0.05)',
     pointerEvents: 'none',
   },
 
@@ -806,14 +805,14 @@ const styles = {
   stepCard: {
     textAlign: 'center',
     padding: '32px',
-    background: '#fafafa',
+    background: '#faf9f7',
     borderRadius: '20px',
     transition: 'all 0.3s ease',
   },
   stepNumber: {
     width: '48px',
     height: '48px',
-    background: '#059669',
+    background: '#047857',
     color: '#fff',
     borderRadius: '12px',
     display: 'flex',
@@ -830,12 +829,12 @@ const styles = {
   stepTitle: {
     fontSize: '20px',
     fontWeight: '700',
-    color: '#1f2937',
+    color: '#1a1a1a',
     marginBottom: '12px',
   },
   stepText: {
     fontSize: '15px',
-    color: '#6b7280',
+    color: '#6b6b6b',
     lineHeight: 1.6,
   },
 
@@ -846,7 +845,7 @@ const styles = {
     margin: '0 auto',
   },
   proofCard: {
-    background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+    background: 'linear-gradient(135deg, #047857 0%, #059669 50%, #10b981 100%)',
     padding: '48px',
     borderRadius: '24px',
     color: '#fff',
@@ -866,7 +865,7 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     fontSize: '28px',
-    border: '3px solid #059669',
+    border: '3px solid #047857',
   },
   proofTitle: {
     fontSize: '24px',
@@ -882,7 +881,7 @@ const styles = {
   // CTA
   cta: {
     padding: '100px 24px',
-    background: 'linear-gradient(180deg, #fafafa 0%, #fff 100%)',
+    background: 'linear-gradient(180deg, #faf9f7 0%, #fff 100%)',
   },
   ctaContent: {
     maxWidth: '600px',
@@ -892,30 +891,30 @@ const styles = {
   ctaTitle: {
     fontSize: '48px',
     fontWeight: '700',
-    color: '#1f2937',
+    color: '#1a1a1a',
     marginBottom: '16px',
   },
   ctaSubtitle: {
     fontSize: '18px',
-    color: '#6b7280',
+    color: '#6b6b6b',
     marginBottom: '40px',
   },
   ctaBtn: {
-    background: '#059669',
+    background: '#047857',
     color: '#fff',
     padding: '18px 40px',
-    borderRadius: '14px',
+    borderRadius: '10px',
     fontSize: '18px',
     fontWeight: '600',
     textDecoration: 'none',
     display: 'inline-flex',
     alignItems: 'center',
-    boxShadow: '0 10px 30px rgba(5, 150, 105, 0.3)',
+    boxShadow: '0 2px 8px rgba(4, 120, 87, 0.25)',
   },
 
   // Footer
   footer: {
-    background: '#1f2937',
+    background: '#1a1a1a',
     color: '#fff',
     padding: '60px 24px 24px',
   },

@@ -1,36 +1,29 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { doc, updateDoc, arrayUnion, getDoc } from 'firebase/firestore';
+import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db, auth } from '../firebase';
+import { useUser } from '../context/UserContext';
+import { FiArrowLeft, FiSearch, FiMapPin } from 'react-icons/fi';
 import DateRangePicker from '../components/DateRangePicker';
 
 function AddTrip() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { currentUserData, refreshAll } = useUser();
   const [step, setStep] = useState(1);
   const [destination, setDestination] = useState('');
   const [dates, setDates] = useState(null);
   const [saving, setSaving] = useState(false);
   const [overlapError, setOverlapError] = useState('');
-  const [existingTrips, setExistingTrips] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [citySuggestions, setCitySuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const cityDebounceRef = useRef(null);
 
-  // Load existing trips and check for preselected destination
-  useEffect(() => {
-    const loadTrips = async () => {
-      const user = auth.currentUser;
-      if (user) {
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists()) {
-          setExistingTrips(userDoc.data().upcomingTrips || []);
-        }
-      }
-    };
-    loadTrips();
+  const existingTrips = currentUserData?.upcomingTrips || [];
 
+  // Check for preselected destination
+  useEffect(() => {
     if (location.state?.preselectedDestination) {
       setDestination(location.state.preselectedDestination);
       setStep(2);
@@ -155,6 +148,7 @@ function AddTrip() {
           endDate: newEnd
         })
       });
+      await refreshAll();
       navigate('/destinations');
     } catch (error) {
       console.error('Error saving trip:', error);
@@ -167,7 +161,7 @@ function AddTrip() {
       {/* Header */}
       <div style={styles.header}>
         <button style={styles.backBtn} onClick={() => navigate(-1)}>
-          ← Back
+          <FiArrowLeft size={16} style={{ marginRight: '6px', verticalAlign: '-2px' }} /> Back
         </button>
         <h1 style={styles.title}>
           {step === 1 ? 'Where to?' : 'When are you going?'}
@@ -181,7 +175,7 @@ function AddTrip() {
             {/* Search Input with Autocomplete */}
             <div style={styles.searchWrapper}>
               <div style={styles.searchBox}>
-                <span style={styles.searchIcon}>🔍</span>
+                <span style={styles.searchIcon}><FiSearch size={18} color="#6b7280" /></span>
                 <input
                   type="text"
                   placeholder="Search any city..."
@@ -201,7 +195,7 @@ function AddTrip() {
                       style={styles.suggestionItem}
                       onMouseDown={() => selectSearchCity(city)}
                     >
-                      <span style={{ marginRight: '8px' }}>📍</span> {city}
+                      <FiMapPin size={14} style={{ marginRight: '8px', flexShrink: 0 }} /> {city}
                     </button>
                   ))}
                 </div>
@@ -218,7 +212,7 @@ function AddTrip() {
                     style={styles.destCard}
                     onClick={() => handleDestinationSelect(dest)}
                   >
-                    <span style={styles.destIcon}>📍</span>
+                    <span style={styles.destIcon}><FiMapPin size={20} color="#047857" /></span>
                     <span style={styles.destName}>{dest}</span>
                   </button>
                 ))}
@@ -232,7 +226,7 @@ function AddTrip() {
           <div style={styles.step}>
             {/* Selected Destination */}
             <div style={styles.selectedDest}>
-              <span style={styles.selectedIcon}>📍</span>
+              <span style={styles.selectedIcon}><FiMapPin size={20} color="#047857" /></span>
               <span style={styles.selectedText}>{destination}</span>
               <button
                 style={styles.changeBtn}
@@ -292,6 +286,8 @@ const styles = {
     cursor: 'pointer',
     padding: '8px 0',
     marginBottom: '8px',
+    display: 'inline-flex',
+    alignItems: 'center',
   },
   title: {
     fontSize: '28px',
@@ -345,16 +341,17 @@ const styles = {
   },
   destCard: {
     background: '#fff',
-    border: '2px solid #e5e7eb',
+    border: 'none',
     borderRadius: '12px',
-    padding: '16px',
+    padding: '20px 16px',
     cursor: 'pointer',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: '8px',
+    gap: '10px',
     transition: 'all 0.2s',
     textAlign: 'center',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06)',
   },
   destIcon: {
     fontSize: '24px',
@@ -376,7 +373,7 @@ const styles = {
     zIndex: 50,
     maxHeight: '240px',
     overflowY: 'auto',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+    boxShadow: '0 4px 6px rgba(0,0,0,0.04), 0 10px 24px rgba(0,0,0,0.08)',
   },
   suggestionItem: {
     width: '100%',
@@ -399,9 +396,10 @@ const styles = {
     gap: '12px',
     padding: '16px',
     background: '#f0fdf4',
-    border: '2px solid #059669',
+    border: 'none',
     borderRadius: '12px',
     marginBottom: '24px',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06)',
   },
   selectedIcon: {
     fontSize: '24px',
@@ -413,13 +411,13 @@ const styles = {
     color: '#1f2937',
   },
   changeBtn: {
-    padding: '8px 16px',
-    background: '#fff',
-    border: '2px solid #059669',
-    borderRadius: '8px',
+    padding: '10px 16px',
+    background: '#f0f9f4',
+    border: 'none',
+    borderRadius: '12px',
     fontSize: '13px',
     fontWeight: '600',
-    color: '#059669',
+    color: '#047857',
     cursor: 'pointer',
   },
   overlapError: {
@@ -443,7 +441,7 @@ const styles = {
   saveBtn: {
     width: '100%',
     padding: '16px',
-    background: 'linear-gradient(135deg, #059669, #10b981)',
+    background: 'linear-gradient(135deg, #047857, #059669)',
     color: '#fff',
     border: 'none',
     borderRadius: '12px',
@@ -451,7 +449,7 @@ const styles = {
     fontWeight: '700',
     cursor: 'pointer',
     marginTop: '24px',
-    boxShadow: '0 4px 16px rgba(5, 150, 105, 0.3)',
+    boxShadow: '0 2px 8px rgba(4,120,87,0.3)',
   },
 };
 

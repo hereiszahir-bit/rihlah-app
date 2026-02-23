@@ -25,11 +25,16 @@ function ExperiencesTab({ destination }) {
       if (userDoc.exists()) {
         const userData = userDoc.data();
         const allTrips = userData.upcomingTrips || [];
-        
-        const relevantTrips = allTrips.filter(trip => 
-          trip.destination === destination
-        );
-        
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const relevantTrips = allTrips.filter(trip => {
+          if (trip.destination !== destination) return false;
+          const endDate = new Date(trip.endDate);
+          endDate.setHours(23, 59, 59, 999);
+          return endDate >= today;
+        });
+
         setUserTrips(relevantTrips);
       }
     } catch (error) {
@@ -163,13 +168,20 @@ function ExperiencesTab({ destination }) {
       const currentUserData = currentUserDoc.data();
       const myConnections = currentUserData.connections || [];
       
-      // Get current user's trip dates for this destination
-      const myTrip = currentUserData.upcomingTrips?.find(t => t.destination === destination);
+      // Get current user's upcoming trip dates for this destination
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const myTrip = (currentUserData.upcomingTrips || []).find(t => {
+        if (t.destination !== destination) return false;
+        const endDate = new Date(t.endDate);
+        endDate.setHours(23, 59, 59, 999);
+        return endDate >= today;
+      });
       if (!myTrip) {
         setWhosGoingData([]);
         return;
       }
-      
+
       const myStartDate = myTrip.startDate;
       const myEndDate = myTrip.endDate;
       

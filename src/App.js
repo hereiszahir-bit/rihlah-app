@@ -1,8 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
-import { auth, db } from './firebase';
+import { UserProvider, useUser } from './context/UserContext';
 import ModernHome from './pages/ModernHome';
 import Signup from './pages/Signup';
 import Login from './pages/Login';
@@ -14,76 +12,55 @@ import Saved from './pages/Saved';
 import Profile from './pages/Profile';
 import EditProfile from './pages/EditProfile';
 
-function App() {
-  const [currentUser, setCurrentUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [needsOnboarding, setNeedsOnboarding] = useState(false);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setCurrentUser(user);
-      
-      if (user) {
-        // Check if user needs onboarding
-        try {
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
-            setNeedsOnboarding(!userData.onboardingComplete);
-          } else {
-            // New user, needs onboarding
-            setNeedsOnboarding(true);
-          }
-        } catch (error) {
-          console.error('Error checking onboarding status:', error);
-          setNeedsOnboarding(true);
-        }
-      }
-      
-      setLoading(false);
-    });
-
-    return unsubscribe;
-  }, []);
+function AppRoutes() {
+  const { currentUser, loading, needsOnboarding } = useUser();
 
   if (loading) {
     return (
       <div style={styles.loading}>
-        <img src="/logo.svg" alt="Rihlah" style={styles.loadingLogo} />
+        <img src="/logo192.png" alt="Rihlah" style={styles.loadingLogo} />
         <div style={styles.loadingText}>Rihlah</div>
       </div>
     );
   }
 
   return (
-    <Router>
-      <Routes>
-        {/* Public routes */}
-        <Route path="/" element={currentUser ? <Navigate to="/destinations" /> : <ModernHome />} />
-        <Route path="/signup" element={currentUser ? <Navigate to="/destinations" /> : <Signup />} />
-        <Route path="/login" element={currentUser ? <Navigate to="/destinations" /> : <Login />} />
+    <Routes>
+      {/* Public routes */}
+      <Route path="/" element={currentUser ? <Navigate to="/destinations" /> : <ModernHome />} />
+      <Route path="/signup" element={currentUser ? <Navigate to="/destinations" /> : <Signup />} />
+      <Route path="/login" element={currentUser ? <Navigate to="/destinations" /> : <Login />} />
 
-        {/* Protected routes */}
-        {currentUser ? (
-          <>
-            {needsOnboarding ? (
-              <Route path="*" element={<Onboarding />} />
-            ) : (
-              <>
-                <Route path="/destinations" element={<Destinations />} />
-                <Route path="/add-trip" element={<AddTrip />} />
-                <Route path="/destination/:destination" element={<DestinationDetail />} />
-                <Route path="/saved" element={<Saved />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/edit-profile" element={<EditProfile />} />
-                <Route path="*" element={<Navigate to="/destinations" />} />
-              </>
-            )}
-          </>
-        ) : (
-          <Route path="*" element={<Navigate to="/" />} />
-        )}
-      </Routes>
+      {/* Protected routes */}
+      {currentUser ? (
+        <>
+          {needsOnboarding ? (
+            <Route path="*" element={<Onboarding />} />
+          ) : (
+            <>
+              <Route path="/destinations" element={<Destinations />} />
+              <Route path="/add-trip" element={<AddTrip />} />
+              <Route path="/destination/:destination" element={<DestinationDetail />} />
+              <Route path="/saved" element={<Saved />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/edit-profile" element={<EditProfile />} />
+              <Route path="*" element={<Navigate to="/destinations" />} />
+            </>
+          )}
+        </>
+      ) : (
+        <Route path="*" element={<Navigate to="/" />} />
+      )}
+    </Routes>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <UserProvider>
+        <AppRoutes />
+      </UserProvider>
     </Router>
   );
 }
@@ -96,7 +73,8 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     fontSize: '18px',
-    color: '#6b7280',
+    color: '#6b6b6b',
+    background: 'linear-gradient(180deg, #faf9f7 0%, #f5f3f0 100%)',
   },
   loadingLogo: {
     width: '72px',
@@ -107,7 +85,7 @@ const styles = {
   loadingText: {
     fontSize: '24px',
     fontWeight: '800',
-    color: '#059669',
+    color: '#047857',
     letterSpacing: '-0.5px',
   },
 };

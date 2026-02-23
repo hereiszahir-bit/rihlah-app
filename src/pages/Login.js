@@ -88,12 +88,11 @@ function Login() {
     <div style={styles.container}>
       <div style={styles.card}>
         <div style={styles.logoContainer}>
-          <img src="/logo.svg" alt="Rihlah" style={styles.logoImg} />
-          <h1 style={styles.logoText}>Rihlah</h1>
+          <img src="/logo192.png" alt="Rihlah" style={styles.logoImg} />
         </div>
 
         <h2 style={styles.title}>Welcome Back</h2>
-        <p style={styles.subtitle}>Sign in to continue your journey</p>
+        <p style={styles.subtitle}>Continue your journey</p>
 
         {error && (
           <div style={styles.error}>
@@ -174,14 +173,14 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
+    background: 'linear-gradient(180deg, #faf9f7 0%, #f5f3f0 100%)',
     padding: '20px',
   },
   card: {
-    background: '#fff',
+    background: '#ffffff',
     padding: '48px',
     borderRadius: '24px',
-    boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
+    boxShadow: '0 1px 2px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.06)',
     width: '100%',
     maxWidth: '440px',
   },
@@ -193,26 +192,26 @@ const styles = {
     marginBottom: '32px',
   },
   logoImg: {
-    width: '36px',
-    height: '36px',
+    width: 'min(140px, 35vw)',
+    height: 'auto',
     borderRadius: '8px',
   },
   logoText: {
     fontSize: '28px',
     fontWeight: '800',
-    color: '#059669',
+    color: '#047857',
     margin: 0,
   },
   title: {
     fontSize: '28px',
     fontWeight: '700',
-    color: '#1f2937',
+    color: '#1a1a1a',
     marginBottom: '8px',
     textAlign: 'center',
   },
   subtitle: {
     fontSize: '16px',
-    color: '#6b7280',
+    color: '#6b6b6b',
     marginBottom: '32px',
     textAlign: 'center',
   },
@@ -229,11 +228,11 @@ const styles = {
     width: '100%',
     padding: '14px',
     background: '#fff',
-    border: '2px solid #e5e7eb',
-    borderRadius: '12px',
+    border: '1.5px solid #e8e5e0',
+    borderRadius: '10px',
     fontSize: '16px',
     fontWeight: '600',
-    color: '#1f2937',
+    color: '#1a1a1a',
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
@@ -255,11 +254,11 @@ const styles = {
   dividerLine: {
     flex: 1,
     height: '1px',
-    background: '#e5e7eb',
+    background: '#e8e5e0',
   },
   dividerText: {
     fontSize: '14px',
-    color: '#9ca3af',
+    color: '#a3a3a3',
     fontWeight: '500',
   },
   form: {
@@ -280,32 +279,33 @@ const styles = {
   input: {
     padding: '14px 16px',
     fontSize: '16px',
-    border: '2px solid #e5e7eb',
-    borderRadius: '12px',
+    border: '1.5px solid #e8e5e0',
+    borderRadius: '10px',
     outline: 'none',
-    transition: 'border-color 0.2s',
+    transition: 'border-color 0.2s, box-shadow 0.2s',
+    background: '#faf9f7',
   },
   submitBtn: {
     width: '100%',
     padding: '16px',
-    background: 'linear-gradient(135deg, #059669, #10b981)',
+    background: '#047857',
     color: '#fff',
     border: 'none',
-    borderRadius: '12px',
+    borderRadius: '10px',
     fontSize: '16px',
     fontWeight: '700',
     cursor: 'pointer',
     marginTop: '8px',
-    boxShadow: '0 4px 16px rgba(5, 150, 105, 0.3)',
+    boxShadow: '0 2px 8px rgba(4, 120, 87, 0.25)',
   },
   footer: {
     textAlign: 'center',
     marginTop: '24px',
     fontSize: '15px',
-    color: '#6b7280',
+    color: '#6b6b6b',
   },
   link: {
-    color: '#059669',
+    color: '#047857',
     textDecoration: 'none',
     fontWeight: '600',
   },

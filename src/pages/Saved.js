@@ -1,138 +1,102 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { auth, db } from '../firebase';
-import { doc, getDoc, updateDoc, collection, getDocs, addDoc } from 'firebase/firestore';
+import { db } from '../firebase';
+import { doc, updateDoc, addDoc, collection } from 'firebase/firestore';
+import { useUser } from '../context/UserContext';
+import { FiX, FiEdit2, FiTrash2, FiChevronDown, FiMapPin, FiNavigation, FiMessageCircle, FiCamera } from 'react-icons/fi';
 import TabBar from '../components/TabBar';
 
 function Saved() {
   const navigate = useNavigate();
-  const [trips, setTrips] = useState([]);
-  const [connections, setConnections] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { currentUser, currentUserData, allUsers, sentRequestUserIds, receivedRequestUserIds, refreshCurrentUser } = useUser();
   const [activeSubTab, setActiveSubTab] = useState('upcoming');
   const [expandedYears, setExpandedYears] = useState({});
   const [editingTrip, setEditingTrip] = useState(null);
   const [editStart, setEditStart] = useState('');
   const [editEnd, setEditEnd] = useState('');
   const [expandedTrips, setExpandedTrips] = useState({});
-  const [overlappingPeople, setOverlappingPeople] = useState({});
   const [previewUser, setPreviewUser] = useState(null);
-  const [sentRequests, setSentRequests] = useState([]);
-  const [currentUserData, setCurrentUserData] = useState(null);
+  const [localSentRequests, setLocalSentRequests] = useState([]);
 
-  useEffect(() => {
-    loadUserData();
-  }, []);
+  const trips = currentUserData?.upcomingTrips || [];
+  const allSentRequests = useMemo(() => [...new Set([...sentRequestUserIds, ...receivedRequestUserIds, ...localSentRequests])], [sentRequestUserIds, receivedRequestUserIds, localSentRequests]);
 
   const parseDate = (dateStr) => {
     const [y, m, d] = dateStr.split('-').map(Number);
     return new Date(y, m - 1, d);
   };
 
-  const loadUserData = async () => {
-    try {
-      const currentUser = auth.currentUser;
-      if (!currentUser) {
-        navigate('/login');
-        return;
-      }
-      const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
-      if (!userDoc.exists()) return;
+  // Derive overlapping people from context data
+  const overlappingPeople = useMemo(() => {
+    if (!currentUserData || !currentUser) return {};
 
-      const userData = userDoc.data();
-      setTrips(userData.upcomingTrips || []);
-      setConnections(userData.connections || []);
-      setCurrentUserData(userData);
+    const myGender = currentUserData.gender || '';
+    const myVisibility = currentUserData.profileVisibility || 'both';
+    const myConnections = (currentUserData.connections || []).map(c => c.userId);
+    const myTrips = currentUserData.upcomingTrips || [];
 
-      const myGender = userData.gender || '';
-      const myVisibility = userData.profileVisibility || 'both';
-      const myConnections = (userData.connections || []).map(c => c.userId);
-      const myTrips = userData.upcomingTrips || [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-      // Fetch all users for overlapping people
-      const usersSnapshot = await getDocs(collection(db, 'users'));
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+    const peopleByTrip = {};
 
-      const peopleByTrip = {};
+    myTrips.forEach((trip, idx) => {
+      const myStart = parseDate(trip.startDate);
+      const myEnd = parseDate(trip.endDate);
+      const people = [];
 
-      myTrips.forEach((trip, idx) => {
-        const myStart = parseDate(trip.startDate);
-        const myEnd = parseDate(trip.endDate);
-        const people = [];
+      allUsers.forEach((u) => {
+        if (u.id === currentUser.uid) return;
 
-        usersSnapshot.forEach((docSnap) => {
-          if (docSnap.id === currentUser.uid) return;
-          const u = docSnap.data();
+        const theirVis = u.profileVisibility || 'both';
+        if (theirVis !== 'both' && theirVis !== myGender) return;
+        if (myVisibility !== 'both' && u.gender !== myVisibility) return;
+        if (!Array.isArray(u.upcomingTrips) || u.upcomingTrips.length === 0) return;
 
-          // Visibility checks
-          const theirVis = u.profileVisibility || 'both';
-          if (theirVis !== 'both' && theirVis !== myGender) return;
-          if (myVisibility !== 'both' && u.gender !== myVisibility) return;
-          if (!u.upcomingTrips) return;
-
-          u.upcomingTrips.forEach(ut => {
-            if (ut.destination !== trip.destination) return;
-            const uStart = parseDate(ut.startDate);
-            const uEnd = parseDate(ut.endDate);
-            if (uStart <= myEnd && uEnd >= myStart) {
-              const isThere = today >= uStart && today <= uEnd;
-              people.push({
-                id: docSnap.id,
-                ...u,
-                tripStart: ut.startDate,
-                tripEnd: ut.endDate,
-                isThere,
-                isConnected: myConnections.includes(docSnap.id),
-              });
-            }
-          });
-        });
-
-        // Deduplicate by userId
-        const seen = {};
-        people.forEach(p => {
-          if (!seen[p.id] || (p.isThere && !seen[p.id].isThere)) {
-            seen[p.id] = p;
+        u.upcomingTrips.forEach(ut => {
+          if (ut.destination !== trip.destination) return;
+          const uStart = parseDate(ut.startDate);
+          const uEnd = parseDate(ut.endDate);
+          if (uStart <= myEnd && uEnd >= myStart) {
+            const isThere = today >= uStart && today <= uEnd;
+            people.push({
+              id: u.id,
+              ...u,
+              tripStart: ut.startDate,
+              tripEnd: ut.endDate,
+              isThere,
+              isConnected: myConnections.includes(u.id),
+            });
           }
         });
-        const deduped = Object.values(seen).sort((a, b) => {
-          if (a.isConnected && !b.isConnected) return -1;
-          if (!a.isConnected && b.isConnected) return 1;
-          if (a.isThere && !b.isThere) return -1;
-          if (!a.isThere && b.isThere) return 1;
-          return 0;
-        });
-        peopleByTrip[idx] = deduped;
       });
 
-      setOverlappingPeople(peopleByTrip);
-
-      // Fetch sent requests
-      const requestsSnapshot = await getDocs(collection(db, 'connectionRequests'));
-      const pending = [];
-      requestsSnapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        if (data.fromUserId === currentUser.uid && data.status === 'pending') {
-          pending.push(data.toUserId);
+      const seen = {};
+      people.forEach(p => {
+        if (!seen[p.id] || (p.isThere && !seen[p.id].isThere)) {
+          seen[p.id] = p;
         }
       });
-      setSentRequests(pending);
-    } catch (error) {
-      console.error('Error loading user data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      const deduped = Object.values(seen).sort((a, b) => {
+        if (a.isConnected && !b.isConnected) return -1;
+        if (!a.isConnected && b.isConnected) return 1;
+        if (a.isThere && !b.isThere) return -1;
+        if (!a.isThere && b.isThere) return 1;
+        return 0;
+      });
+      peopleByTrip[idx] = deduped;
+    });
+
+    return peopleByTrip;
+  }, [currentUserData, allUsers, currentUser]);
 
   const handleSendConnectionRequest = async (toUser) => {
     try {
-      const currentUser = auth.currentUser;
       if (!currentUser || !currentUserData) return;
       if ((currentUserData.connections || []).some(c => c.userId === toUser.id)) return;
-      if (sentRequests.includes(toUser.id)) return;
+      if (allSentRequests.includes(toUser.id)) return;
 
-      setSentRequests(prev => [...prev, toUser.id]);
+      setLocalSentRequests(prev => [...prev, toUser.id]);
       await addDoc(collection(db, 'connectionRequests'), {
         fromUserId: currentUser.uid,
         fromUserName: currentUserData.name,
@@ -155,11 +119,10 @@ function Saved() {
 
   const handleRemoveTrip = async (tripIndex) => {
     try {
-      const currentUser = auth.currentUser;
       if (!currentUser) return;
       const updatedTrips = trips.filter((_, index) => index !== tripIndex);
       await updateDoc(doc(db, 'users', currentUser.uid), { upcomingTrips: updatedTrips });
-      setTrips(updatedTrips);
+      refreshCurrentUser();
     } catch (error) {
       console.error('Error removing trip:', error);
       alert('Failed to remove trip');
@@ -168,12 +131,11 @@ function Saved() {
 
   const handleRemoveExperience = async (tripIndex, expIndex) => {
     try {
-      const currentUser = auth.currentUser;
       if (!currentUser) return;
       const updatedTrips = [...trips];
       updatedTrips[tripIndex].experiences.splice(expIndex, 1);
       await updateDoc(doc(db, 'users', currentUser.uid), { upcomingTrips: updatedTrips });
-      setTrips(updatedTrips);
+      refreshCurrentUser();
     } catch (error) {
       console.error('Error removing experience:', error);
       alert('Failed to remove experience');
@@ -196,7 +158,6 @@ function Saved() {
       return;
     }
     try {
-      const currentUser = auth.currentUser;
       if (!currentUser) return;
       const updatedTrips = [...trips];
       updatedTrips[tripIndex] = {
@@ -205,7 +166,7 @@ function Saved() {
         endDate: editEnd,
       };
       await updateDoc(doc(db, 'users', currentUser.uid), { upcomingTrips: updatedTrips });
-      setTrips(updatedTrips);
+      refreshCurrentUser();
       setEditingTrip(null);
     } catch (error) {
       console.error('Error updating trip dates:', error);
@@ -214,6 +175,8 @@ function Saved() {
   };
 
   // Split trips into upcoming and past
+  // upcomingTrips array now only contains current/future trips (past ones are archived to pastTrips field)
+  // But handle gracefully if cleanup hasn't run yet
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -229,6 +192,12 @@ function Saved() {
     } else {
       pastTrips.push(tripWithIndex);
     }
+  });
+
+  // Also include archived past trips
+  const archivedPastTrips = currentUserData?.pastTrips || [];
+  archivedPastTrips.forEach((trip, i) => {
+    pastTrips.push({ ...trip, originalIndex: `past-${i}`, isArchived: true });
   });
 
   // Group trips by year and sort by month
@@ -254,6 +223,7 @@ function Saved() {
   const pastGrouped = groupByYear(pastTrips);
 
   // Auto-expand the current/nearest year and first trip on first render
+  const loading = !currentUserData;
   useEffect(() => {
     if (!loading && Object.keys(expandedYears).length === 0) {
       const initial = {};
@@ -279,16 +249,6 @@ function Saved() {
 
   const toggleTrip = (tripIndex) => {
     setExpandedTrips(prev => ({ ...prev, [tripIndex]: !prev[tripIndex] }));
-  };
-
-  const getConnectionsForDestination = (destination) => {
-    const cityName = destination.split(',')[0].trim();
-    return connections.filter(conn =>
-      conn.upcomingTrips && conn.upcomingTrips.some(trip => {
-        const tripCity = trip.destination.split(',')[0].trim();
-        return tripCity === cityName || trip.destination === destination;
-      })
-    );
   };
 
   const formatDate = (dateString) => {
@@ -321,7 +281,7 @@ function Saved() {
               <span style={styles.tripDatesInline}>
                 {formatDate(trip.startDate)} - {formatDate(trip.endDate)}
               </span>
-              {isThere && <span style={styles.thereBadge}>📍 There now</span>}
+              {isThere && <span style={styles.thereBadge}><FiMapPin size={11} style={{ marginRight: '4px', verticalAlign: '-1px' }} /> There now</span>}
             </div>
             {!isExpanded && (expCount > 0 || people.length > 0) && (
               <div style={styles.tripHeaderSummary}>
@@ -334,7 +294,7 @@ function Saved() {
           <span style={{
             ...styles.tripChevron,
             transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
-          }}>▾</span>
+          }}><FiChevronDown size={18} /></span>
         </div>
 
         {/* Expanded body */}
@@ -348,7 +308,7 @@ function Saved() {
                   <span style={{ color: '#6b7280' }}>—</span>
                   <input type="date" value={editEnd} onChange={(e) => setEditEnd(e.target.value)} style={styles.dateInput} />
                   <button style={styles.dateSaveBtn} onClick={() => handleSaveDates(trip.originalIndex)}>Save</button>
-                  <button style={styles.dateCancelBtn} onClick={() => setEditingTrip(null)}>✕</button>
+                  <button style={styles.dateCancelBtn} onClick={() => setEditingTrip(null)}><FiX size={14} /></button>
                 </div>
               </div>
             ) : (
@@ -356,7 +316,7 @@ function Saved() {
                 style={styles.editDatesTrigger}
                 onClick={() => handleStartEditDates(trip.originalIndex, trip.startDate, trip.endDate)}
               >
-                ✏️ Edit dates
+                <FiEdit2 size={13} style={{ marginRight: '6px', verticalAlign: '-2px' }} /> Edit dates
               </div>
             )}
 
@@ -375,7 +335,7 @@ function Saved() {
                       {exp.bookingUrl && (
                         <button style={styles.bookNowBtn} onClick={() => window.open(exp.bookingUrl, '_blank')}>Book</button>
                       )}
-                      <button style={styles.removeExpBtn} onClick={() => handleRemoveExperience(trip.originalIndex, expIndex)}>✕</button>
+                      <button style={styles.removeExpBtn} onClick={() => handleRemoveExperience(trip.originalIndex, expIndex)}><FiX size={12} /></button>
                     </div>
                   </div>
                 ))}
@@ -408,7 +368,7 @@ function Saved() {
                         </div>
                       </div>
                       <div style={styles.personStatus}>
-                        {person.isThere ? '📍' : '✈️'}
+                        {person.isThere ? <FiMapPin size={16} color="#047857" /> : <FiNavigation size={16} color="#6b7280" />}
                       </div>
                     </div>
                   ))}
@@ -421,7 +381,7 @@ function Saved() {
                 + Add Experiences
               </button>
               <button style={styles.removeTripBtn} onClick={() => handleRemoveTrip(trip.originalIndex)}>
-                🗑️
+                <FiTrash2 size={16} />
               </button>
             </div>
           </div>
@@ -458,7 +418,7 @@ function Saved() {
             ...styles.tripChevron,
             transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
             color: '#9ca3af',
-          }}>▾</span>
+          }}><FiChevronDown size={18} /></span>
         </div>
         {isExpanded && (
           <div style={styles.pastTripBody}>
@@ -524,7 +484,7 @@ function Saved() {
                 <span style={{
                   ...styles.yearChevron,
                   transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
-                }}>▾</span>
+                }}><FiChevronDown size={18} /></span>
               </button>
               {isExpanded && (
                 <div style={styles.yearTrips}>
@@ -538,7 +498,7 @@ function Saved() {
     );
   };
 
-  if (loading) {
+  if (!currentUserData) {
     return (
       <div style={styles.container}>
         <div style={styles.loading}>Loading...</div>
@@ -582,7 +542,7 @@ function Saved() {
       {/* Profile Preview Modal — Backdrop Photo */}
       {previewUser && (() => {
         const isConnected = (currentUserData?.connections || []).some(c => c.userId === previewUser.id);
-        const isPending = sentRequests.includes(previewUser.id);
+        const isPending = allSentRequests.includes(previewUser.id);
         const allTrips = previewUser.upcomingTrips || [];
         return (
           <div style={styles.modalOverlay} onClick={() => setPreviewUser(null)}>
@@ -597,11 +557,11 @@ function Saved() {
                   </div>
                 )}
                 <div style={styles.modalBackdropGradient} />
-                <button style={styles.modalCloseBtn} onClick={() => setPreviewUser(null)}>✕</button>
+                <button style={styles.modalCloseBtn} onClick={() => setPreviewUser(null)}><FiX size={18} /></button>
                 <div style={styles.modalBackdropInfo}>
                   <div style={styles.modalNameOverlay}>{previewUser.name}{previewUser.age ? `, ${previewUser.age}` : ''}</div>
                   {previewUser.isThere !== undefined && (
-                    <span style={styles.modalStatusBadge}>{previewUser.isThere ? '📍 There now' : '✈️ Going soon'}</span>
+                    <span style={styles.modalStatusBadge}>{previewUser.isThere ? <><FiMapPin size={11} style={{ marginRight: '4px', verticalAlign: '-1px' }} /> There now</> : <><FiNavigation size={11} style={{ marginRight: '4px', verticalAlign: '-1px' }} /> Going soon</>}</span>
                   )}
                 </div>
               </div>
@@ -624,12 +584,12 @@ function Saved() {
                   <div style={styles.modalSocials}>
                     {previewUser.whatsapp && (
                       <a href={`https://wa.me/${previewUser.whatsapp.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" style={styles.modalSocialBtn}>
-                        💬 WhatsApp
+                        <FiMessageCircle size={14} style={{ marginRight: '4px', verticalAlign: '-2px' }} /> WhatsApp
                       </a>
                     )}
                     {previewUser.instagram && (
-                      <a href={`https://instagram.com/${previewUser.instagram}`} target="_blank" rel="noopener noreferrer" style={styles.modalSocialBtn}>
-                        📷 @{previewUser.instagram}
+                      <a href={`https://www.instagram.com/${previewUser.instagram}`} target="_blank" rel="noopener noreferrer" style={styles.modalSocialBtn}>
+                        <FiCamera size={14} style={{ marginRight: '4px', verticalAlign: '-2px' }} /> @{previewUser.instagram}
                       </a>
                     )}
                   </div>
@@ -647,7 +607,7 @@ function Saved() {
                       const isUpcoming = now < start;
                       return (
                         <div key={i} style={styles.modalTripItem}>
-                          <span style={styles.modalTripIcon}>{isThere ? '📍' : isUpcoming ? '✈️' : '✓'}</span>
+                          <span style={styles.modalTripIcon}>{isThere ? <FiMapPin size={14} color="#047857" /> : isUpcoming ? <FiNavigation size={14} color="#6b7280" /> : '✓'}</span>
                           <div style={styles.modalTripInfo}>
                             <div style={styles.modalTripDest}>{trip.destination.split(',')[0]}</div>
                             <div style={styles.modalTripDates}>
@@ -682,30 +642,30 @@ function Saved() {
 }
 
 const styles = {
-  container: { minHeight: '100vh', background: '#fafafa', paddingBottom: '80px' },
+  container: { minHeight: '100vh', background: '#faf9f7', paddingBottom: '80px' },
   loading: { display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', color: '#6b7280', fontSize: '18px' },
 
   // Header
-  header: { background: '#fff', padding: '24px 20px 16px 20px', borderBottom: '1px solid #f0f0f0' },
-  title: { fontSize: '28px', fontWeight: '800', color: '#1f2937', margin: '0 0 4px 0' },
-  subtitle: { fontSize: '14px', color: '#6b7280', margin: 0 },
+  header: { background: '#fff', padding: '24px 20px 16px 20px', borderBottom: '1px solid #e8e5e0' },
+  title: { fontSize: '28px', fontWeight: '800', color: '#1a1a1a', margin: '0 0 4px 0' },
+  subtitle: { fontSize: '14px', color: '#6b6b6b', margin: 0 },
 
   // Sub-tabs
-  subTabsWrapper: { background: '#fff', padding: '12px 20px', borderBottom: '1px solid #f0f0f0' },
+  subTabsWrapper: { background: '#fff', padding: '12px 20px', borderBottom: '1px solid #e8e5e0' },
   subTabs: { display: 'flex', gap: '8px' },
-  subTab: { flex: 1, padding: '12px 16px', background: '#f3f4f6', border: '2px solid transparent', borderRadius: '12px', fontSize: '15px', fontWeight: '700', color: '#6b7280', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s' },
-  subTabActive: { borderColor: '#059669', color: '#059669', background: '#f0fdf4' },
+  subTab: { flex: 1, padding: '12px 16px', background: '#f5f3f0', border: '2px solid transparent', borderRadius: '12px', fontSize: '15px', fontWeight: '700', color: '#6b6b6b', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s' },
+  subTabActive: { borderColor: '#047857', color: '#047857', background: '#f0f9f4' },
 
   // Content
   content: { padding: '20px' },
 
   // Year groups
-  yearList: { display: 'flex', flexDirection: 'column', gap: '12px' },
-  yearGroup: { background: '#fff', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' },
+  yearList: { display: 'flex', flexDirection: 'column', gap: '16px' },
+  yearGroup: { background: '#fff', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 6px rgba(0,0,0,0.04), 0 10px 24px rgba(0,0,0,0.08)' },
   yearHeader: { width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '16px' },
   yearLeft: { display: 'flex', alignItems: 'center', gap: '10px' },
-  yearLabel: { fontSize: '20px', fontWeight: '800', color: '#1f2937' },
-  yearCount: { fontSize: '13px', fontWeight: '600', color: '#6b7280', background: '#f3f4f6', padding: '2px 10px', borderRadius: '12px' },
+  yearLabel: { fontSize: '20px', fontWeight: '800', color: '#1a1a1a' },
+  yearCount: { fontSize: '13px', fontWeight: '600', color: '#6b7280', background: '#f5f3f0', padding: '2px 10px', borderRadius: '12px' },
   yearChevron: { fontSize: '18px', color: '#6b7280', transition: 'transform 0.2s', display: 'inline-block' },
   yearTrips: { padding: '0 16px 16px 16px', display: 'flex', flexDirection: 'column', gap: '12px' },
 
@@ -714,12 +674,12 @@ const styles = {
   emptyIcon: { fontSize: '64px', marginBottom: '16px' },
   emptyTitle: { fontSize: '20px', fontWeight: '700', color: '#1f2937', marginBottom: '8px' },
   emptyText: { fontSize: '15px', color: '#6b7280', marginBottom: '24px' },
-  emptyButton: { background: '#059669', color: '#fff', border: 'none', padding: '14px 28px', borderRadius: '12px', fontSize: '15px', fontWeight: '600', cursor: 'pointer' },
+  emptyButton: { background: 'linear-gradient(135deg, #047857, #059669)', color: '#fff', border: 'none', padding: '14px 28px', borderRadius: '12px', fontSize: '15px', fontWeight: '600', cursor: 'pointer', boxShadow: '0 2px 8px rgba(4,120,87,0.3)' },
 
   // Upcoming Trip Card
-  tripCard: { background: '#fff', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' },
-  tripHeader: { display: 'flex', alignItems: 'center', padding: '16px 20px', background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)', cursor: 'pointer' },
-  tripHeaderThere: { background: 'linear-gradient(135deg, #047857 0%, #059669 100%)' },
+  tripCard: { background: '#fff', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 6px rgba(0,0,0,0.04), 0 10px 24px rgba(0,0,0,0.08)' },
+  tripHeader: { display: 'flex', alignItems: 'center', padding: '16px 20px', background: 'linear-gradient(135deg, #047857 0%, #059669 100%)', cursor: 'pointer' },
+  tripHeaderThere: { background: 'linear-gradient(135deg, #065f46 0%, #047857 100%)' },
   tripHeaderLeft: { flex: 1 },
   tripDestination: { color: '#fff', fontSize: '18px', fontWeight: '800', marginBottom: '4px' },
   tripHeaderMeta: { display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' },
@@ -730,28 +690,28 @@ const styles = {
   editDatesSection: { padding: '12px 0', borderBottom: '1px solid #f3f4f6', marginBottom: '12px' },
   editDatesRow: { display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' },
   dateInput: { padding: '8px 10px', borderRadius: '8px', border: '2px solid #e5e7eb', background: '#fff', color: '#1f2937', fontSize: '13px', fontFamily: 'inherit' },
-  dateSaveBtn: { padding: '8px 14px', background: '#059669', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '700', cursor: 'pointer' },
+  dateSaveBtn: { padding: '8px 14px', background: '#047857', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '700', cursor: 'pointer' },
   dateCancelBtn: { padding: '8px 10px', background: '#f3f4f6', color: '#6b7280', border: 'none', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' },
-  editDatesTrigger: { padding: '8px 0', fontSize: '13px', color: '#059669', fontWeight: '600', cursor: 'pointer', marginBottom: '8px' },
-  tripBody: { padding: '16px 20px' },
+  editDatesTrigger: { padding: '8px 0', fontSize: '13px', color: '#047857', fontWeight: '600', cursor: 'pointer', marginBottom: '8px' },
+  tripBody: { padding: '20px' },
 
   // Experiences in trip
   expSection: { marginBottom: '16px' },
   expSectionLabel: { fontSize: '12px', fontWeight: '700', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '10px' },
-  expCard: { display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', background: '#f9fafb', borderRadius: '12px', marginBottom: '8px' },
+  expCard: { display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px', background: '#fff', borderRadius: '12px', marginBottom: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.04), 0 10px 24px rgba(0,0,0,0.08)' },
   expIcon: { fontSize: '24px', flexShrink: 0 },
   expDetails: { flex: 1 },
   expName: { fontSize: '14px', fontWeight: '600', color: '#1f2937', marginBottom: '2px' },
-  expPrice: { fontSize: '16px', fontWeight: '700', color: '#059669' },
+  expPrice: { fontSize: '16px', fontWeight: '700', color: '#047857' },
   expActions: { display: 'flex', gap: '6px', alignItems: 'center' },
-  bookNowBtn: { padding: '8px 14px', background: '#059669', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' },
-  removeExpBtn: { width: '28px', height: '28px', background: '#fee2e2', color: '#dc2626', border: 'none', borderRadius: '50%', fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  bookNowBtn: { padding: '8px 14px', background: 'linear-gradient(135deg, #047857, #059669)', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '13px', fontWeight: '600', cursor: 'pointer', boxShadow: '0 2px 8px rgba(4,120,87,0.3)' },
+  removeExpBtn: { width: '28px', height: '28px', background: '#fef2f2', color: '#dc2626', border: 'none', borderRadius: '12px', fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
 
   // People list in trip
   connectionsSection: { marginBottom: '16px' },
   connectionsSectionLabel: { fontSize: '12px', fontWeight: '700', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '10px' },
   peopleList: { display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '4px' },
-  personRow: { display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', background: '#f9fafb', borderRadius: '12px', cursor: 'pointer', flexShrink: 0, minWidth: '200px' },
+  personRow: { display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 14px', background: '#fff', borderRadius: '12px', cursor: 'pointer', flexShrink: 0, minWidth: '200px', boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06)' },
   personAvatar: { width: '40px', height: '40px', borderRadius: '50%', flexShrink: 0, overflow: 'hidden' },
   personAvatarImg: { width: '100%', height: '100%', objectFit: 'cover' },
   personAvatarPlaceholder: { width: '100%', height: '100%', background: '#e5e7eb', color: '#6b7280', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', fontWeight: '700' },
@@ -762,11 +722,11 @@ const styles = {
 
   // Trip actions
   tripActions: { display: 'flex', gap: '8px' },
-  addExpBtn: { flex: 1, padding: '12px', background: '#f0fdf4', color: '#059669', border: '2px solid #059669', borderRadius: '10px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' },
-  removeTripBtn: { padding: '12px 16px', background: '#fee2e2', color: '#dc2626', border: 'none', borderRadius: '10px', fontSize: '16px', cursor: 'pointer' },
+  addExpBtn: { flex: 1, padding: '14px 24px', background: '#f0f9f4', color: '#047857', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' },
+  removeTripBtn: { padding: '14px 16px', background: '#fef2f2', color: '#dc2626', border: 'none', borderRadius: '12px', fontSize: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
 
   // Past Trip Card
-  pastTripCard: { background: '#fff', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', opacity: 0.85 },
+  pastTripCard: { background: '#fff', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 6px rgba(0,0,0,0.04), 0 10px 24px rgba(0,0,0,0.08)', opacity: 0.85 },
   pastTripHeader: { display: 'flex', alignItems: 'center', background: 'linear-gradient(135deg, #6b7280 0%, #9ca3af 100%)', padding: '16px 20px', cursor: 'pointer' },
   pastTripDestination: { color: '#fff', fontSize: '18px', fontWeight: '800', marginBottom: '4px' },
   pastTripDatesInline: { color: 'rgba(255,255,255,0.85)', fontSize: '13px', fontWeight: '500' },
@@ -775,14 +735,14 @@ const styles = {
   pastExpList: { display: 'flex', flexDirection: 'column', gap: '8px' },
   pastExpItem: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#4b5563' },
   pastExpPrice: { color: '#6b7280', fontWeight: '600', marginLeft: 'auto' },
-  rebookBtn: { padding: '6px 12px', background: '#f0fdf4', color: '#059669', border: '1px solid #059669', borderRadius: '6px', fontSize: '12px', fontWeight: '600', cursor: 'pointer', flexShrink: 0 },
+  rebookBtn: { padding: '8px 14px', background: '#f0f9f4', color: '#047857', border: 'none', borderRadius: '12px', fontSize: '12px', fontWeight: '600', cursor: 'pointer', flexShrink: 0 },
 
   // Profile Preview Modal — Backdrop style
   modalOverlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' },
-  modalCard: { background: '#fff', borderRadius: '20px', maxWidth: '380px', width: '100%', maxHeight: '85vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', position: 'relative' },
+  modalCard: { background: '#fff', borderRadius: '20px', maxWidth: '380px', width: '100%', maxHeight: '85vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', position: 'relative', boxShadow: '0 8px 16px rgba(0,0,0,0.06), 0 20px 40px rgba(0,0,0,0.1)' },
   modalBackdrop: { position: 'relative', width: '100%', height: '240px', flexShrink: 0 },
   modalBackdropImg: { width: '100%', height: '100%', objectFit: 'cover' },
-  modalBackdropPlaceholder: { width: '100%', height: '100%', background: 'linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '72px', fontWeight: '800', color: 'rgba(255,255,255,0.35)' },
+  modalBackdropPlaceholder: { width: '100%', height: '100%', background: 'linear-gradient(135deg, #047857 0%, #059669 50%, #10b981 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '72px', fontWeight: '800', color: 'rgba(255,255,255,0.35)' },
   modalBackdropGradient: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '60%', background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 50%, transparent 100%)' },
   modalCloseBtn: { position: 'absolute', top: '12px', right: '12px', width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(0,0,0,0.4)', border: 'none', fontSize: '18px', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2, backdropFilter: 'blur(4px)' },
   modalBackdropInfo: { position: 'absolute', bottom: '16px', left: '16px', right: '16px', zIndex: 2 },
@@ -791,20 +751,20 @@ const styles = {
   modalBody: { padding: '20px', overflowY: 'auto', flex: 1 },
   modalBio: { fontSize: '15px', color: '#374151', lineHeight: 1.6, margin: '0 0 16px 0' },
   modalInterests: { display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' },
-  modalInterestChip: { padding: '6px 14px', background: '#f0fdf4', borderRadius: '20px', fontSize: '13px', fontWeight: '600', color: '#059669' },
+  modalInterestChip: { padding: '6px 14px', background: '#f0f9f4', borderRadius: '20px', fontSize: '13px', fontWeight: '600', color: '#047857' },
   modalSocials: { display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' },
-  modalSocialBtn: { padding: '8px 16px', background: '#f3f4f6', borderRadius: '10px', fontSize: '13px', fontWeight: '600', color: '#374151', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' },
+  modalSocialBtn: { padding: '8px 16px', background: '#f5f3f0', borderRadius: '10px', fontSize: '13px', fontWeight: '600', color: '#374151', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' },
   modalTripsSection: { marginBottom: '16px' },
   modalTripsTitle: { fontSize: '13px', fontWeight: '700', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' },
-  modalTripItem: { display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: '#f9fafb', borderRadius: '10px', marginBottom: '6px' },
+  modalTripItem: { display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: '#faf9f7', borderRadius: '10px', marginBottom: '6px' },
   modalTripIcon: { fontSize: '16px', flexShrink: 0 },
   modalTripInfo: { flex: 1, minWidth: 0 },
   modalTripDest: { fontSize: '14px', fontWeight: '700', color: '#1f2937' },
   modalTripDates: { fontSize: '12px', color: '#6b7280', marginTop: '2px' },
-  modalTripBadge: { fontSize: '11px', fontWeight: '700', color: '#059669', background: '#f0fdf4', padding: '4px 8px', borderRadius: '6px', flexShrink: 0 },
-  modalConnectedBadge: { width: '100%', padding: '14px', background: '#f0fdf4', color: '#059669', border: '2px solid #bbf7d0', borderRadius: '14px', fontSize: '16px', fontWeight: '700', textAlign: 'center' },
+  modalTripBadge: { fontSize: '11px', fontWeight: '700', color: '#047857', background: '#f0f9f4', padding: '4px 8px', borderRadius: '6px', flexShrink: 0 },
+  modalConnectedBadge: { width: '100%', padding: '14px', background: '#f0f9f4', color: '#047857', border: '2px solid #bbf7d0', borderRadius: '14px', fontSize: '16px', fontWeight: '700', textAlign: 'center' },
   modalPendingBadge: { width: '100%', padding: '14px', background: '#fffbeb', color: '#d97706', border: '2px solid #fde68a', borderRadius: '14px', fontSize: '16px', fontWeight: '700', textAlign: 'center' },
-  modalConnectBtn: { width: '100%', padding: '14px', background: '#059669', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '16px', fontWeight: '700', cursor: 'pointer' },
+  modalConnectBtn: { width: '100%', padding: '14px', background: 'linear-gradient(135deg, #047857, #059669)', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '16px', fontWeight: '700', cursor: 'pointer', boxShadow: '0 2px 8px rgba(4,120,87,0.3)' },
 };
 
 export default Saved;

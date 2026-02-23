@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { FiMapPin, FiNavigation } from 'react-icons/fi';
 
 function DestinationGrid({ destinations }) {
   const getDestinationImage = (name) => {
@@ -62,16 +63,16 @@ function DestinationGrid({ destinations }) {
               <div style={styles.metrics}>
                 {dest.planningCount > 0 && (
                   <div style={styles.metric}>
-                    <span style={styles.metricIcon}>✈️</span>
+                    <FiNavigation size={13} color="#fff" style={{ marginRight: '4px' }} />
                     <span style={styles.metricText}>
                       {dest.planningCount} planning
                     </span>
                   </div>
                 )}
-                
+
                 {dest.thereNowCount > 0 && (
                   <div style={styles.metric}>
-                    <span style={styles.metricIcon}>📍</span>
+                    <FiMapPin size={13} color="#fff" style={{ marginRight: '4px' }} />
                     <span style={styles.metricText}>
                       {dest.thereNowCount} there now
                     </span>
@@ -104,7 +105,7 @@ const styles = {
     overflow: 'hidden',
     textDecoration: 'none',
     aspectRatio: '1',
-    boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
+    boxShadow: '0 4px 6px rgba(0,0,0,0.04), 0 10px 24px rgba(0,0,0,0.08)',
     transition: 'transform 0.2s',
   },
   image: {

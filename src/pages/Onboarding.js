@@ -96,9 +96,16 @@ const [formData, setFormData] = useState({
   };
 
   const nextStep = () => {
-    if (step === 1 && (!formData.name || !formData.age || !formData.gender)) {
+    if (step === 1 && (!formData.name.trim() || !formData.age || !formData.gender)) {
       alert('Please fill in all required fields');
       return;
+    }
+    if (step === 1 && formData.age) {
+      const ageNum = parseInt(formData.age);
+      if (isNaN(ageNum) || ageNum < 13 || ageNum > 120) {
+        alert('Please enter a valid age between 13 and 120');
+        return;
+      }
     }
     
     if (step < 5) {
@@ -172,15 +179,15 @@ const [formData, setFormData] = useState({
       console.log('Creating Firestore document...');
       
       const userData = {
-        name: formData.name,
+        name: formData.name.trim(),
         age: parseInt(formData.age),
         gender: formData.gender,
         profileVisibility: formData.profileVisibility || formData.gender,
-        city: formData.city || '',
-        bio: formData.bio || '',
+        city: (formData.city || '').trim(),
+        bio: (formData.bio || '').trim(),
         interests: formData.interests,
-        whatsapp: formData.whatsapp || '',
-        instagram: formData.instagram || '',
+        whatsapp: (formData.whatsapp || '').trim(),
+        instagram: (formData.instagram || '').trim(),
         photoURL: photoURL,
         createdAt: new Date().toISOString(),
         upcomingTrips: [],
@@ -246,6 +253,7 @@ const [formData, setFormData] = useState({
               onChange={handleChange}
               style={styles.input}
               placeholder="Your name"
+              maxLength={100}
             />
           </div>
 
@@ -258,6 +266,8 @@ const [formData, setFormData] = useState({
               onChange={handleChange}
               style={styles.input}
               placeholder="Your age"
+              min={13}
+              max={120}
             />
           </div>
 
@@ -345,6 +355,7 @@ const [formData, setFormData] = useState({
               style={styles.textarea}
               placeholder="Tell us about yourself..."
               rows="4"
+              maxLength={500}
             />
           </div>
 
@@ -451,6 +462,7 @@ const [formData, setFormData] = useState({
               onChange={handleChange}
               style={styles.input}
               placeholder="+1234567890"
+              maxLength={50}
             />
           </div>
 
@@ -463,6 +475,7 @@ const [formData, setFormData] = useState({
               onChange={handleChange}
               style={styles.input}
               placeholder="@username"
+              maxLength={50}
             />
           </div>
 
@@ -553,7 +566,7 @@ const [formData, setFormData] = useState({
 const styles = {
   container: {
     minHeight: '100vh',
-    background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
+    background: 'linear-gradient(180deg, #faf9f7 0%, #f5f3f0 100%)',
     padding: '40px 20px',
   },
   progressBar: {
@@ -570,11 +583,11 @@ const styles = {
     transition: 'all 0.3s',
   },
   progressDotActive: {
-    background: '#059669',
+    background: '#047857',
     transform: 'scale(1.3)',
   },
   progressDotComplete: {
-    background: '#10b981',
+    background: '#059669',
   },
   stepContainer: {
     maxWidth: '500px',
@@ -582,18 +595,18 @@ const styles = {
     background: '#fff',
     padding: '40px',
     borderRadius: '20px',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+    boxShadow: '0 1px 2px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.06)',
   },
   stepTitle: {
     fontSize: '28px',
     fontWeight: '800',
-    color: '#1f2937',
+    color: '#1a1a1a',
     marginBottom: '8px',
     textAlign: 'center',
   },
   stepSubtitle: {
     fontSize: '16px',
-    color: '#6b7280',
+    color: '#6b6b6b',
     marginBottom: '32px',
     textAlign: 'center',
   },
@@ -611,22 +624,24 @@ const styles = {
     width: '100%',
     padding: '12px 16px',
     fontSize: '16px',
-    border: '2px solid #e5e7eb',
+    border: '1.5px solid #e8e5e0',
     borderRadius: '10px',
     outline: 'none',
     transition: 'border-color 0.2s',
     boxSizing: 'border-box',
+    background: '#faf9f7',
   },
   textarea: {
     width: '100%',
     padding: '12px 16px',
     fontSize: '16px',
-    border: '2px solid #e5e7eb',
+    border: '1.5px solid #e8e5e0',
     borderRadius: '10px',
     outline: 'none',
     resize: 'vertical',
     fontFamily: 'inherit',
     boxSizing: 'border-box',
+    background: '#faf9f7',
   },
   cityInputWrapper: {
     position: 'relative',
@@ -637,7 +652,7 @@ const styles = {
     left: 0,
     right: 0,
     background: '#fff',
-    border: '2px solid #e5e7eb',
+    border: '1.5px solid #e8e5e0',
     borderTop: 'none',
     borderRadius: '0 0 10px 10px',
     zIndex: 50,
@@ -650,9 +665,9 @@ const styles = {
     padding: '12px 16px',
     background: 'none',
     border: 'none',
-    borderBottom: '1px solid #f3f4f6',
+    borderBottom: '1px solid #f5f3f0',
     fontSize: '15px',
-    color: '#1f2937',
+    color: '#1a1a1a',
     textAlign: 'left',
     cursor: 'pointer',
     fontFamily: 'inherit',
@@ -669,13 +684,13 @@ const styles = {
     borderRadius: '50%',
     objectFit: 'cover',
     marginBottom: '20px',
-    border: '4px solid #059669',
+    border: '4px solid #047857',
   },
   changePhotoBtn: {
     padding: '10px 20px',
-    background: '#f3f4f6',
-    color: '#059669',
-    border: '2px solid #059669',
+    background: '#f5f3f0',
+    color: '#047857',
+    border: '1.5px solid #047857',
     borderRadius: '8px',
     fontSize: '14px',
     fontWeight: '600',
@@ -686,8 +701,8 @@ const styles = {
     height: '200px',
     margin: '0 auto 20px',
     borderRadius: '50%',
-    background: '#f9fafb',
-    border: '3px dashed #d1d5db',
+    background: '#faf9f7',
+    border: '3px dashed #e8e5e0',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
@@ -702,12 +717,12 @@ const styles = {
   uploadText: {
     fontSize: '16px',
     fontWeight: '600',
-    color: '#1f2937',
+    color: '#1a1a1a',
     marginBottom: '4px',
   },
   uploadSubtext: {
     fontSize: '12px',
-    color: '#9ca3af',
+    color: '#a3a3a3',
   },
   hiddenInput: {
     display: 'none',
@@ -720,19 +735,19 @@ const styles = {
   },
   interestChip: {
     padding: '14px',
-    background: '#f9fafb',
-    border: '2px solid #e5e7eb',
+    background: '#faf9f7',
+    border: '1.5px solid #e8e5e0',
     borderRadius: '12px',
     fontSize: '15px',
     fontWeight: '600',
-    color: '#6b7280',
+    color: '#6b6b6b',
     cursor: 'pointer',
     transition: 'all 0.2s',
   },
   interestChipActive: {
-    background: '#f0fdf4',
-    borderColor: '#059669',
-    color: '#059669',
+    background: '#f0f9f4',
+    borderColor: '#047857',
+    color: '#047857',
   },
   reviewSection: {
     marginBottom: '32px',
@@ -746,41 +761,41 @@ const styles = {
     height: '150px',
     borderRadius: '50%',
     objectFit: 'cover',
-    border: '3px solid #059669',
+    border: '3px solid #047857',
   },
   reviewItem: {
     padding: '12px',
-    background: '#f9fafb',
+    background: '#faf9f7',
     borderRadius: '8px',
     marginBottom: '8px',
     fontSize: '14px',
-    color: '#1f2937',
+    color: '#1a1a1a',
   },
   nextButton: {
     width: '100%',
     padding: '16px',
-    background: 'linear-gradient(135deg, #059669, #10b981)',
+    background: '#047857',
     color: '#fff',
     border: 'none',
-    borderRadius: '12px',
+    borderRadius: '10px',
     fontSize: '16px',
     fontWeight: '700',
     cursor: 'pointer',
     marginBottom: '12px',
-    boxShadow: '0 4px 16px rgba(5, 150, 105, 0.3)',
+    boxShadow: '0 2px 8px rgba(4, 120, 87, 0.25)',
   },
   submitButton: {
     width: '100%',
     padding: '16px',
-    background: 'linear-gradient(135deg, #059669, #10b981)',
+    background: '#047857',
     color: '#fff',
     border: 'none',
-    borderRadius: '12px',
+    borderRadius: '10px',
     fontSize: '18px',
     fontWeight: '700',
     cursor: 'pointer',
     marginBottom: '12px',
-    boxShadow: '0 4px 20px rgba(5, 150, 105, 0.4)',
+    boxShadow: '0 2px 8px rgba(4, 120, 87, 0.25)',
   },
   submitButtonDisabled: {
     opacity: 0.6,
@@ -790,7 +805,7 @@ const styles = {
     width: '100%',
     padding: '12px',
     background: 'transparent',
-    color: '#6b7280',
+    color: '#6b6b6b',
     border: 'none',
     borderRadius: '8px',
     fontSize: '14px',
@@ -805,8 +820,8 @@ const styles = {
     flex: 1,
     padding: '14px 8px',
     background: '#fff',
-    color: '#6b7280',
-    border: '2px solid #e5e7eb',
+    color: '#6b6b6b',
+    border: '1.5px solid #e8e5e0',
     borderRadius: '12px',
     fontSize: '15px',
     fontWeight: '700',
@@ -815,13 +830,13 @@ const styles = {
     fontFamily: 'inherit',
   },
   visibilityBtnActive: {
-    background: '#f0fdf4',
-    color: '#059669',
-    borderColor: '#059669',
+    background: '#f0f9f4',
+    color: '#047857',
+    borderColor: '#047857',
   },
   visibilityHint: {
     fontSize: '13px',
-    color: '#9ca3af',
+    color: '#a3a3a3',
     margin: '8px 0 0 0',
     lineHeight: 1.4,
   },

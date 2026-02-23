@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rihlah Profile Pic</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: #111;
+    }
+
+    .pic {
+      width: 500px;
+      height: 500px;
+      background: linear-gradient(160deg, #0b2319 0%, #0e3625 50%, #115a3a 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .logo {
+      width: 430px;
+      height: 430px;
+      object-fit: contain;
+      filter: brightness(0) invert(1);
+    }
+  </style>
+</head>
+<body>
+  <div class="pic">
+    <img src="public/logo512.png" alt="Rihlah" class="logo" />
+  </div>
+</body>
+</html>

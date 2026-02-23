@@ -1,21 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { auth, db } from '../firebase';
-import { collection, getDocs, doc, getDoc, updateDoc, addDoc } from 'firebase/firestore';
+import { doc, updateDoc, addDoc, collection, getDocs, query, where } from 'firebase/firestore';
+import { useUser } from '../context/UserContext';
+import { FiX, FiArrowLeft, FiChevronDown, FiMapPin, FiNavigation, FiStar, FiClock, FiMessageCircle, FiCamera, FiPlus, FiCheck } from 'react-icons/fi';
 import TabBar from '../components/TabBar';
 
 function DestinationDetail() {
   const { destination } = useParams();
   const navigate = useNavigate();
   const destinationName = decodeURIComponent(destination);
+  const { currentUser, currentUserData, allUsers, sentRequestUserIds, refreshConnections, refreshCurrentUser, refreshAll } = useUser();
+
+  // Refresh data on mount to pick up other users' changes
+  useEffect(() => {
+    refreshAll();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [activeTab, setActiveTab] = useState('experiences');
   const [peopleSubTab, setPeopleSubTab] = useState('hereNow');
-  const [destinationUsers, setDestinationUsers] = useState([]);
-  const [experiences, setExperiences] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [currentUserData, setCurrentUserData] = useState(null);
-  const [sentRequests, setSentRequests] = useState([]);
+  const [localSentRequests, setLocalSentRequests] = useState([]);
 
   const [expandedSaversExp, setExpandedSaversExp] = useState(null);
   const [previewUser, setPreviewUser] = useState(null);
@@ -37,72 +41,34 @@ function DestinationDetail() {
   const [goingSoonInterests, setGoingSoonInterests] = useState([]);
   const [showGoingSoonFilters, setShowGoingSoonFilters] = useState(false);
 
-  useEffect(() => {
-    loadData();
-  }, [destinationName]);
+  // Combine context + local optimistic sent requests
+  const allSentRequests = useMemo(() => {
+    return [...new Set([...sentRequestUserIds, ...localSentRequests])];
+  }, [sentRequestUserIds, localSentRequests]);
 
-  const loadData = async () => {
-    try {
-      const currentUser = auth.currentUser;
-      if (!currentUser) {
-        navigate('/login');
-        return;
-      }
+  // Derive destination users from context
+  const destinationUsers = useMemo(() => {
+    if (!currentUser) return [];
+    const currentUserGender = currentUserData?.gender || '';
+    const rawVisibility = currentUserData?.profileVisibility || 'both';
+    const myVisibility = ['Male', 'Female', 'both'].includes(rawVisibility) ? rawVisibility : 'both';
 
-      const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
-      let fetchedUserData = null;
-      if (userDoc.exists()) {
-        fetchedUserData = userDoc.data();
-        setCurrentUserData(fetchedUserData);
-      }
+    return allUsers.filter(user => {
+      if (user.id === currentUser.uid) return false;
+      if (!Array.isArray(user.upcomingTrips) || user.upcomingTrips.length === 0) return false;
+      if (!user.upcomingTrips.some(trip => trip.destination === destinationName)) return false;
 
-      const usersSnapshot = await getDocs(collection(db, 'users'));
-      const users = [];
+      const rawTheirVis = user.profileVisibility || 'both';
+      const theirVisibility = ['Male', 'Female', 'both'].includes(rawTheirVis) ? rawTheirVis : 'both';
+      if (theirVisibility !== 'both' && theirVisibility !== currentUserGender) return false;
+      if (myVisibility !== 'both' && user.gender !== myVisibility) return false;
 
-      const currentUserGender = fetchedUserData?.gender || '';
-      const myVisibility = fetchedUserData?.profileVisibility || 'both';
+      return true;
+    });
+  }, [allUsers, currentUser, currentUserData, destinationName]);
 
-      usersSnapshot.forEach((docSnap) => {
-        const userData = docSnap.data();
-        if (docSnap.id !== currentUser.uid && userData.upcomingTrips) {
-          const hasDestination = userData.upcomingTrips.some(
-            trip => trip.destination === destinationName
-          );
-          if (hasDestination) {
-            // Their visibility: do they want to be seen by my gender?
-            const theirVisibility = userData.profileVisibility || 'both';
-            if (theirVisibility !== 'both' && theirVisibility !== currentUserGender) {
-              return;
-            }
-            // My visibility: do I only want to see a specific gender?
-            if (myVisibility !== 'both' && userData.gender !== myVisibility) {
-              return;
-            }
-            users.push({ id: docSnap.id, ...userData });
-          }
-        }
-      });
-
-      const requestsSnapshot = await getDocs(collection(db, 'connectionRequests'));
-      const pending = [];
-      requestsSnapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        if (data.fromUserId === currentUser.uid && data.status === 'pending') {
-          pending.push(data.toUserId);
-        }
-      });
-      setSentRequests(pending);
-
-      setDestinationUsers(users);
-      loadExperiences();
-    } catch (error) {
-      console.error('Error loading data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadExperiences = () => {
+  // Experiences (static data)
+  const experiences = useMemo(() => {
     const allExperiences = {
       'Istanbul': [
         { id: 1, name: 'Ottoman Mosques Walking Tour', price: 45, icon: '🕌', duration: '3 hours', rating: 4.9, reviews: 324, bookingUrl: 'https://www.getyourguide.com/istanbul-l56/ottoman-mosques-walking-tour-t12345/' },
@@ -199,25 +165,19 @@ function DestinationDetail() {
     };
 
     const cityName = destinationName.split(',')[0].trim();
-    const experiencesForDestination = allExperiences[cityName] || allExperiences[destinationName] || [];
-    setExperiences(experiencesForDestination);
-  };
+    return allExperiences[cityName] || allExperiences[destinationName] || [];
+  }, [destinationName]);
 
-  const handleAddExperience = async (experience) => {
+  const [localCurrentUserData, setLocalCurrentUserData] = useState(null);
+  // Use context data but allow local overrides for optimistic updates
+  const effectiveUserData = localCurrentUserData || currentUserData;
+
+  // Trip picker state for when multiple upcoming trips match
+  const [tripPickerData, setTripPickerData] = useState(null); // { experience, matchingTrips: [{ index, trip }] }
+
+  const saveExperienceToTrip = async (experience, tripIndex) => {
     try {
-      const currentUser = auth.currentUser;
-      if (!currentUser || !currentUserData) return;
-
-      const tripIndex = currentUserData.upcomingTrips?.findIndex(
-        trip => trip.destination === destinationName
-      );
-
-      if (tripIndex === -1) {
-        alert('Please add a trip to this destination first!');
-        return;
-      }
-
-      const updatedTrips = [...currentUserData.upcomingTrips];
+      const updatedTrips = [...effectiveUserData.upcomingTrips];
       if (!updatedTrips[tripIndex].experiences) {
         updatedTrips[tripIndex].experiences = [];
       }
@@ -226,26 +186,55 @@ function DestinationDetail() {
         exp => exp.id === experience.id
       );
       if (alreadyAdded) {
-        alert('Already saved!');
+        alert('Already saved to this trip!');
         return;
       }
 
       updatedTrips[tripIndex].experiences.push(experience);
       await updateDoc(doc(db, 'users', currentUser.uid), { upcomingTrips: updatedTrips });
-      setCurrentUserData({ ...currentUserData, upcomingTrips: updatedTrips });
-      alert('Saved!');
+      setLocalCurrentUserData({ ...effectiveUserData, upcomingTrips: updatedTrips });
+      refreshCurrentUser();
     } catch (error) {
       console.error('Error:', error);
       alert('Failed to save');
     }
   };
 
+  const handleAddExperience = async (experience) => {
+    if (!currentUser || !effectiveUserData) return;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const matchingTrips = [];
+    (effectiveUserData.upcomingTrips || []).forEach((trip, index) => {
+      if (trip.destination !== destinationName) return;
+      const endDate = new Date(trip.endDate);
+      endDate.setHours(23, 59, 59, 999);
+      if (endDate >= today) {
+        matchingTrips.push({ index, trip });
+      }
+    });
+
+    if (matchingTrips.length === 0) {
+      alert('Please add an upcoming trip to this destination first!');
+      return;
+    }
+
+    if (matchingTrips.length === 1) {
+      await saveExperienceToTrip(experience, matchingTrips[0].index);
+      return;
+    }
+
+    // Multiple trips — show picker
+    setTripPickerData({ experience, matchingTrips });
+  };
+
   const handleSendConnectionRequest = async (toUser) => {
     try {
-      const currentUser = auth.currentUser;
-      if (!currentUser || !currentUserData) return;
+      if (!currentUser || !effectiveUserData) return;
 
-      const alreadyConnected = (currentUserData.connections || []).some(
+      const alreadyConnected = (effectiveUserData.connections || []).some(
         c => c.userId === toUser.id
       );
       if (alreadyConnected) {
@@ -253,8 +242,12 @@ function DestinationDetail() {
         return;
       }
 
-      const requestsSnapshot = await getDocs(collection(db, 'connectionRequests'));
-      const existingRequest = requestsSnapshot.docs.find(docSnap => {
+      const [fromMeSnapshot, toMeSnapshot] = await Promise.all([
+        getDocs(query(collection(db, 'connectionRequests'), where('fromUserId', '==', currentUser.uid))),
+        getDocs(query(collection(db, 'connectionRequests'), where('toUserId', '==', currentUser.uid)))
+      ]);
+      const allDocs = [...fromMeSnapshot.docs, ...toMeSnapshot.docs];
+      const existingRequest = allDocs.find(docSnap => {
         const data = docSnap.data();
         return (
           (data.fromUserId === currentUser.uid && data.toUserId === toUser.id) ||
@@ -267,24 +260,23 @@ function DestinationDetail() {
         return;
       }
 
-      setSentRequests(prev => [...prev, toUser.id]);
+      setLocalSentRequests(prev => [...prev, toUser.id]);
 
       await addDoc(collection(db, 'connectionRequests'), {
         fromUserId: currentUser.uid,
-        fromUserName: currentUserData.name,
-        fromUserAge: currentUserData.age,
-        fromUserGender: currentUserData.gender,
-        fromUserBio: currentUserData.bio || '',
-        fromUserPhotoURL: currentUserData.photoURL || '',
-        fromUserInterests: currentUserData.interests || [],
-        fromUserUpcomingTrips: currentUserData.upcomingTrips || [],
-        fromUserWhatsapp: currentUserData.whatsapp || '',
-        fromUserInstagram: currentUserData.instagram || '',
+        fromUserName: effectiveUserData.name,
+        fromUserAge: effectiveUserData.age,
+        fromUserGender: effectiveUserData.gender,
+        fromUserBio: effectiveUserData.bio || '',
+        fromUserPhotoURL: effectiveUserData.photoURL || '',
+        fromUserInterests: effectiveUserData.interests || [],
         toUserId: toUser.id,
+        toUserName: toUser.name || '',
         status: 'pending',
         createdAt: new Date().toISOString()
       });
 
+      refreshConnections();
       alert('Request sent!');
     } catch (error) {
       console.error('Error:', error);
@@ -293,10 +285,9 @@ function DestinationDetail() {
   };
 
   // Filter and sort experiences
-  const getFilteredExperiences = () => {
+  const filteredExperiences = useMemo(() => {
     let filtered = [...experiences];
 
-    // Price filter
     if (expPriceRange === 'under50') {
       filtered = filtered.filter(e => e.price < 50);
     } else if (expPriceRange === '50to80') {
@@ -305,7 +296,6 @@ function DestinationDetail() {
       filtered = filtered.filter(e => e.price > 80);
     }
 
-    // Sort
     if (expSort === 'rating') {
       filtered.sort((a, b) => b.rating - a.rating);
     } else if (expSort === 'priceLow') {
@@ -317,23 +307,21 @@ function DestinationDetail() {
     }
 
     return filtered;
-  };
+  }, [experiences, expPriceRange, expSort]);
 
-  // Parse "YYYY-MM-DD" as local date to avoid timezone issues
   const parseDate = (dateStr) => {
     const [y, m, d] = dateStr.split('-').map(Number);
     return new Date(y, m - 1, d);
   };
 
-  // Split all users into here now / going soon (unfiltered)
-  const splitUsers = () => {
+  // Split users into here now / going soon
+  const { allHereNow, allGoingSoon } = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const now = [];
     const soon = [];
 
     destinationUsers.forEach(user => {
-      // Check ALL trips to this destination — hereNow takes priority over planning
       let status = null;
       user.upcomingTrips.forEach(trip => {
         if (trip.destination !== destinationName) return;
@@ -352,7 +340,7 @@ function DestinationDetail() {
     });
 
     return { allHereNow: now, allGoingSoon: soon };
-  };
+  }, [destinationUsers, destinationName]);
 
   const applyPeopleFilters = (users, gender, ageRange, interests) => {
     return users.filter(user => {
@@ -376,61 +364,56 @@ function DestinationDetail() {
     });
   };
 
-  const { allHereNow, allGoingSoon } = splitUsers();
   const hereNow = applyPeopleFilters(allHereNow, hereNowGender, hereNowAgeRange, hereNowInterests);
   const goingSoon = applyPeopleFilters(allGoingSoon, goingSoonGender, goingSoonAgeRange, goingSoonInterests);
-  const filteredExperiences = getFilteredExperiences();
 
-  // Get unique genders per group
   const hereNowGenderOptions = [...new Set(allHereNow.map(u => u.gender).filter(Boolean))];
   const goingSoonGenderOptions = [...new Set(allGoingSoon.map(u => u.gender).filter(Boolean))];
 
-  // Interests list (matches onboarding)
   const availableInterests = [
     'Food', 'Adventure', 'Culture', 'Photography',
     'Art', 'History', 'Nature', 'Shopping',
     'Nightlife', 'Wellness'
   ];
 
-  if (loading) {
-    return (
-      <div style={styles.container}>
-        <div style={styles.loading}>Loading...</div>
-        <TabBar />
-      </div>
-    );
-  }
-
   const isExperienceSaved = (expId) => {
-    return currentUserData?.upcomingTrips
+    return effectiveUserData?.upcomingTrips
       ?.find(trip => trip.destination === destinationName)
       ?.experiences?.some(e => e.id === expId) || false;
   };
 
-  // Find users who saved a specific experience and overlap with current user's dates
   const getOverlappingSavers = (expId) => {
-    const myTrip = currentUserData?.upcomingTrips?.find(
-      trip => trip.destination === destinationName
-    );
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Find the user's upcoming/current trips to this destination
+    const myTrips = (effectiveUserData?.upcomingTrips || []).filter(trip => {
+      if (trip.destination !== destinationName) return false;
+      const endDate = new Date(trip.endDate);
+      endDate.setHours(23, 59, 59, 999);
+      return endDate >= today;
+    });
+
+    // No upcoming trip — don't show any savers
+    if (myTrips.length === 0) return [];
 
     return destinationUsers.filter(user => {
-      const userTrip = user.upcomingTrips.find(t => t.destination === destinationName);
-      if (!userTrip || !userTrip.experiences) return false;
+      const userTrips = (user.upcomingTrips || []).filter(t => t.destination === destinationName);
 
-      const hasSaved = userTrip.experiences.some(e => e.id === expId);
-      if (!hasSaved) return false;
+      return userTrips.some(userTrip => {
+        if (!userTrip.experiences) return false;
+        const hasSaved = userTrip.experiences.some(e => e.id === expId);
+        if (!hasSaved) return false;
 
-      // If current user has a trip, only show users with overlapping dates
-      if (myTrip) {
-        const myStart = new Date(myTrip.startDate);
-        const myEnd = new Date(myTrip.endDate);
+        // Check if any of their trips overlap with any of my upcoming trips
         const theirStart = new Date(userTrip.startDate);
         const theirEnd = new Date(userTrip.endDate);
-        return theirStart <= myEnd && theirEnd >= myStart;
-      }
-
-      // No trip booked — show all savers
-      return true;
+        return myTrips.some(myTrip => {
+          const myStart = new Date(myTrip.startDate);
+          const myEnd = new Date(myTrip.endDate);
+          return theirStart <= myEnd && theirEnd >= myStart;
+        });
+      });
     });
   };
 
@@ -443,8 +426,8 @@ function DestinationDetail() {
       const e = parseDate(t.endDate);
       return today >= s && today <= e;
     }) || matchingTrips.find(t => parseDate(t.startDate) > today) || matchingTrips[0];
-    const isConnected = (currentUserData?.connections || []).some(c => c.userId === user.id);
-    const isPending = sentRequests.includes(user.id);
+    const isConnected = (effectiveUserData?.connections || []).some(c => c.userId === user.id);
+    const isPending = allSentRequests.includes(user.id);
     const fmt = { month: 'short', day: 'numeric' };
     return (
       <div key={user.id} style={styles.personRow} onClick={() => setPreviewUser(user)}>
@@ -481,7 +464,7 @@ function DestinationDetail() {
     <div style={styles.container}>
       <div style={styles.header}>
         <button style={styles.backBtn} onClick={() => navigate('/destinations')}>
-          ← Back
+          <FiArrowLeft size={16} style={{ marginRight: '6px', verticalAlign: '-2px' }} /> Back
         </button>
         <h1 style={styles.title}>{destinationName}</h1>
         <p style={styles.subtitle}>
@@ -508,13 +491,12 @@ function DestinationDetail() {
         {/* EXPERIENCES TAB */}
         {activeTab === 'experiences' && (
           <div>
-            {/* Filters Toggle */}
             <button
               style={styles.filterToggle}
               onClick={() => setShowExpFilters(!showExpFilters)}
             >
               <span>Filters {expPriceRange !== 'all' || expSort !== 'rating' ? '•' : ''}</span>
-              <span style={{ transform: showExpFilters ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', display: 'inline-block' }}>▾</span>
+              <span style={{ transform: showExpFilters ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', display: 'inline-flex' }}><FiChevronDown size={16} /></span>
             </button>
             {showExpFilters && (
               <div style={styles.filterBar}>
@@ -572,10 +554,10 @@ function DestinationDetail() {
                     <div style={styles.expIcon}>{exp.icon}</div>
                     <h3 style={styles.expName}>{exp.name}</h3>
                     <div style={styles.expMeta}>
-                      <span>⭐ {exp.rating}</span>
+                      <span><FiStar size={14} style={{ marginRight: '3px', verticalAlign: '-2px', color: '#f59e0b' }} />{exp.rating}</span>
                       <span style={{marginLeft: '8px'}}>({exp.reviews})</span>
                     </div>
-                    <div style={styles.expDuration}>🕐 {exp.duration}</div>
+                    <div style={styles.expDuration}><FiClock size={13} style={{ marginRight: '4px', verticalAlign: '-2px' }} />{exp.duration}</div>
                     <div style={styles.expPrice}>${exp.price}</div>
 
                     {savers.length > 0 && (
@@ -603,15 +585,15 @@ function DestinationDetail() {
                                 : `${savers[0].name?.split(' ')[0]} + ${savers.length - 1} others saved this`
                             }
                           </span>
-                          <span style={{ ...styles.saversChevron, transform: expandedSaversExp === exp.id ? 'rotate(180deg)' : 'rotate(0deg)' }}>▾</span>
+                          <span style={{ ...styles.saversChevron, transform: expandedSaversExp === exp.id ? 'rotate(180deg)' : 'rotate(0deg)' }}><FiChevronDown size={14} /></span>
                         </div>
 
                         {expandedSaversExp === exp.id && (
                           <div style={styles.saversExpanded}>
                             {savers.map(user => {
                               const userTrip = user.upcomingTrips.find(t => t.destination === destinationName);
-                              const isConnected = (currentUserData?.connections || []).some(c => c.userId === user.id);
-                              const isPending = sentRequests.includes(user.id);
+                              const isConnected = (effectiveUserData?.connections || []).some(c => c.userId === user.id);
+                              const isPending = allSentRequests.includes(user.id);
                               return (
                                 <div key={user.id} style={styles.saverProfile}>
                                   <div style={styles.saverProfileLeft} onClick={() => setPreviewUser(user)}>
@@ -653,7 +635,7 @@ function DestinationDetail() {
                         style={isExperienceSaved(exp.id) ? styles.savedBtn : styles.saveBtn}
                         onClick={() => handleAddExperience(exp)}
                       >
-                        {isExperienceSaved(exp.id) ? '✓ Saved' : '+ Save'}
+                        {isExperienceSaved(exp.id) ? <><FiCheck size={14} style={{ marginRight: '4px', verticalAlign: '-2px' }} />Saved</> : <><FiPlus size={14} style={{ marginRight: '4px', verticalAlign: '-2px' }} />Save</>}
                       </button>
                       <button
                         style={styles.bookBtn}
@@ -672,7 +654,6 @@ function DestinationDetail() {
         {/* PEOPLE TAB */}
         {activeTab === 'people' && (
           <div>
-            {/* Sub-tabs: Here Now / Going Soon */}
             <div style={styles.subTabs}>
               <button
                 style={{...styles.subTab, ...(peopleSubTab === 'hereNow' ? styles.subTabActive : {})}}
@@ -690,7 +671,6 @@ function DestinationDetail() {
               </button>
             </div>
 
-            {/* HERE NOW PAGE */}
             {peopleSubTab === 'hereNow' && (
               <div>
                 {allHereNow.length > 0 ? (
@@ -700,11 +680,11 @@ function DestinationDetail() {
                       onClick={() => setShowHereNowFilters(!showHereNowFilters)}
                     >
                       <span>Filters {hereNowGender !== 'all' || hereNowAgeRange !== 'all' || hereNowInterests.length > 0 ? '•' : ''}</span>
-                      <span style={{ transform: showHereNowFilters ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', display: 'inline-block' }}>▾</span>
+                      <span style={{ transform: showHereNowFilters ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', display: 'inline-flex' }}><FiChevronDown size={16} /></span>
                     </button>
                     {showHereNowFilters && (
                       <div style={styles.filterBar}>
-                        {(currentUserData?.profileVisibility || 'both') === 'both' && (
+                        {(effectiveUserData?.profileVisibility || 'both') === 'both' && (
                           <div style={styles.filterGroup}>
                             <div style={styles.filterLabel}>Gender</div>
                             <div style={styles.filterChips}>
@@ -781,7 +761,6 @@ function DestinationDetail() {
               </div>
             )}
 
-            {/* GOING SOON PAGE */}
             {peopleSubTab === 'goingSoon' && (
               <div>
                 {allGoingSoon.length > 0 ? (
@@ -791,11 +770,11 @@ function DestinationDetail() {
                       onClick={() => setShowGoingSoonFilters(!showGoingSoonFilters)}
                     >
                       <span>Filters {goingSoonGender !== 'all' || goingSoonAgeRange !== 'all' || goingSoonInterests.length > 0 ? '•' : ''}</span>
-                      <span style={{ transform: showGoingSoonFilters ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', display: 'inline-block' }}>▾</span>
+                      <span style={{ transform: showGoingSoonFilters ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', display: 'inline-flex' }}><FiChevronDown size={16} /></span>
                     </button>
                     {showGoingSoonFilters && (
                       <div style={styles.filterBar}>
-                        {(currentUserData?.profileVisibility || 'both') === 'both' && (
+                        {(effectiveUserData?.profileVisibility || 'both') === 'both' && (
                           <div style={styles.filterGroup}>
                             <div style={styles.filterLabel}>Gender</div>
                             <div style={styles.filterChips}>
@@ -875,12 +854,11 @@ function DestinationDetail() {
         )}
       </div>
 
-      {/* Profile Preview Modal — Backdrop Photo */}
+      {/* Profile Preview Modal */}
       {previewUser && (() => {
-        const isConnected = (currentUserData?.connections || []).some(c => c.userId === previewUser.id);
-        const isPending = sentRequests.includes(previewUser.id);
+        const isConnected = (effectiveUserData?.connections || []).some(c => c.userId === previewUser.id);
+        const isPending = allSentRequests.includes(previewUser.id);
         const allTrips = previewUser.upcomingTrips || [];
-        // Determine status for this destination
         const todayModal = new Date();
         todayModal.setHours(0, 0, 0, 0);
         const destTrips = allTrips.filter(t => t.destination === destinationName);
@@ -891,7 +869,6 @@ function DestinationDetail() {
         return (
           <div style={styles.modalOverlay} onClick={() => setPreviewUser(null)}>
             <div style={styles.modalCard} onClick={e => e.stopPropagation()}>
-              {/* Backdrop photo */}
               <div style={styles.modalBackdrop}>
                 {previewUser.photoURL ? (
                   <img src={previewUser.photoURL} alt={previewUser.name} style={styles.modalBackdropImg} />
@@ -901,16 +878,15 @@ function DestinationDetail() {
                   </div>
                 )}
                 <div style={styles.modalBackdropGradient} />
-                <button style={styles.modalCloseBtn} onClick={() => setPreviewUser(null)}>✕</button>
+                <button style={styles.modalCloseBtn} onClick={() => setPreviewUser(null)}><FiX size={18} /></button>
                 <div style={styles.modalBackdropInfo}>
                   <div style={styles.modalNameOverlay}>{previewUser.name}{previewUser.age ? `, ${previewUser.age}` : ''}</div>
                   {destTrips.length > 0 && (
-                    <span style={styles.modalStatusBadge}>{isThereDest ? '📍 Here now' : '✈️ Going soon'}</span>
+                    <span style={styles.modalStatusBadge}>{isThereDest ? <><FiMapPin size={11} style={{ marginRight: '4px', verticalAlign: '-1px' }} /> Here now</> : <><FiNavigation size={11} style={{ marginRight: '4px', verticalAlign: '-1px' }} /> Going soon</>}</span>
                   )}
                 </div>
               </div>
 
-              {/* Content below backdrop */}
               <div style={styles.modalBody}>
                 {previewUser.bio && (
                   <p style={styles.modalBio}>{previewUser.bio}</p>
@@ -928,12 +904,12 @@ function DestinationDetail() {
                   <div style={styles.modalSocials}>
                     {previewUser.whatsapp && (
                       <a href={`https://wa.me/${previewUser.whatsapp.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" style={styles.modalSocialBtn}>
-                        💬 WhatsApp
+                        <FiMessageCircle size={14} style={{ marginRight: '4px', verticalAlign: '-2px' }} /> WhatsApp
                       </a>
                     )}
                     {previewUser.instagram && (
-                      <a href={`https://instagram.com/${previewUser.instagram}`} target="_blank" rel="noopener noreferrer" style={styles.modalSocialBtn}>
-                        📷 @{previewUser.instagram}
+                      <a href={`https://www.instagram.com/${previewUser.instagram}`} target="_blank" rel="noopener noreferrer" style={styles.modalSocialBtn}>
+                        <FiCamera size={14} style={{ marginRight: '4px', verticalAlign: '-2px' }} /> @{previewUser.instagram}
                       </a>
                     )}
                   </div>
@@ -949,7 +925,7 @@ function DestinationDetail() {
                       const isUpcoming = todayModal < start;
                       return (
                         <div key={i} style={styles.modalTripItem}>
-                          <span style={styles.modalTripIcon}>{isThere ? '📍' : isUpcoming ? '✈️' : '✓'}</span>
+                          <span style={styles.modalTripIcon}>{isThere ? <FiMapPin size={14} color="#047857" /> : isUpcoming ? <FiNavigation size={14} color="#6b7280" /> : '✓'}</span>
                           <div style={styles.modalTripInfo}>
                             <div style={styles.modalTripDest}>{trip.destination.split(',')[0]}</div>
                             <div style={styles.modalTripDates}>
@@ -982,8 +958,47 @@ function DestinationDetail() {
         style={styles.fab}
         onClick={() => navigate('/add-trip', { state: { preselectedDestination: destinationName } })}
       >
-        <span style={styles.fabIcon}>✈️</span>
+        <FiPlus size={28} color="#fff" />
       </button>
+
+      {/* Trip Picker Modal */}
+      {tripPickerData && (
+        <div style={styles.tripPickerOverlay} onClick={() => setTripPickerData(null)}>
+          <div style={styles.tripPickerCard} onClick={e => e.stopPropagation()}>
+            <div style={styles.tripPickerHeader}>
+              <div style={styles.tripPickerTitle}>Which trip?</div>
+              <button style={styles.tripPickerClose} onClick={() => setTripPickerData(null)}><FiX size={18} /></button>
+            </div>
+            <div style={styles.tripPickerBody}>
+              {tripPickerData.matchingTrips.map(({ index, trip }) => {
+                const start = new Date(trip.startDate);
+                const end = new Date(trip.endDate);
+                const now = new Date();
+                now.setHours(0, 0, 0, 0);
+                const isThere = now >= start && now <= end;
+                return (
+                  <button
+                    key={index}
+                    style={styles.tripPickerOption}
+                    onClick={async () => {
+                      await saveExperienceToTrip(tripPickerData.experience, index);
+                      setTripPickerData(null);
+                    }}
+                  >
+                    <div style={styles.tripPickerOptionLeft}>
+                      <div style={styles.tripPickerDest}>{trip.destination.split(',')[0]}</div>
+                      <div style={styles.tripPickerDates}>
+                        {start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – {end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </div>
+                    </div>
+                    {isThere && <span style={styles.tripPickerBadge}><FiMapPin size={11} /> Now</span>}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       <TabBar />
     </div>
@@ -991,82 +1006,76 @@ function DestinationDetail() {
 }
 
 const styles = {
-  container: { minHeight: '100vh', background: '#f8f9fa', paddingBottom: '80px' },
-  header: { background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)', padding: '24px 20px', color: '#fff' },
-  backBtn: { background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', padding: '8px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: '600', cursor: 'pointer', marginBottom: '12px' },
+  container: { minHeight: '100vh', background: '#faf9f7', paddingBottom: '80px' },
+  header: { background: 'linear-gradient(135deg, #047857 0%, #059669 50%, #10b981 100%)', padding: '24px 20px', color: '#fff' },
+  backBtn: { background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', padding: '10px 16px', borderRadius: '12px', fontSize: '14px', fontWeight: '600', cursor: 'pointer', marginBottom: '12px', display: 'inline-flex', alignItems: 'center' },
   title: { fontSize: '32px', fontWeight: '800', margin: '0 0 8px 0' },
   subtitle: { fontSize: '14px', opacity: 0.9, margin: 0 },
-  tabs: { display: 'flex', background: '#fff', borderBottom: '1px solid #e5e7eb', position: 'sticky', top: 0, zIndex: 10 },
-  tab: { flex: 1, padding: '16px', background: 'transparent', border: 'none', fontSize: '15px', fontWeight: '600', color: '#6b7280', cursor: 'pointer' },
-  tabActive: { color: '#059669', borderBottom: '3px solid #059669' },
+  tabs: { display: 'flex', background: '#fff', borderBottom: '1px solid #e8e5e0', position: 'sticky', top: 0, zIndex: 10 },
+  tab: { flex: 1, padding: '16px', background: 'transparent', border: 'none', fontSize: '15px', fontWeight: '600', color: '#6b6b6b', cursor: 'pointer' },
+  tabActive: { color: '#047857', borderBottom: '3px solid #047857' },
   content: { padding: '20px' },
 
-  // Filters
-  filterToggle: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '12px 16px', background: '#fff', border: '1px solid #e5e7eb', borderRadius: '12px', fontSize: '15px', fontWeight: '600', color: '#374151', cursor: 'pointer', marginBottom: '12px' },
-  filterBar: { marginBottom: '20px', background: '#fff', borderRadius: '12px', padding: '16px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' },
+  filterToggle: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '12px 16px', background: '#fff', border: '1px solid #e8e5e0', borderRadius: '12px', fontSize: '15px', fontWeight: '600', color: '#374151', cursor: 'pointer', marginBottom: '12px' },
+  filterBar: { marginBottom: '20px', background: '#fff', borderRadius: '12px', padding: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06)' },
   filterGroup: { marginBottom: '12px' },
   filterLabel: { fontSize: '12px', fontWeight: '700', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' },
   filterChips: { display: 'flex', gap: '8px', flexWrap: 'wrap' },
-  chip: { padding: '8px 14px', background: '#f3f4f6', color: '#6b7280', border: 'none', borderRadius: '20px', fontSize: '13px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s' },
-  chipActive: { background: '#059669', color: '#fff' },
+  chip: { padding: '8px 14px', background: '#f5f3f0', color: '#6b6b6b', border: 'none', borderRadius: '20px', fontSize: '13px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s' },
+  chipActive: { background: '#047857', color: '#fff' },
 
-  // Experiences
   experiencesGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' },
-  expCard: { background: '#fff', borderRadius: '16px', padding: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' },
+  expCard: { background: '#fff', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 6px rgba(0,0,0,0.04), 0 10px 24px rgba(0,0,0,0.08)' },
   expIcon: { fontSize: '48px', marginBottom: '12px' },
-  expName: { fontSize: '18px', fontWeight: '700', color: '#1f2937', margin: '0 0 8px 0' },
+  expName: { fontSize: '18px', fontWeight: '700', color: '#1a1a1a', margin: '0 0 8px 0' },
   expMeta: { display: 'flex', marginBottom: '8px', fontSize: '14px', color: '#6b7280' },
   expDuration: { fontSize: '14px', color: '#6b7280', marginBottom: '12px' },
-  expPrice: { fontSize: '24px', fontWeight: '800', color: '#059669', marginBottom: '16px' },
-  // Savers row
-  saversRow: { display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: '#f0fdf4', borderRadius: '10px', marginBottom: '4px', cursor: 'pointer', transition: 'background 0.2s' },
+  expPrice: { fontSize: '24px', fontWeight: '800', color: '#047857', marginBottom: '16px' },
+  saversRow: { display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: '#f0f9f4', borderRadius: '10px', marginBottom: '4px', cursor: 'pointer', transition: 'background 0.2s' },
   saversAvatars: { display: 'flex', flexShrink: 0 },
   saverAvatar: { width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #f0fdf4', marginLeft: '-8px' },
   saverAvatarPlaceholder: { width: '28px', height: '28px', borderRadius: '50%', background: 'linear-gradient(135deg, #059669, #10b981)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: '700', border: '2px solid #f0fdf4', marginLeft: '-8px' },
-  saversText: { fontSize: '13px', fontWeight: '600', color: '#059669', lineHeight: 1.3, flex: 1 },
-  saversChevron: { fontSize: '14px', color: '#059669', transition: 'transform 0.2s', flexShrink: 0 },
-  saversExpanded: { background: '#f0fdf4', borderRadius: '0 0 10px 10px', padding: '8px 12px 12px', marginBottom: '12px', display: 'flex', flexDirection: 'column', gap: '10px' },
-  saverProfile: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', padding: '10px 12px', background: '#fff', borderRadius: '12px' },
+  saversText: { fontSize: '13px', fontWeight: '600', color: '#047857', lineHeight: 1.3, flex: 1 },
+  saversChevron: { fontSize: '14px', color: '#047857', transition: 'transform 0.2s', flexShrink: 0 },
+  saversExpanded: { background: '#f0f9f4', borderRadius: '0 0 10px 10px', padding: '8px 12px 12px', marginBottom: '12px', display: 'flex', flexDirection: 'column', gap: '10px' },
+  saverProfile: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', padding: '10px 12px', background: '#fff', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06)' },
   saverProfileLeft: { display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0, cursor: 'pointer' },
   saverProfileImg: { width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 },
   saverProfilePlaceholder: { width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, #059669, #10b981)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', fontWeight: '700', flexShrink: 0 },
   saverProfileInfo: { flex: 1, minWidth: 0 },
   saverProfileName: { fontSize: '14px', fontWeight: '700', color: '#1f2937', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
   saverProfileDates: { fontSize: '12px', color: '#059669', fontWeight: '600', marginTop: '2px' },
-  saverConnectBtn: { padding: '8px 16px', background: '#059669', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '700', cursor: 'pointer', flexShrink: 0 },
-  saverConnectedBadge: { padding: '8px 12px', background: '#f0fdf4', color: '#059669', border: '1px solid #bbf7d0', borderRadius: '8px', fontSize: '12px', fontWeight: '700', flexShrink: 0 },
+  saverConnectBtn: { padding: '10px 16px', background: 'linear-gradient(135deg, #047857, #059669)', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '13px', fontWeight: '700', cursor: 'pointer', flexShrink: 0, boxShadow: '0 2px 8px rgba(4,120,87,0.3)' },
+  saverConnectedBadge: { padding: '8px 12px', background: '#f0f9f4', color: '#047857', border: '1px solid #bbf7d0', borderRadius: '8px', fontSize: '12px', fontWeight: '700', flexShrink: 0 },
   saverPendingBadge: { padding: '8px 12px', background: '#fffbeb', color: '#d97706', border: '1px solid #fde68a', borderRadius: '8px', fontSize: '12px', fontWeight: '700', flexShrink: 0 },
 
   expActions: { display: 'flex', gap: '8px' },
-  saveBtn: { flex: 1, padding: '12px', background: '#f0fdf4', color: '#059669', border: '2px solid #059669', borderRadius: '10px', fontSize: '14px', fontWeight: '700', cursor: 'pointer' },
-  savedBtn: { flex: 1, padding: '12px', background: '#059669', color: '#fff', border: '2px solid #059669', borderRadius: '10px', fontSize: '14px', fontWeight: '700', cursor: 'pointer' },
-  bookBtn: { flex: 1, padding: '12px', background: '#059669', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: '700', cursor: 'pointer' },
+  saveBtn: { flex: 1, padding: '14px 24px', background: '#f0f9f4', color: '#047857', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: '700', cursor: 'pointer' },
+  savedBtn: { flex: 1, padding: '14px 24px', background: 'linear-gradient(135deg, #047857, #059669)', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: '700', cursor: 'pointer', boxShadow: '0 2px 8px rgba(4,120,87,0.3)' },
+  bookBtn: { flex: 1, padding: '14px 24px', background: 'linear-gradient(135deg, #047857, #059669)', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: '700', cursor: 'pointer', boxShadow: '0 2px 8px rgba(4,120,87,0.3)' },
 
-  // People sub-tabs
   subTabs: { display: 'flex', gap: '8px', marginBottom: '16px' },
   subTab: { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px 16px', background: '#fff', border: '2px solid #e5e7eb', borderRadius: '12px', fontSize: '15px', fontWeight: '700', color: '#6b7280', cursor: 'pointer', transition: 'all 0.2s' },
-  subTabActive: { borderColor: '#059669', color: '#059669', background: '#f0fdf4' },
+  subTabActive: { borderColor: '#047857', color: '#047857', background: '#f0f9f4' },
   subTabDot: { width: '8px', height: '8px', borderRadius: '50%', background: '#10b981' },
 
-  // People list — simple rows
   peopleList: { display: 'flex', flexDirection: 'column', gap: '6px' },
-  personRow: { display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', background: '#fff', borderRadius: '12px', cursor: 'pointer', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' },
+  personRow: { display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px', background: '#fff', borderRadius: '12px', cursor: 'pointer', boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06)' },
   personAvatar: { width: '44px', height: '44px', borderRadius: '50%', flexShrink: 0, overflow: 'hidden' },
   personAvatarImg: { width: '100%', height: '100%', objectFit: 'cover' },
   personAvatarPlaceholder: { width: '100%', height: '100%', background: '#e5e7eb', color: '#6b7280', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: '700' },
   personInfo: { flex: 1, minWidth: 0 },
-  personName: { fontSize: '15px', fontWeight: '700', color: '#1f2937' },
+  personName: { fontSize: '15px', fontWeight: '700', color: '#1a1a1a' },
   personDates: { fontSize: '12px', color: '#6b7280', marginTop: '2px' },
-  personConnectBtn: { padding: '8px 16px', background: '#059669', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '700', cursor: 'pointer', flexShrink: 0 },
-  personConnectedTag: { padding: '6px 12px', background: '#f0fdf4', color: '#059669', border: '1px solid #bbf7d0', borderRadius: '8px', fontSize: '12px', fontWeight: '700', flexShrink: 0 },
+  personConnectBtn: { padding: '10px 16px', background: 'linear-gradient(135deg, #047857, #059669)', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '13px', fontWeight: '700', cursor: 'pointer', flexShrink: 0, boxShadow: '0 2px 8px rgba(4,120,87,0.3)' },
+  personConnectedTag: { padding: '6px 12px', background: '#f0f9f4', color: '#047857', border: '1px solid #bbf7d0', borderRadius: '8px', fontSize: '12px', fontWeight: '700', flexShrink: 0 },
   personPendingTag: { padding: '6px 12px', background: '#fffbeb', color: '#d97706', border: '1px solid #fde68a', borderRadius: '8px', fontSize: '12px', fontWeight: '700', flexShrink: 0 },
 
-  // Profile Preview Modal — Backdrop style
   modalOverlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' },
-  modalCard: { background: '#fff', borderRadius: '20px', maxWidth: '380px', width: '100%', maxHeight: '85vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', position: 'relative' },
+  modalCard: { background: '#fff', borderRadius: '20px', maxWidth: '380px', width: '100%', maxHeight: '85vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', position: 'relative', boxShadow: '0 8px 16px rgba(0,0,0,0.06), 0 20px 40px rgba(0,0,0,0.1)' },
   modalBackdrop: { position: 'relative', width: '100%', height: '240px', flexShrink: 0 },
   modalBackdropImg: { width: '100%', height: '100%', objectFit: 'cover' },
-  modalBackdropPlaceholder: { width: '100%', height: '100%', background: 'linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '72px', fontWeight: '800', color: 'rgba(255,255,255,0.35)' },
+  modalBackdropPlaceholder: { width: '100%', height: '100%', background: 'linear-gradient(135deg, #047857 0%, #059669 50%, #10b981 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '72px', fontWeight: '800', color: 'rgba(255,255,255,0.35)' },
   modalBackdropGradient: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '60%', background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 50%, transparent 100%)' },
   modalCloseBtn: { position: 'absolute', top: '12px', right: '12px', width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(0,0,0,0.4)', border: 'none', fontSize: '18px', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2, backdropFilter: 'blur(4px)' },
   modalBackdropInfo: { position: 'absolute', bottom: '16px', left: '16px', right: '16px', zIndex: 2 },
@@ -1075,26 +1084,37 @@ const styles = {
   modalBody: { padding: '20px', overflowY: 'auto', flex: 1 },
   modalBio: { fontSize: '15px', color: '#374151', lineHeight: 1.6, margin: '0 0 16px 0' },
   modalInterests: { display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' },
-  modalInterestChip: { padding: '6px 14px', background: '#f0fdf4', borderRadius: '20px', fontSize: '13px', fontWeight: '600', color: '#059669' },
+  modalInterestChip: { padding: '6px 14px', background: '#f0f9f4', borderRadius: '20px', fontSize: '13px', fontWeight: '600', color: '#047857' },
   modalSocials: { display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' },
-  modalSocialBtn: { padding: '8px 16px', background: '#f3f4f6', borderRadius: '10px', fontSize: '13px', fontWeight: '600', color: '#374151', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' },
+  modalSocialBtn: { padding: '8px 16px', background: '#f5f3f0', borderRadius: '10px', fontSize: '13px', fontWeight: '600', color: '#374151', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' },
   modalTripsSection: { marginBottom: '16px' },
   modalTripsTitle: { fontSize: '13px', fontWeight: '700', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' },
-  modalTripItem: { display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: '#f9fafb', borderRadius: '10px', marginBottom: '6px' },
+  modalTripItem: { display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: '#faf9f7', borderRadius: '10px', marginBottom: '6px' },
   modalTripIcon: { fontSize: '16px', flexShrink: 0 },
   modalTripInfo: { flex: 1, minWidth: 0 },
   modalTripDest: { fontSize: '14px', fontWeight: '700', color: '#1f2937' },
   modalTripDates: { fontSize: '12px', color: '#6b7280', marginTop: '2px' },
-  modalTripBadge: { fontSize: '11px', fontWeight: '700', color: '#059669', background: '#f0fdf4', padding: '4px 8px', borderRadius: '6px', flexShrink: 0 },
-  modalConnectBtn: { width: '100%', padding: '14px', background: '#059669', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '16px', fontWeight: '700', cursor: 'pointer' },
-  modalConnectedBadge: { width: '100%', padding: '14px', background: '#f0fdf4', color: '#059669', border: '2px solid #bbf7d0', borderRadius: '14px', fontSize: '16px', fontWeight: '700', textAlign: 'center' },
+  modalTripBadge: { fontSize: '11px', fontWeight: '700', color: '#047857', background: '#f0f9f4', padding: '4px 8px', borderRadius: '6px', flexShrink: 0 },
+  modalConnectBtn: { width: '100%', padding: '14px', background: 'linear-gradient(135deg, #047857, #059669)', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '16px', fontWeight: '700', cursor: 'pointer', boxShadow: '0 2px 8px rgba(4,120,87,0.3)' },
+  modalConnectedBadge: { width: '100%', padding: '14px', background: '#f0f9f4', color: '#047857', border: '2px solid #bbf7d0', borderRadius: '14px', fontSize: '16px', fontWeight: '700', textAlign: 'center' },
   modalPendingBadge: { width: '100%', padding: '14px', background: '#fffbeb', color: '#d97706', border: '2px solid #fde68a', borderRadius: '14px', fontSize: '16px', fontWeight: '700', textAlign: 'center' },
 
-  fab: { position: 'fixed', bottom: '100px', right: '20px', width: '64px', height: '64px', borderRadius: '32px', background: 'linear-gradient(135deg, #059669, #10b981)', border: 'none', boxShadow: '0 8px 24px rgba(5, 150, 105, 0.4)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 0.2s', zIndex: 999 },
-  fabIcon: { fontSize: '28px' },
+  fab: { position: 'fixed', bottom: '100px', right: '20px', width: '64px', height: '64px', borderRadius: '32px', background: 'linear-gradient(135deg, #047857, #059669)', border: 'none', boxShadow: '0 8px 16px rgba(0,0,0,0.06), 0 20px 40px rgba(0,0,0,0.1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 0.2s', zIndex: 999 },
 
-  loading: { display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', fontSize: '18px', color: '#6b7280' },
   empty: { textAlign: 'center', padding: '60px 20px', fontSize: '18px', color: '#6b7280' },
+
+  // Trip Picker Modal
+  tripPickerOverlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 1100, padding: '20px' },
+  tripPickerCard: { background: '#fff', borderRadius: '20px', maxWidth: '400px', width: '100%', overflow: 'hidden', boxShadow: '0 8px 16px rgba(0,0,0,0.06), 0 20px 40px rgba(0,0,0,0.1)', marginBottom: '20px' },
+  tripPickerHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 20px 12px' },
+  tripPickerTitle: { fontSize: '18px', fontWeight: '800', color: '#1a1a1a' },
+  tripPickerClose: { width: '32px', height: '32px', borderRadius: '50%', background: '#f3f4f6', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280' },
+  tripPickerBody: { padding: '0 20px 20px', display: 'flex', flexDirection: 'column', gap: '8px' },
+  tripPickerOption: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', background: '#faf9f7', border: '2px solid #e8e5e0', borderRadius: '14px', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', transition: 'all 0.15s' },
+  tripPickerOptionLeft: { flex: 1 },
+  tripPickerDest: { fontSize: '16px', fontWeight: '700', color: '#1f2937', marginBottom: '2px' },
+  tripPickerDates: { fontSize: '13px', color: '#6b7280' },
+  tripPickerBadge: { fontSize: '11px', fontWeight: '700', color: '#047857', background: '#f0f9f4', padding: '4px 10px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 },
 };
 
 export default DestinationDetail;
