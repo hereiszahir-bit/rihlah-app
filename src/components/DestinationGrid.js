@@ -27,7 +27,7 @@ function DestinationGrid({ destinations }) {
       'Tunis': 'https://images.pexels.com/photos/3250638/pexels-photo-3250638.jpeg?auto=compress&w=400',
       'Casablanca': 'https://images.pexels.com/photos/3581916/pexels-photo-3581916.jpeg?auto=compress&w=400',
     };
-    
+
     const cityName = name.split(',')[0].trim();
     return images[cityName] || 'https://images.pexels.com/photos/346885/pexels-photo-346885.jpeg?auto=compress&w=400';
   };
@@ -43,74 +43,76 @@ function DestinationGrid({ destinations }) {
   }
 
   return (
-    <div style={styles.grid}>
-      {destinations.map((dest, index) => (
-        <Link
-          key={index}
-          to={`/destination/${encodeURIComponent(dest.name)}`}
-          style={styles.card}
-        >
-          <div 
-            style={{
-              ...styles.image,
-              backgroundImage: `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.6)), url(${getDestinationImage(dest.name)})`
-            }}
+    <div style={styles.scroll}>
+      {destinations.map((dest, index) => {
+        const cityName = dest.name.split(',')[0].trim();
+        const country = dest.name.includes(',') ? dest.name.split(',').slice(1).join(',').trim() : '';
+        return (
+          <Link
+            key={index}
+            to={`/destination/${encodeURIComponent(dest.name)}`}
+            style={styles.card}
           >
-            <div style={styles.overlay}>
-              <h3 style={styles.name}>{dest.name}</h3>
-              
-              {/* Dual Metrics */}
-              <div style={styles.metrics}>
-                {dest.planningCount > 0 && (
-                  <div style={styles.metric}>
-                    <FiNavigation size={13} color="#fff" style={{ marginRight: '4px' }} />
-                    <span style={styles.metricText}>
-                      {dest.planningCount} planning
-                    </span>
-                  </div>
-                )}
-
-                {dest.thereNowCount > 0 && (
-                  <div style={styles.metric}>
-                    <FiMapPin size={13} color="#fff" style={{ marginRight: '4px' }} />
-                    <span style={styles.metricText}>
-                      {dest.thereNowCount} there now
-                    </span>
-                  </div>
-                )}
-                
-                {dest.planningCount === 0 && dest.thereNowCount === 0 && (
-                  <div style={styles.metric}>
-                    <span style={styles.metricText}>No travelers yet</span>
-                  </div>
-                )}
+            <div
+              style={{
+                ...styles.image,
+                backgroundImage: `linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.6)), url(${getDestinationImage(dest.name)})`,
+              }}
+            >
+              <div style={styles.overlay}>
+                <h3 style={styles.name}>{cityName}</h3>
+                {country && <p style={styles.country}>{country}</p>}
+                {(() => {
+                  if (dest.thereNowCount === 0 && dest.planningCount === 0) {
+                    return <div style={styles.badge}>Be the first</div>;
+                  }
+                  return (
+                    <div style={styles.metrics}>
+                      {dest.thereNowCount > 0 && (
+                        <div style={styles.metric}>
+                          <FiMapPin size={12} style={{ marginRight: '3px' }} /> {dest.thereNowCount} here now
+                        </div>
+                      )}
+                      {dest.planningCount > 0 && (
+                        <div style={styles.metric}>
+                          <FiNavigation size={12} style={{ marginRight: '3px' }} /> {dest.planningCount} planning
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             </div>
-          </div>
-        </Link>
-      ))}
+          </Link>
+        );
+      })}
     </div>
   );
 }
 
 const styles = {
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(2, 1fr)',
-    gap: '16px',
-    padding: '20px',
+  scroll: {
+    display: 'flex',
+    overflowX: 'auto',
+    gap: '14px',
+    paddingLeft: '20px',
+    paddingRight: '20px',
+    paddingBottom: '8px',
+    scrollbarWidth: 'none',
+    msOverflowStyle: 'none',
+    WebkitOverflowScrolling: 'touch',
   },
   card: {
+    flexShrink: 0,
+    width: '180px',
     borderRadius: '16px',
     overflow: 'hidden',
     textDecoration: 'none',
-    aspectRatio: '1',
     boxShadow: '0 4px 6px rgba(0,0,0,0.04), 0 10px 24px rgba(0,0,0,0.08)',
-    transition: 'transform 0.2s',
   },
   image: {
-    width: '100%',
-    height: '100%',
+    width: '180px',
+    height: '240px',
     backgroundSize: 'cover',
     backgroundPosition: 'center',
     display: 'flex',
@@ -124,8 +126,25 @@ const styles = {
     fontSize: '18px',
     fontWeight: '800',
     color: '#fff',
-    margin: '0 0 8px 0',
+    margin: '0 0 2px 0',
     textShadow: '0 2px 8px rgba(0,0,0,0.5)',
+  },
+  country: {
+    fontSize: '13px',
+    color: 'rgba(255,255,255,0.85)',
+    margin: '0 0 8px 0',
+    textShadow: '0 1px 4px rgba(0,0,0,0.4)',
+  },
+  badge: {
+    fontSize: '12px',
+    fontWeight: '700',
+    color: '#6ee7b7',
+    background: 'rgba(0,0,0,0.35)',
+    backdropFilter: 'blur(4px)',
+    padding: '4px 10px',
+    borderRadius: '12px',
+    display: 'inline-block',
+    textShadow: '0 1px 2px rgba(0,0,0,0.3)',
   },
   metrics: {
     display: 'flex',
@@ -133,18 +152,13 @@ const styles = {
     gap: '4px',
   },
   metric: {
+    fontSize: '12px',
+    fontWeight: '700',
+    color: '#fff',
+    textShadow: '0 1px 4px rgba(0,0,0,0.5)',
     display: 'flex',
     alignItems: 'center',
-    gap: '6px',
-  },
-  metricIcon: {
-    fontSize: '14px',
-  },
-  metricText: {
-    fontSize: '13px',
-    color: '#fff',
-    fontWeight: '600',
-    textShadow: '0 2px 4px rgba(0,0,0,0.5)',
+    gap: '4px',
   },
   empty: {
     textAlign: 'center',

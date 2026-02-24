@@ -1,7 +1,7 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useUser } from '../context/UserContext';
-import { FiX, FiMapPin, FiNavigation, FiMessageCircle, FiCamera, FiPlus } from 'react-icons/fi';
+import { FiX, FiMapPin, FiNavigation, FiMessageCircle, FiCamera, FiPlus, FiSearch } from 'react-icons/fi';
 import DestinationGrid from '../components/DestinationGrid';
 import TabBar from '../components/TabBar';
 
@@ -22,6 +22,56 @@ function Destinations() {
   const navigate = useNavigate();
   const { currentUser, currentUserData, allUsers, allUsersMap, refreshAll } = useUser();
   const [previewUser, setPreviewUser] = useState(null);
+  const [moreSearch, setMoreSearch] = useState('');
+  const [moreSearchOpen, setMoreSearchOpen] = useState(false);
+  const moreSearchRef = useRef(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [citySuggestions, setCitySuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const cityDebounceRef = useRef(null);
+
+  const searchCities = useCallback(async (query) => {
+    if (query.length < 2) {
+      setCitySuggestions([]);
+      return;
+    }
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=6&featuretype=city`,
+        { headers: { 'Accept-Language': 'en' } }
+      );
+      const data = await res.json();
+      const cities = data
+        .filter(item => item.address && (item.address.city || item.address.town || item.address.village || item.address.state))
+        .map(item => {
+          const addr = item.address;
+          const cityName = addr.city || addr.town || addr.village || addr.state || '';
+          const country = addr.country || '';
+          return `${cityName}, ${country}`;
+        })
+        .filter((v, i, arr) => arr.indexOf(v) === i);
+      setCitySuggestions(cities);
+    } catch {
+      setCitySuggestions([]);
+    }
+  }, []);
+
+  const handleSearchChange = (value) => {
+    setSearchQuery(value);
+    setShowSuggestions(true);
+    if (cityDebounceRef.current) clearTimeout(cityDebounceRef.current);
+    cityDebounceRef.current = setTimeout(() => searchCities(value), 300);
+  };
+
+  // Check if a Nominatim suggestion matches an existing destination with travelers
+  const getMatchingDestination = (city) => {
+    const normalize = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const cityNorm = normalize(city.split(',')[0].trim());
+    return destinations.find(dest => {
+      const destNorm = normalize(dest.name.split(',')[0].trim());
+      return destNorm === cityNorm;
+    });
+  };
 
   // Refresh data on mount to pick up other users' changes
   useEffect(() => {
@@ -195,6 +245,70 @@ function Destinations() {
           <h1 style={styles.title}>Explore</h1>
         </div>
         <p style={styles.subtitle}>Discover where Muslims travel</p>
+        <div style={styles.searchWrapper}>
+          <div style={styles.searchBox}>
+            <FiSearch size={18} color="#6b7280" style={{ flexShrink: 0 }} />
+            <input
+              type="text"
+              placeholder="Search any city..."
+              style={styles.searchInput}
+              value={searchQuery}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { setShowSuggestions(false); e.target.blur(); } }}
+              onFocus={() => setShowSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+              autoComplete="off"
+            />
+            {searchQuery && (
+              <button
+                style={styles.searchClear}
+                onMouseDown={() => { setSearchQuery(''); setCitySuggestions([]); setShowSuggestions(false); }}
+              >
+                <FiX size={16} />
+              </button>
+            )}
+          </div>
+          {showSuggestions && citySuggestions.length > 0 && (
+            <div style={styles.suggestionsDropdown}>
+              {citySuggestions.map((city, i) => {
+                const existing = getMatchingDestination(city);
+                const totalTravelers = existing ? existing.thereNowCount + existing.planningCount : 0;
+                return (
+                  <div key={i} style={styles.suggestionItem}>
+                    <div
+                      style={styles.suggestionInfo}
+                      onMouseDown={() => {
+                        setSearchQuery('');
+                        setShowSuggestions(false);
+                        setCitySuggestions([]);
+                        navigate(`/destination/${encodeURIComponent(existing ? existing.name : city)}`);
+                      }}
+                    >
+                      <FiMapPin size={14} style={{ marginRight: '8px', flexShrink: 0, color: existing ? '#047857' : '#9ca3af' }} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={styles.suggestionName}>{city}</div>
+                        {totalTravelers > 0 && (
+                          <div style={styles.suggestionMeta}>{totalTravelers} traveler{totalTravelers !== 1 ? 's' : ''}</div>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      style={styles.suggestionAddBtn}
+                      onMouseDown={() => {
+                        setSearchQuery('');
+                        setShowSuggestions(false);
+                        setCitySuggestions([]);
+                        navigate('/add-trip', { state: { preselectedDestination: city } });
+                      }}
+                    >
+                      <FiPlus size={16} />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Connections Section */}
@@ -238,12 +352,20 @@ function Destinations() {
       )}
 
       {/* Featured Section */}
+      {(() => {
+        const normalize = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+        const q = normalize(searchQuery.trim());
+        const filtered = q
+          ? FEATURED_CITIES.filter(c => normalize(c.name).includes(q) || normalize(c.country).includes(q))
+          : FEATURED_CITIES;
+        if (filtered.length === 0) return null;
+        return (
       <div style={styles.section}>
         <div style={styles.sectionHeader}>
           <h2 style={styles.sectionTitle}>Featured</h2>
         </div>
         <div style={styles.horizontalScroll}>
-          {FEATURED_CITIES.map((city) => (
+          {filtered.map((city) => (
             <Link
               key={city.name}
               to={`/destination/${encodeURIComponent(featuredFullNames[city.name] || city.name)}`}
@@ -284,6 +406,8 @@ function Destinations() {
           ))}
         </div>
       </div>
+        );
+      })()}
 
       {/* Profile Preview Modal */}
       {previewUser && (
@@ -363,13 +487,55 @@ function Destinations() {
       {(() => {
         const normalize = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
         const featuredNorm = new Set(FEATURED_CITIES.map(c => normalize(c.name)));
-        const nonFeatured = destinations.filter(dest => !featuredNorm.has(normalize(dest.name.split(',')[0].trim())));
-        return nonFeatured.length > 0 ? (
+        const q = normalize(searchQuery.trim());
+        const mq = normalize(moreSearch.trim());
+        const allNonFeatured = destinations
+          .filter(dest => !featuredNorm.has(normalize(dest.name.split(',')[0].trim())))
+          .filter(dest => !q || normalize(dest.name).includes(q));
+        const filtered = mq
+          ? allNonFeatured.filter(dest => normalize(dest.name).includes(mq))
+          : allNonFeatured;
+        const showSearchIcon = allNonFeatured.length >= 10;
+        return allNonFeatured.length > 0 ? (
           <div style={styles.section}>
             <div style={styles.sectionHeader}>
-              <h2 style={styles.sectionTitle}>More Destinations</h2>
+              {moreSearchOpen ? (
+                <div style={styles.moreSearchBar}>
+                  <FiSearch size={16} color="#9ca3af" style={{ flexShrink: 0 }} />
+                  <input
+                    ref={moreSearchRef}
+                    type="text"
+                    placeholder="Search destinations..."
+                    style={styles.moreSearchInput}
+                    value={moreSearch}
+                    onChange={(e) => setMoreSearch(e.target.value)}
+                    autoComplete="off"
+                  />
+                  <button
+                    style={styles.moreSearchClose}
+                    onClick={() => { setMoreSearchOpen(false); setMoreSearch(''); }}
+                  >
+                    <FiX size={16} />
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <h2 style={styles.sectionTitle}>More Destinations</h2>
+                  {showSearchIcon && (
+                    <button
+                      style={styles.moreSearchIcon}
+                      onClick={() => {
+                        setMoreSearchOpen(true);
+                        setTimeout(() => moreSearchRef.current?.focus(), 50);
+                      }}
+                    >
+                      <FiSearch size={18} />
+                    </button>
+                  )}
+                </>
+              )}
             </div>
-            <DestinationGrid destinations={nonFeatured} />
+            <DestinationGrid destinations={filtered} />
           </div>
         ) : null;
       })()}
@@ -416,7 +582,97 @@ const styles = {
   subtitle: {
     fontSize: '15px',
     color: '#6b6b6b',
-    margin: 0,
+    margin: '0 0 16px 0',
+  },
+  searchWrapper: {
+    position: 'relative',
+  },
+  searchBox: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    padding: '12px 16px',
+    background: '#f5f3f0',
+    border: 'none',
+    borderRadius: '12px',
+  },
+  searchInput: {
+    flex: 1,
+    border: 'none',
+    outline: 'none',
+    fontSize: '15px',
+    color: '#1f2937',
+    background: 'transparent',
+    fontFamily: 'inherit',
+  },
+  suggestionsDropdown: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    background: '#fff',
+    border: '1px solid #e5e7eb',
+    borderRadius: '0 0 12px 12px',
+    zIndex: 50,
+    maxHeight: '240px',
+    overflowY: 'auto',
+    boxShadow: '0 4px 6px rgba(0,0,0,0.04), 0 10px 24px rgba(0,0,0,0.08)',
+  },
+  searchClear: {
+    background: 'none',
+    border: 'none',
+    color: '#9ca3af',
+    cursor: 'pointer',
+    padding: '4px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  suggestionItem: {
+    width: '100%',
+    padding: '10px 16px',
+    background: 'none',
+    borderBottom: '1px solid #f3f4f6',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+  },
+  suggestionInfo: {
+    flex: 1,
+    minWidth: 0,
+    display: 'flex',
+    alignItems: 'center',
+    cursor: 'pointer',
+    padding: '4px 0',
+  },
+  suggestionName: {
+    fontSize: '15px',
+    fontWeight: '500',
+    color: '#1f2937',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+  },
+  suggestionMeta: {
+    fontSize: '12px',
+    fontWeight: '600',
+    color: '#047857',
+    marginTop: '1px',
+  },
+  suggestionAddBtn: {
+    width: '32px',
+    height: '32px',
+    borderRadius: '50%',
+    background: 'linear-gradient(135deg, #047857, #059669)',
+    border: 'none',
+    color: '#fff',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    boxShadow: '0 2px 6px rgba(4,120,87,0.3)',
   },
 
   // Sections
@@ -546,6 +802,49 @@ const styles = {
   storyPlaceholder: { width: '56px', height: '56px', borderRadius: '50%', background: '#f3f4f6', border: '3px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', fontWeight: '700', color: '#6b7280' },
   storyDest: { fontSize: '11px', fontWeight: '700', color: '#047857', textDecoration: 'none', textAlign: 'center', lineHeight: 1.2, maxWidth: '76px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
   storyName: { fontSize: '11px', color: '#6b7280', fontWeight: '600', textAlign: 'center', maxWidth: '76px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+
+  // More Destinations search
+  moreSearchIcon: {
+    background: 'none',
+    border: 'none',
+    color: '#9ca3af',
+    cursor: 'pointer',
+    padding: '6px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: '50%',
+    transition: 'color 0.2s',
+  },
+  moreSearchBar: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    flex: 1,
+    padding: '8px 14px',
+    background: '#f5f3f0',
+    borderRadius: '10px',
+  },
+  moreSearchInput: {
+    flex: 1,
+    border: 'none',
+    outline: 'none',
+    fontSize: '14px',
+    color: '#1f2937',
+    background: 'transparent',
+    fontFamily: 'inherit',
+  },
+  moreSearchClose: {
+    background: 'none',
+    border: 'none',
+    color: '#9ca3af',
+    cursor: 'pointer',
+    padding: '2px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
 
   // FAB
   fab: {
