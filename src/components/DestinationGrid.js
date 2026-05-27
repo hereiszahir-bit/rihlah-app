@@ -1,41 +1,14 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { FiMapPin, FiNavigation } from 'react-icons/fi';
+import { getDestinationImage } from '../data/destinations';
 
 function DestinationGrid({ destinations }) {
-  const getDestinationImage = (name) => {
-    const images = {
-      'Istanbul': 'https://images.pexels.com/photos/1559825/pexels-photo-1559825.jpeg?auto=compress&w=400',
-      'Tokyo': 'https://images.pexels.com/photos/2506923/pexels-photo-2506923.jpeg?auto=compress&w=400',
-      'Marrakech': 'https://images.pexels.com/photos/2549018/pexels-photo-2549018.jpeg?auto=compress&w=400',
-      'Dubai': 'https://images.pexels.com/photos/1470405/pexels-photo-1470405.jpeg?auto=compress&w=400',
-      'Kuala Lumpur': 'https://images.pexels.com/photos/3881104/pexels-photo-3881104.jpeg?auto=compress&w=400',
-      'Barcelona': 'https://images.pexels.com/photos/1388030/pexels-photo-1388030.jpeg?auto=compress&w=400',
-      'Cairo': 'https://images.pexels.com/photos/3252273/pexels-photo-3252273.jpeg?auto=compress&w=400',
-      'Jakarta': 'https://images.pexels.com/photos/1587927/pexels-photo-1587927.jpeg?auto=compress&w=400',
-      'Mecca': 'https://images.pexels.com/photos/2291789/pexels-photo-2291789.jpeg?auto=compress&w=400',
-      'Medina': 'https://images.pexels.com/photos/2895185/pexels-photo-2895185.jpeg?auto=compress&w=400',
-      'Amman': 'https://images.pexels.com/photos/1631665/pexels-photo-1631665.jpeg?auto=compress&w=400',
-      'Sarajevo': 'https://images.pexels.com/photos/5765766/pexels-photo-5765766.jpeg?auto=compress&w=400',
-      'Cordoba': 'https://images.pexels.com/photos/3722818/pexels-photo-3722818.jpeg?auto=compress&w=400',
-      'Fez': 'https://images.pexels.com/photos/3889704/pexels-photo-3889704.jpeg?auto=compress&w=400',
-      'Doha': 'https://images.pexels.com/photos/3551203/pexels-photo-3551203.jpeg?auto=compress&w=400',
-      'Muscat': 'https://images.pexels.com/photos/4388167/pexels-photo-4388167.jpeg?auto=compress&w=400',
-      'Baku': 'https://images.pexels.com/photos/4388164/pexels-photo-4388164.jpeg?auto=compress&w=400',
-      'Zanzibar': 'https://images.pexels.com/photos/3601425/pexels-photo-3601425.jpeg?auto=compress&w=400',
-      'London': 'https://images.pexels.com/photos/460672/pexels-photo-460672.jpeg?auto=compress&w=400',
-      'Tunis': 'https://images.pexels.com/photos/3250638/pexels-photo-3250638.jpeg?auto=compress&w=400',
-      'Casablanca': 'https://images.pexels.com/photos/3581916/pexels-photo-3581916.jpeg?auto=compress&w=400',
-    };
-
-    const cityName = name.split(',')[0].trim();
-    return images[cityName] || 'https://images.pexels.com/photos/346885/pexels-photo-346885.jpeg?auto=compress&w=400';
-  };
 
   if (destinations.length === 0) {
     return (
       <div style={styles.empty}>
-        <div style={styles.emptyIcon}>🌍</div>
+        <div style={styles.emptyIcon}></div>
         <h3 style={styles.emptyTitle}>No destinations yet</h3>
         <p style={styles.emptyText}>Be the first to add a trip!</p>
       </div>

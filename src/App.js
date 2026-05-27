@@ -1,6 +1,7 @@
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import { UserProvider, useUser } from './context/UserContext';
+import { Capacitor } from '@capacitor/core';
 import ModernHome from './pages/ModernHome';
 import Signup from './pages/Signup';
 import Login from './pages/Login';
@@ -11,6 +12,23 @@ import DestinationDetail from './pages/DestinationDetail';
 import Saved from './pages/Saved';
 import Profile from './pages/Profile';
 import EditProfile from './pages/EditProfile';
+import Messages from './pages/Messages';
+import ChatRoom from './pages/ChatRoom';
+import Waitlist from './pages/Waitlist';
+import TabBar from './components/TabBar';
+
+const TAB_PAGES = ['/destinations', '/saved', '/messages', '/profile'];
+
+function AppShell({ children }) {
+  const location = useLocation();
+  const showTabBar = TAB_PAGES.includes(location.pathname);
+  return (
+    <>
+      {children}
+      {showTabBar && <TabBar />}
+    </>
+  );
+}
 
 function AppRoutes() {
   const { currentUser, loading, needsOnboarding } = useUser();
@@ -25,11 +43,13 @@ function AppRoutes() {
   }
 
   return (
+    <AppShell>
     <Routes>
       {/* Public routes */}
-      <Route path="/" element={currentUser ? <Navigate to="/destinations" /> : <ModernHome />} />
+      <Route path="/" element={currentUser ? <Navigate to="/destinations" /> : (Capacitor.isNativePlatform() ? <Navigate to="/login" /> : <ModernHome />)} />
       <Route path="/signup" element={currentUser ? <Navigate to="/destinations" /> : <Signup />} />
       <Route path="/login" element={currentUser ? <Navigate to="/destinations" /> : <Login />} />
+      <Route path="/waitlist" element={<Waitlist />} />
 
       {/* Protected routes */}
       {currentUser ? (
@@ -44,6 +64,8 @@ function AppRoutes() {
               <Route path="/saved" element={<Saved />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/edit-profile" element={<EditProfile />} />
+              <Route path="/messages" element={<Messages />} />
+              <Route path="/chat/:conversationId" element={<ChatRoom />} />
               <Route path="*" element={<Navigate to="/destinations" />} />
             </>
           )}
@@ -52,6 +74,7 @@ function AppRoutes() {
         <Route path="*" element={<Navigate to="/" />} />
       )}
     </Routes>
+    </AppShell>
   );
 }
 

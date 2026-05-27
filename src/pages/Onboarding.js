@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth, db, storage } from '../firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { FiCamera } from 'react-icons/fi';
 
 function Onboarding() {
   const navigate = useNavigate();
@@ -19,6 +20,7 @@ const [formData, setFormData] = useState({
     city: '',
     bio: '',
     interests: [],
+    identity: [],
     whatsapp: '',
     instagram: ''
   });
@@ -33,19 +35,22 @@ const [formData, setFormData] = useState({
     }
     try {
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=5&featuretype=city`,
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=8`,
         { headers: { 'Accept-Language': 'en' } }
       );
       const data = await res.json();
       const cities = data
-        .filter(item => item.address && (item.address.city || item.address.town || item.address.village || item.address.state))
+        .filter(item => item.address)
         .map(item => {
           const addr = item.address;
-          const cityName = addr.city || addr.town || addr.village || addr.state || '';
+          const cityName = addr.city || addr.town || addr.village || addr.state || addr.county || item.name || '';
           const country = addr.country || '';
+          if (!cityName) return null;
           return `${cityName}, ${country}`;
         })
-        .filter((v, i, arr) => arr.indexOf(v) === i);
+        .filter(Boolean)
+        .filter((v, i, arr) => arr.indexOf(v) === i)
+        .slice(0, 6);
       setCitySuggestions(cities);
     } catch {
       setCitySuggestions([]);
@@ -72,6 +77,36 @@ const [formData, setFormData] = useState({
     }
   }, []);
 
+  // Pre-fill from waitlist data if user's email exists
+  useEffect(() => {
+    const prefillFromWaitlist = async () => {
+      const email = auth.currentUser?.email;
+      if (!email) return;
+
+      try {
+        const q = query(collection(db, 'waitlist'), where('email', '==', email.toLowerCase()));
+        const snap = await getDocs(q);
+        if (snap.empty) return;
+
+        const data = snap.docs[0].data();
+        setFormData(prev => ({
+          ...prev,
+          name: data.name || prev.name,
+          age: data.age ? String(data.age) : prev.age,
+          gender: data.gender || prev.gender,
+          profileVisibility: data.profileVisibility || prev.profileVisibility,
+          city: data.homeCity || prev.city,
+          interests: data.interests?.length > 0 ? data.interests : prev.interests,
+          identity: data.identity?.length > 0 ? data.identity : prev.identity,
+        }));
+      } catch (err) {
+        console.warn('Waitlist prefill failed:', err);
+      }
+    };
+
+    prefillFromWaitlist();
+  }, []);
+
   const handleChange = (e) => {
     const updates = { [e.target.name]: e.target.value };
     // Auto-default visibility to same gender when gender is selected
@@ -91,6 +126,20 @@ const [formData, setFormData] = useState({
       setFormData({
         ...formData,
         interests: [...formData.interests, interest]
+      });
+    }
+  };
+
+  const toggleIdentity = (value) => {
+    if (formData.identity.includes(value)) {
+      setFormData({
+        ...formData,
+        identity: formData.identity.filter(i => i !== value)
+      });
+    } else {
+      setFormData({
+        ...formData,
+        identity: [...formData.identity, value]
       });
     }
   };
@@ -138,46 +187,30 @@ const [formData, setFormData] = useState({
   };
 
   const handleSubmit = async () => {
-    console.log('=== STARTING PROFILE CREATION ===');
-    
     try {
       const user = auth.currentUser;
-      console.log('Current user:', user);
-      
+
       if (!user) {
-        console.error('No user logged in!');
         alert('You are not logged in. Please log in again.');
         navigate('/login');
         return;
       }
 
-      console.log('User ID:', user.uid);
       setUploadingPhoto(true);
       let photoURL = '';
-      
+
       // Upload photo if provided
       if (photoFile) {
         try {
-          console.log('Starting photo upload...');
-          console.log('Photo file size:', photoFile.size, 'bytes');
-          
           const photoRef = ref(storage, `profilePhotos/${user.uid}`);
-          const uploadResult = await uploadBytes(photoRef, photoFile);
-          console.log('Photo uploaded successfully');
-          
+          await uploadBytes(photoRef, photoFile);
           photoURL = await getDownloadURL(photoRef);
-          console.log('Photo URL obtained');
         } catch (photoError) {
-          console.error('=== PHOTO UPLOAD ERROR ===');
-          console.error('Error message:', photoError.message);
+          console.error('Photo upload error:', photoError.message);
           alert(`Photo upload failed: ${photoError.message}\n\nContinuing without photo...`);
         }
-      } else {
-        console.log('No photo file selected, skipping upload');
       }
 
-      console.log('Creating Firestore document...');
-      
       const userData = {
         name: formData.name.trim(),
         age: parseInt(formData.age),
@@ -186,6 +219,7 @@ const [formData, setFormData] = useState({
         city: (formData.city || '').trim(),
         bio: (formData.bio || '').trim(),
         interests: formData.interests,
+        identity: formData.identity,
         whatsapp: (formData.whatsapp || '').trim(),
         instagram: (formData.instagram || '').trim(),
         photoURL: photoURL,
@@ -194,21 +228,14 @@ const [formData, setFormData] = useState({
         connections: [],
         onboardingComplete: true
       };
-      
-      console.log('Saving user data...');
 
       await setDoc(doc(db, 'users', user.uid), userData);
-      
-      console.log('=== PROFILE CREATED SUCCESSFULLY ===');
-      console.log('Navigating to /modernhome...');
-      
+
       // Force navigation with window.location
       window.location.href = '/destinations';
-      
+
     } catch (error) {
-      console.error('=== PROFILE CREATION ERROR ===');
-      console.error('Error message:', error.message);
-      console.error('Full error:', error);
+      console.error('Profile creation error:', error.message);
       
       alert(`Failed to save profile:\n\n${error.message}\n\nCheck console for details.`);
     } finally {
@@ -216,10 +243,28 @@ const [formData, setFormData] = useState({
     }
   };
 
-  const availableInterests = [
-    'Food', 'Adventure', 'Culture', 'Photography', 
-    'Art', 'History', 'Nature', 'Shopping', 
-    'Nightlife', 'Wellness'
+  const interestGroups = [
+    {
+      label: 'Travel',
+      options: ['Hiking', 'Food & Culinary', 'History & Culture', 'Photography', 'Beach', 'Adventure', 'Shopping', 'Nature'],
+    },
+    {
+      label: 'Events',
+      options: ['World Cup 2026', 'Hajj', 'Umrah', 'Conferences', 'Festivals', 'Sporting Events'],
+    },
+    {
+      label: 'Lifestyle',
+      options: ['Fitness', 'Tech', 'Business', 'Art', 'Reading', 'Sports', 'Volunteering', 'Language Learning'],
+    },
+    {
+      label: 'Faith',
+      options: ['Mosque Tours', 'Halal Dining', 'Quran Study', 'Islamic History', 'Dawah', 'Community Service'],
+    },
+  ];
+
+  const identityOptions = [
+    'Student', 'Young Professional', 'Solo Traveler', 'Couple',
+    'Family', 'Retiree', 'Gap Year', 'Digital Nomad',
   ];
 
   return (
@@ -241,7 +286,7 @@ const [formData, setFormData] = useState({
       {/* Step 1: Basic Info */}
       {step === 1 && (
         <div style={styles.stepContainer}>
-          <h2 style={styles.stepTitle}>Welcome to Rihlah! 👋</h2>
+          <h2 style={styles.stepTitle}>Welcome to Rihlah</h2>
           <p style={styles.stepSubtitle}>Let's set up your profile</p>
 
           <div style={styles.inputGroup}>
@@ -368,7 +413,7 @@ const [formData, setFormData] = useState({
       {/* Step 2: Photo Upload */}
       {step === 2 && (
         <div style={styles.stepContainer}>
-          <h2 style={styles.stepTitle}>Add Your Photo 📷</h2>
+          <h2 style={styles.stepTitle}>Add Your Photo</h2>
           <p style={styles.stepSubtitle}>
             Help other travelers recognize you (optional)
           </p>
@@ -393,7 +438,7 @@ const [formData, setFormData] = useState({
                 style={styles.photoUploadPlaceholder}
                 onClick={() => document.getElementById('photoInput').click()}
               >
-                <div style={styles.uploadIcon}>📷</div>
+                <div style={styles.uploadIcon}><FiCamera size={28} color="#047857" /></div>
                 <div style={styles.uploadText}>Tap to Upload Photo</div>
                 <div style={styles.uploadSubtext}>JPG, PNG (Max 5MB)</div>
               </div>
@@ -417,24 +462,52 @@ const [formData, setFormData] = useState({
         </div>
       )}
 
-      {/* Step 3: Interests */}
+      {/* Step 3: Identity + Interests */}
       {step === 3 && (
         <div style={styles.stepContainer}>
-          <h2 style={styles.stepTitle}>What are you into? 🎯</h2>
-          <p style={styles.stepSubtitle}>Select your travel interests</p>
+          <h2 style={styles.stepTitle}>Tell us about yourself</h2>
+          <p style={styles.stepSubtitle}>Select what describes you</p>
 
-          <div style={styles.interestsGrid}>
-            {availableInterests.map((interest) => (
-              <button
-                key={interest}
-                style={{
-                  ...styles.interestChip,
-                  ...(formData.interests.includes(interest) ? styles.interestChipActive : {})
-                }}
-                onClick={() => toggleInterest(interest)}
-              >
-                {interest}
-              </button>
+          {/* Identity */}
+          <div style={{ marginBottom: '28px' }}>
+            <div style={styles.groupLabel}>I am a...</div>
+            <div style={styles.interestsGrid}>
+              {identityOptions.map((option) => (
+                <button
+                  key={option}
+                  style={{
+                    ...styles.interestChip,
+                    ...(formData.identity.includes(option) ? styles.interestChipActive : {})
+                  }}
+                  onClick={() => toggleIdentity(option)}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Grouped Interests */}
+          <div style={{ marginBottom: '24px' }}>
+            <div style={{ fontSize: '16px', fontWeight: '700', color: '#1a1a1a', marginBottom: '16px' }}>Interests</div>
+            {interestGroups.map((group) => (
+              <div key={group.label} style={{ marginBottom: '16px' }}>
+                <div style={styles.groupLabel}>{group.label}</div>
+                <div style={styles.interestsGrid}>
+                  {group.options.map((interest) => (
+                    <button
+                      key={interest}
+                      style={{
+                        ...styles.interestChip,
+                        ...(formData.interests.includes(interest) ? styles.interestChipActive : {})
+                      }}
+                      onClick={() => toggleInterest(interest)}
+                    >
+                      {interest}
+                    </button>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
 
@@ -450,7 +523,7 @@ const [formData, setFormData] = useState({
       {/* Step 4: Social Links */}
       {step === 4 && (
         <div style={styles.stepContainer}>
-          <h2 style={styles.stepTitle}>Stay Connected 📱</h2>
+          <h2 style={styles.stepTitle}>Stay Connected</h2>
           <p style={styles.stepSubtitle}>Add your contact info (optional)</p>
 
           <div style={styles.inputGroup}>
@@ -491,7 +564,7 @@ const [formData, setFormData] = useState({
       {/* Step 5: Review */}
       {step === 5 && (
         <div style={styles.stepContainer}>
-          <h2 style={styles.stepTitle}>Looking Good! ✨</h2>
+          <h2 style={styles.stepTitle}>Looking Good</h2>
           <p style={styles.stepSubtitle}>Review your profile</p>
 
           <div style={styles.reviewSection}>
@@ -527,6 +600,11 @@ const [formData, setFormData] = useState({
                 <strong>Bio:</strong> {formData.bio}
               </div>
             )}
+            {formData.identity.length > 0 && (
+              <div style={styles.reviewItem}>
+                <strong>Identity:</strong> {formData.identity.join(', ')}
+              </div>
+            )}
             {formData.interests.length > 0 && (
               <div style={styles.reviewItem}>
                 <strong>Interests:</strong> {formData.interests.join(', ')}
@@ -552,7 +630,7 @@ const [formData, setFormData] = useState({
             onClick={handleSubmit}
             disabled={uploadingPhoto}
           >
-            {uploadingPhoto ? 'Creating Profile...' : "Let's Go! 🚀"}
+            {uploadingPhoto ? 'Creating Profile...' : "Let's Go"}
           </button>
           <button style={styles.backButton} onClick={prevStep}>
             ← Back
@@ -727,11 +805,19 @@ const styles = {
   hiddenInput: {
     display: 'none',
   },
+  groupLabel: {
+    fontSize: '12px',
+    fontWeight: '700',
+    color: '#047857',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+    marginBottom: '10px',
+  },
   interestsGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(2, 1fr)',
     gap: '12px',
-    marginBottom: '24px',
+    marginBottom: '12px',
   },
   interestChip: {
     padding: '14px',

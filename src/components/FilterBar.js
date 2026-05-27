@@ -17,14 +17,31 @@ function FilterBar({ filters, onFilterChange }) {
 
 const travelStyles = [
   { value: 'all', label: 'All' },
-  { value: 'food', label: '🍽️ Foodie', icon: '🍽️' },
-  { value: 'history', label: '🏛️ History', icon: '🏛️' },
-  { value: 'photography', label: '📸 Photography', icon: '📸' },
-  { value: 'adventure', label: '⛰️ Adventure', icon: '⛰️' },
-  { value: 'art', label: '🎨 Art', icon: '🎨' },
-  { value: 'shopping', label: '🛍️ Shopping', icon: '🛍️' },
-  { value: 'nature', label: '🌿 Nature', icon: '🌿' },
-  { value: 'relaxation', label: '🧘 Relaxation', icon: '🧘' },
+  // Travel
+  { value: 'Hiking', label: 'Hiking' },
+  { value: 'Food & Culinary', label: 'Food & Culinary' },
+  { value: 'History & Culture', label: 'History & Culture' },
+  { value: 'Photography', label: 'Photography' },
+  { value: 'Beach', label: 'Beach' },
+  { value: 'Adventure', label: 'Adventure' },
+  { value: 'Shopping', label: 'Shopping' },
+  { value: 'Nature', label: 'Nature' },
+  // Lifestyle
+  { value: 'Fitness', label: 'Fitness' },
+  { value: 'Tech', label: 'Tech' },
+  { value: 'Business', label: 'Business' },
+  { value: 'Art', label: 'Art' },
+  { value: 'Reading', label: 'Reading' },
+  { value: 'Sports', label: 'Sports' },
+  { value: 'Volunteering', label: 'Volunteering' },
+  { value: 'Language Learning', label: 'Language Learning' },
+  // Faith
+  { value: 'Mosque Tours', label: 'Mosque Tours' },
+  { value: 'Halal Dining', label: 'Halal Dining' },
+  { value: 'Quran Study', label: 'Quran Study' },
+  { value: 'Islamic History', label: 'Islamic History' },
+  { value: 'Dawah', label: 'Dawah' },
+  { value: 'Community Service', label: 'Community Service' },
 ];
 
   return (

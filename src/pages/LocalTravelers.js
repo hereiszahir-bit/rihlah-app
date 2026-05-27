@@ -67,7 +67,7 @@ function LocalTravelers() {
 
       {/* Content */}
       <div style={styles.container}>
-        <h1 style={styles.title}>🌍 Travelers in {myCity}</h1>
+        <h1 style={styles.title}>Travelers in {myCity}</h1>
         <p style={styles.subtitle}>
           {localUsers.length} {localUsers.length === 1 ? 'Muslim' : 'Muslims'} in your area
         </p>
@@ -79,7 +79,7 @@ function LocalTravelers() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
             >
-              <div style={styles.emptyIcon}>👥</div>
+              <div style={styles.emptyIcon}></div>
               <h3 style={styles.emptyTitle}>No travelers in {myCity} yet</h3>
               <p style={styles.emptyText}>
                 Be the first! Invite friends to join Rihlah.
@@ -104,12 +104,12 @@ function LocalTravelers() {
                   </div>
                   <div style={styles.info}>
                     <h3 style={styles.name}>{traveler.name}</h3>
-                    <p style={styles.location}>📍 {traveler.city}</p>
+                    <p style={styles.location}>{traveler.city}</p>
                   </div>
                 </div>
 
                 <p style={styles.bio}>
-                  {traveler.bio || 'New to Rihlah 🌙'}
+                  {traveler.bio || 'New to Rihlah'}
                 </p>
 
                 {traveler.interests && traveler.interests.length > 0 && (
@@ -121,7 +121,7 @@ function LocalTravelers() {
                 )}
 
                 <button style={styles.messageBtn}>
-                  💬 Message
+                  Message
                 </button>
               </motion.div>
             ))

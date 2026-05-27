@@ -91,7 +91,7 @@ function OnboardingCards({ options, onComplete, title }) {
           Skip
         </button>
         <button style={styles.yesBtn} onClick={handleYes}>
-          ❤️ Yes!
+          Yes
         </button>
       </div>
 

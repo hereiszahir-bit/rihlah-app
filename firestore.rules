@@ -9,7 +9,7 @@ service cloud.firestore {
       // Helper: list of every field a user document may contain
       function allowedUserFields() {
         return ['name', 'age', 'gender', 'profileVisibility', 'city', 'bio',
-                'interests', 'whatsapp', 'instagram', 'linkedin', 'photoURL',
+                'interests', 'identity', 'whatsapp', 'instagram', 'linkedin', 'photoURL',
                 'createdAt', 'upcomingTrips', 'pastTrips', 'connections',
                 'onboardingComplete', 'email'];
       }
@@ -27,11 +27,18 @@ service cloud.firestore {
             && d.onboardingComplete is bool;
       }
 
+      // Partial document for initial signup (before onboarding)
+      function validPartialCreate() {
+        let d = request.resource.data;
+        return d.onboardingComplete == false
+            && d.email is string;
+      }
+
       allow create: if request.auth.uid == userId
                     && request.resource.data.keys().hasOnly(allowedUserFields())
-                    && validUserData();
+                    && (validUserData() || validPartialCreate());
 
-      // Own profile: full validation. Other user: only connections field.
+      // Own profile: full validation. Other user: only connections field if self is involved.
       allow update: if request.auth != null
                     && request.resource.data.keys().hasOnly(allowedUserFields())
                     && (
@@ -39,6 +46,13 @@ service cloud.firestore {
                       || (request.auth.uid != userId
                           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['connections']))
                     );
+    }
+
+    // ── Waitlist ────────────────────────────────────────────
+    match /waitlist/{docId} {
+      allow read: if false;
+      allow create: if request.resource.data.keys().hasAll(['email', 'createdAt']);
+      allow update, delete: if false;
     }
 
     // ── Connection Requests ────────────────────────────────
@@ -76,6 +90,45 @@ service cloud.firestore {
       allow delete: if request.auth != null
                     && (resource.data.fromUserId == request.auth.uid
                         || resource.data.toUserId == request.auth.uid);
+    }
+
+    // ── Conversations ─────────────────────────────────────
+    match /conversations/{convId} {
+      // Only participants can read conversations
+      allow read: if request.auth != null
+                  && request.auth.uid in resource.data.participants;
+
+      // Authenticated users can create conversations they're part of
+      allow create: if request.auth != null
+                    && request.auth.uid in request.resource.data.participants
+                    && request.resource.data.participants.size() == 2;
+
+      // Only participants can update (for lastMessage, unread counts)
+      allow update: if request.auth != null
+                    && request.auth.uid in resource.data.participants;
+
+      // Participants can delete conversations
+      allow delete: if request.auth != null
+                    && request.auth.uid in resource.data.participants;
+
+      // Messages subcollection
+      match /messages/{messageId} {
+        // Only conversation participants can read messages
+        allow read: if request.auth != null
+                    && request.auth.uid in get(/databases/$(database)/documents/conversations/$(convId)).data.participants;
+
+        // Only participants can send messages, senderId must match auth, validate content
+        allow create: if request.auth != null
+                      && request.auth.uid in get(/databases/$(database)/documents/conversations/$(convId)).data.participants
+                      && request.resource.data.senderId == request.auth.uid
+                      && request.resource.data.text is string
+                      && request.resource.data.text.size() >= 1
+                      && request.resource.data.text.size() <= 5000;
+
+        // Conversation participants can delete messages
+        allow delete: if request.auth != null
+                      && request.auth.uid in get(/databases/$(database)/documents/conversations/$(convId)).data.participants;
+      }
     }
   }
 }

@@ -1,8 +1,18 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithPopup, signInWithCredential, GoogleAuthProvider } from 'firebase/auth';
+import { Capacitor } from '@capacitor/core';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase';
+
+const nativeGoogleSignIn = () => {
+  return new Promise((resolve, reject) => {
+    window._googleSignInResolve = (idToken) => { resolve(idToken); cleanup(); };
+    window._googleSignInReject = (err) => { reject(err); cleanup(); };
+    const cleanup = () => { delete window._googleSignInResolve; delete window._googleSignInReject; };
+    window.webkit.messageHandlers.googleSignIn.postMessage({});
+  });
+};
 
 function Signup() {
   const navigate = useNavigate();
@@ -18,8 +28,6 @@ function Signup() {
 
     try {
       const result = await createUserWithEmailAndPassword(auth, email, password);
-      console.log('User created:', result.user.uid);
-
       // Create user document with onboardingComplete: false
       await setDoc(doc(db, 'users', result.user.uid), {
         email: result.user.email,
@@ -30,7 +38,6 @@ function Signup() {
         profileVisibility: 'both',
       });
 
-      console.log('User document created with onboardingComplete: false');
       navigate('/onboarding');
     } catch (error) {
       console.error('Signup error:', error);
@@ -45,16 +52,20 @@ function Signup() {
     setLoading(true);
 
     try {
-      const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-      
-      console.log('Google sign-in successful:', result.user.uid);
+      let result;
 
-      // Check if user document exists
+      if (Capacitor.isNativePlatform()) {
+        const idToken = await nativeGoogleSignIn();
+        const credential = GoogleAuthProvider.credential(idToken);
+        result = await signInWithCredential(auth, credential);
+      } else {
+        const provider = new GoogleAuthProvider();
+        result = await signInWithPopup(auth, provider);
+      }
+
       const userDoc = await getDoc(doc(db, 'users', result.user.uid));
 
       if (!userDoc.exists()) {
-        // New Google user - create document and send to onboarding
         await setDoc(doc(db, 'users', result.user.uid), {
           email: result.user.email,
           name: result.user.displayName || '',
@@ -65,11 +76,8 @@ function Signup() {
           upcomingTrips: [],
           profileVisibility: 'both',
         });
-
-        console.log('New Google user - going to onboarding');
         navigate('/onboarding');
       } else {
-        // Existing user - check if they completed onboarding
         const userData = userDoc.data();
         if (!userData.onboardingComplete) {
           navigate('/onboarding');

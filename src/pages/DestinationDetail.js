@@ -3,8 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { auth, db } from '../firebase';
 import { doc, updateDoc, addDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import { useUser } from '../context/UserContext';
-import { FiX, FiArrowLeft, FiChevronDown, FiMapPin, FiNavigation, FiStar, FiClock, FiMessageCircle, FiCamera, FiPlus, FiCheck } from 'react-icons/fi';
-import TabBar from '../components/TabBar';
+import { FiX, FiArrowLeft, FiChevronDown, FiMapPin, FiNavigation, FiStar, FiClock, FiMessageCircle, FiCamera, FiPlus, FiCheck, FiCompass, FiSearch, FiAlertTriangle } from 'react-icons/fi';
+
+import { getExperiencesForDestination } from '../data/destinations';
 
 function DestinationDetail() {
   const { destination } = useParams();
@@ -53,119 +54,28 @@ function DestinationDetail() {
     const rawVisibility = currentUserData?.profileVisibility || 'both';
     const myVisibility = ['Male', 'Female', 'both'].includes(rawVisibility) ? rawVisibility : 'both';
 
+    const myConnections = (currentUserData?.connections || []).map(c => c.userId);
+
     return allUsers.filter(user => {
       if (user.id === currentUser.uid) return false;
       if (!Array.isArray(user.upcomingTrips) || user.upcomingTrips.length === 0) return false;
       if (!user.upcomingTrips.some(trip => trip.destination === destinationName)) return false;
 
-      const rawTheirVis = user.profileVisibility || 'both';
-      const theirVisibility = ['Male', 'Female', 'both'].includes(rawTheirVis) ? rawTheirVis : 'both';
-      if (theirVisibility !== 'both' && theirVisibility !== currentUserGender) return false;
-      if (myVisibility !== 'both' && user.gender !== myVisibility) return false;
+      // Skip gender visibility filter for existing connections
+      if (!myConnections.includes(user.id)) {
+        const rawTheirVis = user.profileVisibility || 'both';
+        const theirVisibility = ['Male', 'Female', 'both'].includes(rawTheirVis) ? rawTheirVis : 'both';
+        if (theirVisibility !== 'both' && theirVisibility !== currentUserGender) return false;
+        if (myVisibility !== 'both' && user.gender !== myVisibility) return false;
+      }
 
       return true;
     });
   }, [allUsers, currentUser, currentUserData, destinationName]);
 
-  // Experiences (static data)
+  // Experiences from curated destinations data
   const experiences = useMemo(() => {
-    const allExperiences = {
-      'Istanbul': [
-        { id: 1, name: 'Ottoman Mosques Walking Tour', price: 45, icon: '🕌', duration: '3 hours', rating: 4.9, reviews: 324, bookingUrl: 'https://www.getyourguide.com/istanbul-l56/ottoman-mosques-walking-tour-t12345/' },
-        { id: 2, name: 'Halal Food Tour', price: 65, icon: '🍽️', duration: '4 hours', rating: 5.0, reviews: 189, bookingUrl: 'https://www.getyourguide.com/istanbul-l56/halal-food-tour-t23456/' },
-        { id: 3, name: 'Sisters Turkish Bath', price: 80, icon: '💆‍♀️', duration: '2.5 hours', rating: 4.8, reviews: 267, bookingUrl: 'https://www.getyourguide.com/istanbul-l56/turkish-bath-experience-t34567/' },
-        { id: 4, name: 'Bosphorus Sunset Cruise', price: 55, icon: '🚢', duration: '2 hours', rating: 4.9, reviews: 412, bookingUrl: 'https://www.getyourguide.com/istanbul-l56/bosphorus-sunset-cruise-t45678/' },
-        { id: 5, name: 'Grand Bazaar Shopping Tour', price: 35, icon: '🛍️', duration: '3 hours', rating: 4.7, reviews: 156, bookingUrl: 'https://www.getyourguide.com/istanbul-l56/grand-bazaar-shopping-tour-t56789/' },
-      ],
-      'Dubai': [
-        { id: 6, name: 'Desert Safari', price: 90, icon: '🏜️', duration: '6 hours', rating: 4.9, reviews: 892, bookingUrl: 'https://www.getyourguide.com/dubai-l173/desert-safari-t67890/' },
-        { id: 7, name: 'Burj Khalifa Tour', price: 120, icon: '🏙️', duration: '2 hours', rating: 4.8, reviews: 1245, bookingUrl: 'https://www.getyourguide.com/dubai-l173/burj-khalifa-tour-t78901/' },
-        { id: 8, name: 'Gold Souk Visit', price: 40, icon: '💍', duration: '2 hours', rating: 4.6, reviews: 234, bookingUrl: 'https://www.getyourguide.com/dubai-l173/gold-souk-visit-t89012/' },
-      ],
-      'Cairo': [
-        { id: 9, name: 'Pyramids & Sphinx Tour', price: 75, icon: '🔺', duration: '5 hours', rating: 4.9, reviews: 678, bookingUrl: 'https://www.getyourguide.com/cairo-l169/pyramids-sphinx-tour-t90123/' },
-        { id: 10, name: 'Islamic Cairo Walking Tour', price: 50, icon: '🕌', duration: '4 hours', rating: 4.8, reviews: 345, bookingUrl: 'https://www.getyourguide.com/cairo-l169/islamic-cairo-walking-tour-t01234/' },
-        { id: 11, name: 'Nile River Dinner Cruise', price: 85, icon: '🚢', duration: '3 hours', rating: 4.7, reviews: 456, bookingUrl: 'https://www.getyourguide.com/cairo-l169/nile-dinner-cruise-t12340/' },
-      ],
-      'Marrakech': [
-        { id: 12, name: 'Medina Walking Tour', price: 40, icon: '🕌', duration: '3 hours', rating: 4.8, reviews: 512, bookingUrl: 'https://www.getyourguide.com/marrakech-l208/medina-walking-tour-t13456/' },
-        { id: 13, name: 'Moroccan Cooking Class', price: 55, icon: '🍽️', duration: '4 hours', rating: 4.9, reviews: 278, bookingUrl: 'https://www.getyourguide.com/marrakech-l208/moroccan-cooking-class-t14567/' },
-        { id: 14, name: 'Atlas Mountains Day Trip', price: 70, icon: '🏔️', duration: '8 hours', rating: 4.7, reviews: 389, bookingUrl: 'https://www.getyourguide.com/marrakech-l208/atlas-mountains-day-trip-t15678/' },
-      ],
-      'Kuala Lumpur': [
-        { id: 15, name: 'Islamic Arts Museum Tour', price: 30, icon: '🕌', duration: '2 hours', rating: 4.8, reviews: 198, bookingUrl: 'https://www.getyourguide.com/kuala-lumpur-l246/islamic-arts-museum-t16789/' },
-        { id: 16, name: 'Halal Street Food Tour', price: 50, icon: '🍽️', duration: '3.5 hours', rating: 4.9, reviews: 345, bookingUrl: 'https://www.getyourguide.com/kuala-lumpur-l246/halal-street-food-tour-t17890/' },
-        { id: 17, name: 'Batu Caves & Cultural Tour', price: 45, icon: '🏛️', duration: '4 hours', rating: 4.7, reviews: 267, bookingUrl: 'https://www.getyourguide.com/kuala-lumpur-l246/batu-caves-tour-t18901/' },
-      ],
-      'Mecca': [
-        { id: 18, name: 'Guided Umrah Support Tour', price: 60, icon: '🕋', duration: '5 hours', rating: 5.0, reviews: 1023, bookingUrl: 'https://www.getyourguide.com/mecca-l4561/umrah-support-tour-t20001/' },
-        { id: 19, name: 'Historical Mecca Walking Tour', price: 45, icon: '🕌', duration: '3 hours', rating: 4.9, reviews: 578, bookingUrl: 'https://www.getyourguide.com/mecca-l4561/historical-mecca-tour-t20002/' },
-        { id: 20, name: 'Jabal al-Nour Hiking Experience', price: 35, icon: '🏔️', duration: '4 hours', rating: 4.8, reviews: 312, bookingUrl: 'https://www.getyourguide.com/mecca-l4561/jabal-al-nour-hike-t20003/' },
-      ],
-      'Medina': [
-        { id: 21, name: 'Masjid al-Nabawi Guided Visit', price: 40, icon: '🕌', duration: '3 hours', rating: 5.0, reviews: 876, bookingUrl: 'https://www.getyourguide.com/medina-l4562/masjid-nabawi-visit-t20004/' },
-        { id: 22, name: 'Historical Sites of Medina Tour', price: 55, icon: '🏛️', duration: '4 hours', rating: 4.9, reviews: 445, bookingUrl: 'https://www.getyourguide.com/medina-l4562/historical-medina-tour-t20005/' },
-        { id: 23, name: 'Date Farm & Local Market Tour', price: 30, icon: '🌴', duration: '2.5 hours', rating: 4.7, reviews: 234, bookingUrl: 'https://www.getyourguide.com/medina-l4562/date-farm-tour-t20006/' },
-      ],
-      'Amman': [
-        { id: 24, name: 'Citadel & Roman Theater Tour', price: 40, icon: '🏛️', duration: '3 hours', rating: 4.8, reviews: 356, bookingUrl: 'https://www.getyourguide.com/amman-l347/citadel-roman-theater-t20007/' },
-        { id: 25, name: 'Jordanian Cooking Class', price: 55, icon: '🍽️', duration: '4 hours', rating: 4.9, reviews: 189, bookingUrl: 'https://www.getyourguide.com/amman-l347/jordanian-cooking-class-t20008/' },
-        { id: 26, name: 'Dead Sea Day Trip', price: 75, icon: '🏖️', duration: '8 hours', rating: 4.8, reviews: 512, bookingUrl: 'https://www.getyourguide.com/amman-l347/dead-sea-day-trip-t20009/' },
-      ],
-      'Sarajevo': [
-        { id: 27, name: 'Old Town & Ottoman Heritage Walk', price: 35, icon: '🕌', duration: '3 hours', rating: 4.9, reviews: 278, bookingUrl: 'https://www.getyourguide.com/sarajevo-l917/ottoman-heritage-walk-t20010/' },
-        { id: 28, name: 'Bosnian War & Tunnel Tour', price: 45, icon: '🏛️', duration: '4 hours', rating: 4.8, reviews: 423, bookingUrl: 'https://www.getyourguide.com/sarajevo-l917/war-tunnel-tour-t20011/' },
-        { id: 29, name: 'Traditional Bosnian Food Tour', price: 40, icon: '🍽️', duration: '3.5 hours', rating: 4.9, reviews: 198, bookingUrl: 'https://www.getyourguide.com/sarajevo-l917/bosnian-food-tour-t20012/' },
-      ],
-      'Cordoba': [
-        { id: 30, name: 'Mezquita-Cathedral Guided Tour', price: 35, icon: '🕌', duration: '2 hours', rating: 4.9, reviews: 867, bookingUrl: 'https://www.getyourguide.com/cordoba-l488/mezquita-cathedral-tour-t20013/' },
-        { id: 31, name: 'Jewish Quarter & Alcazar Visit', price: 40, icon: '🏛️', duration: '3 hours', rating: 4.8, reviews: 345, bookingUrl: 'https://www.getyourguide.com/cordoba-l488/jewish-quarter-alcazar-t20014/' },
-        { id: 32, name: 'Andalusian Patios Walking Tour', price: 25, icon: '🌺', duration: '2 hours', rating: 4.7, reviews: 234, bookingUrl: 'https://www.getyourguide.com/cordoba-l488/patios-walking-tour-t20015/' },
-      ],
-      'Fez': [
-        { id: 33, name: 'Fez Medina Guided Walking Tour', price: 30, icon: '🕌', duration: '4 hours', rating: 4.9, reviews: 567, bookingUrl: 'https://www.getyourguide.com/fez-l571/medina-walking-tour-t20016/' },
-        { id: 34, name: 'Traditional Tanneries Visit', price: 20, icon: '🎨', duration: '1.5 hours', rating: 4.7, reviews: 345, bookingUrl: 'https://www.getyourguide.com/fez-l571/tanneries-visit-t20017/' },
-        { id: 35, name: 'Moroccan Ceramic Workshop', price: 45, icon: '🏺', duration: '3 hours', rating: 4.8, reviews: 178, bookingUrl: 'https://www.getyourguide.com/fez-l571/ceramic-workshop-t20018/' },
-      ],
-      'Doha': [
-        { id: 36, name: 'Museum of Islamic Art Tour', price: 25, icon: '🏛️', duration: '2 hours', rating: 4.9, reviews: 456, bookingUrl: 'https://www.getyourguide.com/doha-l1234/islamic-art-museum-t20019/' },
-        { id: 37, name: 'Souq Waqif & Katara Tour', price: 40, icon: '🛍️', duration: '3 hours', rating: 4.8, reviews: 312, bookingUrl: 'https://www.getyourguide.com/doha-l1234/souq-waqif-katara-t20020/' },
-        { id: 38, name: 'Desert Safari & Inland Sea', price: 95, icon: '🏜️', duration: '6 hours', rating: 4.9, reviews: 589, bookingUrl: 'https://www.getyourguide.com/doha-l1234/desert-safari-inland-sea-t20021/' },
-      ],
-      'Muscat': [
-        { id: 39, name: 'Sultan Qaboos Grand Mosque Visit', price: 20, icon: '🕌', duration: '2 hours', rating: 4.9, reviews: 423, bookingUrl: 'https://www.getyourguide.com/muscat-l1456/grand-mosque-visit-t20022/' },
-        { id: 40, name: 'Muttrah Souq & Corniche Walk', price: 30, icon: '🛍️', duration: '2.5 hours', rating: 4.7, reviews: 234, bookingUrl: 'https://www.getyourguide.com/muscat-l1456/muttrah-souq-walk-t20023/' },
-        { id: 41, name: 'Wadi Shab Day Trip', price: 70, icon: '🏞️', duration: '8 hours', rating: 4.9, reviews: 345, bookingUrl: 'https://www.getyourguide.com/muscat-l1456/wadi-shab-day-trip-t20024/' },
-      ],
-      'Baku': [
-        { id: 42, name: 'Old City & Maiden Tower Tour', price: 30, icon: '🏰', duration: '3 hours', rating: 4.8, reviews: 312, bookingUrl: 'https://www.getyourguide.com/baku-l1789/old-city-maiden-tower-t20025/' },
-        { id: 43, name: 'Flame Towers & Modern Baku', price: 35, icon: '🏙️', duration: '2.5 hours', rating: 4.7, reviews: 198, bookingUrl: 'https://www.getyourguide.com/baku-l1789/flame-towers-modern-baku-t20026/' },
-        { id: 44, name: 'Fire Temple & Mud Volcanoes', price: 50, icon: '🔥', duration: '5 hours', rating: 4.8, reviews: 267, bookingUrl: 'https://www.getyourguide.com/baku-l1789/fire-temple-mud-volcanoes-t20027/' },
-      ],
-      'Zanzibar': [
-        { id: 45, name: 'Stone Town Spice Tour', price: 35, icon: '🌿', duration: '3 hours', rating: 4.8, reviews: 456, bookingUrl: 'https://www.getyourguide.com/zanzibar-l2345/stone-town-spice-tour-t20028/' },
-        { id: 46, name: 'Jozani Forest & Beach Day', price: 55, icon: '🌴', duration: '6 hours', rating: 4.7, reviews: 278, bookingUrl: 'https://www.getyourguide.com/zanzibar-l2345/jozani-forest-beach-t20029/' },
-        { id: 47, name: 'Dhow Sunset Sailing Cruise', price: 45, icon: '⛵', duration: '2.5 hours', rating: 4.9, reviews: 389, bookingUrl: 'https://www.getyourguide.com/zanzibar-l2345/dhow-sunset-cruise-t20030/' },
-      ],
-      'Barcelona': [
-        { id: 48, name: 'Gothic Quarter Walking Tour', price: 30, icon: '🏛️', duration: '2.5 hours', rating: 4.8, reviews: 789, bookingUrl: 'https://www.getyourguide.com/barcelona-l45/gothic-quarter-tour-t20031/' },
-        { id: 49, name: 'Sagrada Familia Guided Tour', price: 50, icon: '⛪', duration: '2 hours', rating: 4.9, reviews: 1567, bookingUrl: 'https://www.getyourguide.com/barcelona-l45/sagrada-familia-tour-t20032/' },
-        { id: 50, name: 'Halal Tapas & Food Tour', price: 65, icon: '🍽️', duration: '3.5 hours', rating: 4.8, reviews: 234, bookingUrl: 'https://www.getyourguide.com/barcelona-l45/halal-tapas-food-tour-t20033/' },
-      ],
-      'London': [
-        { id: 51, name: 'East London Muslim Heritage Walk', price: 25, icon: '🕌', duration: '2.5 hours', rating: 4.8, reviews: 345, bookingUrl: 'https://www.getyourguide.com/london-l57/muslim-heritage-walk-t20034/' },
-        { id: 52, name: 'British Museum Guided Tour', price: 35, icon: '🏛️', duration: '3 hours', rating: 4.9, reviews: 1234, bookingUrl: 'https://www.getyourguide.com/london-l57/british-museum-tour-t20035/' },
-        { id: 53, name: 'Halal Food Tour: Brick Lane & Beyond', price: 55, icon: '🍽️', duration: '3.5 hours', rating: 4.8, reviews: 278, bookingUrl: 'https://www.getyourguide.com/london-l57/halal-food-brick-lane-t20036/' },
-      ],
-      'Jakarta': [
-        { id: 54, name: 'Istiqlal Mosque & Old Town Tour', price: 25, icon: '🕌', duration: '3 hours', rating: 4.8, reviews: 345, bookingUrl: 'https://www.getyourguide.com/jakarta-l294/istiqlal-mosque-old-town-t20037/' },
-        { id: 55, name: 'Jakarta Street Food Adventure', price: 35, icon: '🍽️', duration: '4 hours', rating: 4.9, reviews: 456, bookingUrl: 'https://www.getyourguide.com/jakarta-l294/street-food-adventure-t20038/' },
-        { id: 56, name: 'Thousand Islands Day Trip', price: 65, icon: '🏝️', duration: '8 hours', rating: 4.7, reviews: 189, bookingUrl: 'https://www.getyourguide.com/jakarta-l294/thousand-islands-trip-t20039/' },
-      ],
-    };
-
-    const cityName = destinationName.split(',')[0].trim();
-    return allExperiences[cityName] || allExperiences[destinationName] || [];
+    return getExperiencesForDestination(destinationName);
   }, [destinationName]);
 
   const [localCurrentUserData, setLocalCurrentUserData] = useState(null);
@@ -468,7 +378,9 @@ function DestinationDetail() {
         </button>
         <h1 style={styles.title}>{destinationName}</h1>
         <p style={styles.subtitle}>
-          {allHereNow.length + allGoingSoon.length} travelers • {experiences.length} experiences
+          {allHereNow.length + allGoingSoon.length > 0 || experiences.length > 0
+            ? `${allHereNow.length + allGoingSoon.length} travelers • ${experiences.length} experiences`
+            : 'Be the first to explore this destination'}
         </p>
       </div>
 
@@ -542,7 +454,17 @@ function DestinationDetail() {
             )}
 
             <div style={styles.experiencesGrid}>
-              {filteredExperiences.length === 0 && (
+              {filteredExperiences.length === 0 && experiences.length === 0 && (
+                <div style={styles.emptyState}>
+                  <div style={styles.emptyStateIconWrap}><FiCompass size={32} color="#047857" /></div>
+                  <p style={styles.emptyStateTitle}>Experiences coming soon</p>
+                  <p style={styles.emptyStateText}>We're curating the best halal-friendly experiences for this destination</p>
+                  <button style={styles.emptyStateBtn} onClick={() => setActiveTab('people')}>
+                    See who's traveling here
+                  </button>
+                </div>
+              )}
+              {filteredExperiences.length === 0 && experiences.length > 0 && (
                 <div style={styles.empty}>
                   <p>No experiences match your filters</p>
                 </div>
@@ -551,7 +473,7 @@ function DestinationDetail() {
                 const savers = getOverlappingSavers(exp.id);
                 return (
                   <div key={exp.id} style={styles.expCard}>
-                    <div style={styles.expIcon}>{exp.icon}</div>
+                    <div style={styles.expIconWrap}><FiCompass size={24} color="#047857" /></div>
                     <h3 style={styles.expName}>{exp.name}</h3>
                     <div style={styles.expMeta}>
                       <span><FiStar size={14} style={{ marginRight: '3px', verticalAlign: '-2px', color: '#f59e0b' }} />{exp.rating}</span>
@@ -747,15 +669,19 @@ function DestinationDetail() {
                       </div>
                     ) : (
                       <div style={styles.empty}>
-                        <div style={{fontSize: '48px', marginBottom: '12px'}}>🔍</div>
+                        <div style={{marginBottom: '12px'}}><FiSearch size={32} color="#9ca3af" /></div>
                         <p>No travelers match your filters</p>
                       </div>
                     )}
                   </>
                 ) : (
-                  <div style={styles.empty}>
-                    <div style={{fontSize: '64px', marginBottom: '16px'}}>📍</div>
-                    <p>No one is here right now</p>
+                  <div style={styles.emptyState}>
+                    <div style={styles.emptyStateIconWrap}><FiMapPin size={32} color="#047857" /></div>
+                    <p style={styles.emptyStateTitle}>Be the first one here</p>
+                    <p style={styles.emptyStateText}>Add your trip and we'll match you with travelers when they arrive</p>
+                    <button style={styles.emptyStateBtn} onClick={() => navigate('/add-trip', { state: { preselectedDestination: destinationName } })}>
+                      <FiPlus size={16} style={{ marginRight: '6px', verticalAlign: '-2px' }} /> Add Trip
+                    </button>
                   </div>
                 )}
               </div>
@@ -837,15 +763,19 @@ function DestinationDetail() {
                       </div>
                     ) : (
                       <div style={styles.empty}>
-                        <div style={{fontSize: '48px', marginBottom: '12px'}}>🔍</div>
+                        <div style={{marginBottom: '12px'}}><FiSearch size={32} color="#9ca3af" /></div>
                         <p>No travelers match your filters</p>
                       </div>
                     )}
                   </>
                 ) : (
-                  <div style={styles.empty}>
-                    <div style={{fontSize: '64px', marginBottom: '16px'}}>✈️</div>
-                    <p>No upcoming travelers yet</p>
+                  <div style={styles.emptyState}>
+                    <div style={styles.emptyStateIconWrap}><FiNavigation size={32} color="#047857" /></div>
+                    <p style={styles.emptyStateTitle}>No one's going yet</p>
+                    <p style={styles.emptyStateText}>Add your trip and get notified when someone else plans to visit</p>
+                    <button style={styles.emptyStateBtn} onClick={() => navigate('/add-trip', { state: { preselectedDestination: destinationName } })}>
+                      <FiPlus size={16} style={{ marginRight: '6px', verticalAlign: '-2px' }} /> Add Trip
+                    </button>
                   </div>
                 )}
               </div>
@@ -1000,18 +930,17 @@ function DestinationDetail() {
         </div>
       )}
 
-      <TabBar />
     </div>
   );
 }
 
 const styles = {
-  container: { minHeight: '100vh', background: '#faf9f7', paddingBottom: '80px' },
-  header: { background: 'linear-gradient(135deg, #047857 0%, #059669 50%, #10b981 100%)', padding: '24px 20px', color: '#fff' },
+  container: { minHeight: '100vh', background: '#faf9f7', paddingBottom: '70px' },
+  header: { background: 'linear-gradient(135deg, #047857 0%, #059669 50%, #10b981 100%)', padding: '8px 20px 12px', color: '#fff' },
   backBtn: { background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', padding: '10px 16px', borderRadius: '12px', fontSize: '14px', fontWeight: '600', cursor: 'pointer', marginBottom: '12px', display: 'inline-flex', alignItems: 'center' },
   title: { fontSize: '32px', fontWeight: '800', margin: '0 0 8px 0' },
   subtitle: { fontSize: '14px', opacity: 0.9, margin: 0 },
-  tabs: { display: 'flex', background: '#fff', borderBottom: '1px solid #e8e5e0', position: 'sticky', top: 0, zIndex: 10 },
+  tabs: { display: 'flex', background: '#fff', borderBottom: '1px solid #e8e5e0' },
   tab: { flex: 1, padding: '16px', background: 'transparent', border: 'none', fontSize: '15px', fontWeight: '600', color: '#6b6b6b', cursor: 'pointer' },
   tabActive: { color: '#047857', borderBottom: '3px solid #047857' },
   content: { padding: '20px' },
@@ -1026,7 +955,7 @@ const styles = {
 
   experiencesGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' },
   expCard: { background: '#fff', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 6px rgba(0,0,0,0.04), 0 10px 24px rgba(0,0,0,0.08)' },
-  expIcon: { fontSize: '48px', marginBottom: '12px' },
+  expIconWrap: { width: '48px', height: '48px', borderRadius: '14px', background: '#f0f9f4', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px' },
   expName: { fontSize: '18px', fontWeight: '700', color: '#1a1a1a', margin: '0 0 8px 0' },
   expMeta: { display: 'flex', marginBottom: '8px', fontSize: '14px', color: '#6b7280' },
   expDuration: { fontSize: '14px', color: '#6b7280', marginBottom: '12px' },
@@ -1102,6 +1031,11 @@ const styles = {
   fab: { position: 'fixed', bottom: '100px', right: '20px', width: '64px', height: '64px', borderRadius: '32px', background: 'linear-gradient(135deg, #047857, #059669)', border: 'none', boxShadow: '0 8px 16px rgba(0,0,0,0.06), 0 20px 40px rgba(0,0,0,0.1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 0.2s', zIndex: 999 },
 
   empty: { textAlign: 'center', padding: '60px 20px', fontSize: '18px', color: '#6b7280' },
+  emptyState: { textAlign: 'center', padding: '48px 24px', background: '#fff', borderRadius: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' },
+  emptyStateIconWrap: { width: '64px', height: '64px', borderRadius: '50%', background: '#f0f9f4', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px', marginLeft: 'auto', marginRight: 'auto' },
+  emptyStateTitle: { fontSize: '18px', fontWeight: '700', color: '#1a1a1a', margin: '0 0 8px 0' },
+  emptyStateText: { fontSize: '14px', color: '#6b7280', lineHeight: 1.5, margin: '0 0 20px 0', maxWidth: '280px', marginLeft: 'auto', marginRight: 'auto' },
+  emptyStateBtn: { padding: '12px 24px', background: 'linear-gradient(135deg, #047857, #059669)', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', boxShadow: '0 2px 8px rgba(4,120,87,0.3)', display: 'inline-flex', alignItems: 'center' },
 
   // Trip Picker Modal
   tripPickerOverlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 1100, padding: '20px' },

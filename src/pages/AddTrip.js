@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db, auth } from '../firebase';
 import { useUser } from '../context/UserContext';
-import { FiArrowLeft, FiSearch, FiMapPin } from 'react-icons/fi';
+import { FiArrowLeft, FiMapPin, FiCheck } from 'react-icons/fi';
 import DateRangePicker from '../components/DateRangePicker';
+import CURATED_DESTINATIONS from '../data/destinations';
 
 function AddTrip() {
   const navigate = useNavigate();
@@ -15,14 +16,9 @@ function AddTrip() {
   const [dates, setDates] = useState(null);
   const [saving, setSaving] = useState(false);
   const [overlapError, setOverlapError] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [citySuggestions, setCitySuggestions] = useState([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const cityDebounceRef = useRef(null);
 
   const existingTrips = currentUserData?.upcomingTrips || [];
 
-  // Check for preselected destination
   useEffect(() => {
     if (location.state?.preselectedDestination) {
       setDestination(location.state.preselectedDestination);
@@ -30,63 +26,10 @@ function AddTrip() {
     }
   }, [location]);
 
-  const searchCities = useCallback(async (query) => {
-    if (query.length < 2) {
-      setCitySuggestions([]);
-      return;
-    }
-    try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=6&featuretype=city`,
-        { headers: { 'Accept-Language': 'en' } }
-      );
-      const data = await res.json();
-      const cities = data
-        .filter(item => item.address && (item.address.city || item.address.town || item.address.village || item.address.state))
-        .map(item => {
-          const addr = item.address;
-          const cityName = addr.city || addr.town || addr.village || addr.state || '';
-          const country = addr.country || '';
-          return `${cityName}, ${country}`;
-        })
-        .filter((v, i, arr) => arr.indexOf(v) === i);
-      setCitySuggestions(cities);
-    } catch {
-      setCitySuggestions([]);
-    }
-  }, []);
-
-  const handleSearchChange = (value) => {
-    setSearchQuery(value);
-    setShowSuggestions(true);
-    if (cityDebounceRef.current) clearTimeout(cityDebounceRef.current);
-    cityDebounceRef.current = setTimeout(() => searchCities(value), 300);
-  };
-
-  const selectSearchCity = (city) => {
-    setDestination(city);
-    setSearchQuery('');
-    setShowSuggestions(false);
-    setCitySuggestions([]);
-    setStep(2);
-  };
-
-  const popularDestinations = [
-    'Istanbul, Turkey',
-    'Dubai, UAE',
-    'Kuala Lumpur, Malaysia',
-    'Marrakech, Morocco',
-    'Cairo, Egypt',
-    'Jakarta, Indonesia',
-    'Barcelona, Spain',
-    'London, UK',
-  ];
-
   const handleDestinationSelect = (dest) => {
-    setDestination(dest);
+    setDestination(dest.name);
     setStep(2);
   };
-
 
   const handleDateSelect = (range) => {
     setDates(range);
@@ -94,7 +37,6 @@ function AddTrip() {
   };
 
   const parseDate = (dateStr) => {
-    // Parse "YYYY-MM-DD" as local date to avoid timezone issues
     const [y, m, d] = dateStr.split('-').map(Number);
     return new Date(y, m - 1, d);
   };
@@ -106,10 +48,6 @@ function AddTrip() {
     for (const trip of existingTrips) {
       const tripStart = parseDate(trip.startDate);
       const tripEnd = parseDate(trip.endDate);
-
-      // Allow same-day transitions: new starts on day existing ends, or new ends on day existing starts
-      // Block: new start is before existing end AND new end is after existing start (true overlap)
-      // But exclude the boundary case where they share exactly one day
       const newStartsBeforeExistingEnds = ns.getTime() < tripEnd.getTime();
       const newEndsAfterExistingStarts = ne.getTime() > tripStart.getTime();
       const overlaps = newStartsBeforeExistingEnds && newEndsAfterExistingStarts;
@@ -130,7 +68,6 @@ function AddTrip() {
     const newStart = dates.startDate.toISOString().split('T')[0];
     const newEnd = dates.endDate.toISOString().split('T')[0];
 
-    // Check for overlapping trips
     const overlap = checkOverlap(newStart, newEnd);
     if (overlap) {
       setOverlapError(overlap);
@@ -156,9 +93,11 @@ function AddTrip() {
     }
   };
 
+  // Check which destinations the user already has trips to
+  const existingDestinations = new Set(existingTrips.map(t => t.destination));
+
   return (
     <div style={styles.page}>
-      {/* Header */}
       <div style={styles.header}>
         <button style={styles.backBtn} onClick={() => navigate(-1)}>
           <FiArrowLeft size={16} style={{ marginRight: '6px', verticalAlign: '-2px' }} /> Back
@@ -166,65 +105,48 @@ function AddTrip() {
         <h1 style={styles.title}>
           {step === 1 ? 'Where to?' : 'When are you going?'}
         </h1>
+        {step === 1 && (
+          <p style={styles.subtitle}>Pick a destination</p>
+        )}
       </div>
 
       <div style={styles.content}>
-        {/* Step 1: Destination Selection */}
         {step === 1 && (
           <div style={styles.step}>
-            {/* Search Input with Autocomplete */}
-            <div style={styles.searchWrapper}>
-              <div style={styles.searchBox}>
-                <span style={styles.searchIcon}><FiSearch size={18} color="#6b7280" /></span>
-                <input
-                  type="text"
-                  placeholder="Search any city..."
-                  style={styles.searchInput}
-                  value={searchQuery}
-                  onChange={(e) => handleSearchChange(e.target.value)}
-                  onFocus={() => citySuggestions.length > 0 && setShowSuggestions(true)}
-                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                  autoComplete="off"
-                />
-              </div>
-              {showSuggestions && citySuggestions.length > 0 && (
-                <div style={styles.suggestionsDropdown}>
-                  {citySuggestions.map((city, i) => (
-                    <button
-                      key={i}
-                      style={styles.suggestionItem}
-                      onMouseDown={() => selectSearchCity(city)}
-                    >
-                      <FiMapPin size={14} style={{ marginRight: '8px', flexShrink: 0 }} /> {city}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Popular Destinations */}
-            <div style={styles.section}>
-              <h3 style={styles.sectionTitle}>Popular Destinations</h3>
-              <div style={styles.grid}>
-                {popularDestinations.map((dest, index) => (
+            <div style={styles.grid}>
+              {CURATED_DESTINATIONS.map((dest) => {
+                const hasTrip = existingDestinations.has(dest.name);
+                return (
                   <button
-                    key={index}
+                    key={dest.id}
                     style={styles.destCard}
                     onClick={() => handleDestinationSelect(dest)}
                   >
-                    <span style={styles.destIcon}><FiMapPin size={20} color="#047857" /></span>
-                    <span style={styles.destName}>{dest}</span>
+                    <div
+                      style={{
+                        ...styles.destImage,
+                        backgroundImage: `linear-gradient(rgba(0,0,0,0.05), rgba(0,0,0,0.55)), url(${dest.image})`,
+                      }}
+                    >
+                      {hasTrip && (
+                        <div style={styles.hasTrip}>
+                          <FiCheck size={12} /> Trip added
+                        </div>
+                      )}
+                      <div style={styles.destOverlay}>
+                        <div style={styles.destCity}>{dest.city}</div>
+                        <div style={styles.destCountry}>{dest.country}</div>
+                      </div>
+                    </div>
                   </button>
-                ))}
-              </div>
+                );
+              })}
             </div>
           </div>
         )}
 
-        {/* Step 2: Date Selection */}
         {step === 2 && (
           <div style={styles.step}>
-            {/* Selected Destination */}
             <div style={styles.selectedDest}>
               <span style={styles.selectedIcon}><FiMapPin size={20} color="#047857" /></span>
               <span style={styles.selectedText}>{destination}</span>
@@ -236,18 +158,15 @@ function AddTrip() {
               </button>
             </div>
 
-            {/* Date Picker */}
             <DateRangePicker onSelect={handleDateSelect} />
 
-            {/* Overlap Error */}
             {overlapError && (
               <div style={styles.overlapError}>
-                <span style={styles.overlapIcon}>⚠️</span>
+                <span style={styles.overlapIcon}>!</span>
                 {overlapError}
               </div>
             )}
 
-            {/* Add Trip Button */}
             {dates && (
               <button
                 style={{
@@ -270,12 +189,12 @@ function AddTrip() {
 const styles = {
   page: {
     minHeight: '100vh',
-    background: '#fafafa',
+    background: '#faf9f7',
   },
   header: {
     background: '#fff',
-    padding: '20px',
-    borderBottom: '1px solid #f0f0f0',
+    padding: '8px 20px 12px',
+    borderBottom: '1px solid #e8e5e0',
   },
   backBtn: {
     background: 'none',
@@ -295,6 +214,11 @@ const styles = {
     color: '#1f2937',
     margin: 0,
   },
+  subtitle: {
+    fontSize: '15px',
+    color: '#6b7280',
+    margin: '4px 0 0 0',
+  },
   content: {
     padding: '20px',
   },
@@ -302,93 +226,57 @@ const styles = {
     maxWidth: '600px',
     margin: '0 auto',
   },
-  searchWrapper: {
-    position: 'relative',
-    marginBottom: '32px',
-  },
-  searchBox: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    padding: '14px 16px',
-    background: '#fff',
-    border: '2px solid #e5e7eb',
-    borderRadius: '12px',
-  },
-  searchIcon: {
-    fontSize: '20px',
-  },
-  searchInput: {
-    flex: 1,
-    border: 'none',
-    outline: 'none',
-    fontSize: '16px',
-    color: '#1f2937',
-  },
-  section: {
-    marginBottom: '24px',
-  },
-  sectionTitle: {
-    fontSize: '18px',
-    fontWeight: '700',
-    color: '#1f2937',
-    margin: '0 0 16px 0',
-  },
   grid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(2, 1fr)',
     gap: '12px',
   },
   destCard: {
-    background: '#fff',
-    border: 'none',
-    borderRadius: '12px',
-    padding: '20px 16px',
-    cursor: 'pointer',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '10px',
-    transition: 'all 0.2s',
-    textAlign: 'center',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06)',
-  },
-  destIcon: {
-    fontSize: '24px',
-  },
-  destName: {
-    fontSize: '14px',
-    fontWeight: '600',
-    color: '#1f2937',
-  },
-  suggestionsDropdown: {
-    position: 'absolute',
-    top: '100%',
-    left: 0,
-    right: 0,
-    background: '#fff',
-    border: '2px solid #e5e7eb',
-    borderTop: 'none',
-    borderRadius: '0 0 12px 12px',
-    zIndex: 50,
-    maxHeight: '240px',
-    overflowY: 'auto',
-    boxShadow: '0 4px 6px rgba(0,0,0,0.04), 0 10px 24px rgba(0,0,0,0.08)',
-  },
-  suggestionItem: {
-    width: '100%',
-    padding: '14px 16px',
     background: 'none',
     border: 'none',
-    borderBottom: '1px solid #f3f4f6',
-    fontSize: '15px',
-    fontWeight: '500',
-    color: '#1f2937',
-    textAlign: 'left',
+    borderRadius: '16px',
+    overflow: 'hidden',
     cursor: 'pointer',
-    fontFamily: 'inherit',
+    padding: 0,
+    boxShadow: '0 4px 6px rgba(0,0,0,0.04), 0 10px 24px rgba(0,0,0,0.08)',
+  },
+  destImage: {
+    width: '100%',
+    height: '140px',
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'flex-end',
+    position: 'relative',
+  },
+  destOverlay: {
+    padding: '12px',
+  },
+  destCity: {
+    fontSize: '17px',
+    fontWeight: '800',
+    color: '#fff',
+    textShadow: '0 2px 8px rgba(0,0,0,0.5)',
+  },
+  destCountry: {
+    fontSize: '12px',
+    color: 'rgba(255,255,255,0.85)',
+    textShadow: '0 1px 4px rgba(0,0,0,0.4)',
+  },
+  hasTrip: {
+    position: 'absolute',
+    top: '8px',
+    right: '8px',
+    background: 'rgba(4,120,87,0.9)',
+    color: '#fff',
+    fontSize: '11px',
+    fontWeight: '700',
+    padding: '4px 8px',
+    borderRadius: '8px',
     display: 'flex',
     alignItems: 'center',
+    gap: '4px',
   },
   selectedDest: {
     display: 'flex',

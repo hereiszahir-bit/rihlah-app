@@ -4,7 +4,7 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { auth, db, storage } from '../firebase';
 import { useUser } from '../context/UserContext';
-import { FiArrowLeft, FiCamera, FiMessageCircle } from 'react-icons/fi';
+import { FiArrowLeft, FiBriefcase, FiCamera, FiMessageCircle } from 'react-icons/fi';
 
 function EditProfile() {
   const navigate = useNavigate();
@@ -21,6 +21,8 @@ function EditProfile() {
   const [linkedin, setLinkedin] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
   const [profileVisibility, setProfileVisibility] = useState('both');
+  const [interests, setInterests] = useState([]);
+  const [identity, setIdentity] = useState([]);
   const [photoURL, setPhotoURL] = useState('');
   const [newPhotoFile, setNewPhotoFile] = useState(null);
   const [newPhotoPreview, setNewPhotoPreview] = useState(null);
@@ -36,19 +38,22 @@ function EditProfile() {
     }
     try {
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=5&featuretype=city`,
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=8`,
         { headers: { 'Accept-Language': 'en' } }
       );
       const data = await res.json();
       const cities = data
-        .filter(item => item.address && (item.address.city || item.address.town || item.address.village || item.address.state))
+        .filter(item => item.address)
         .map(item => {
           const addr = item.address;
-          const cityName = addr.city || addr.town || addr.village || addr.state || '';
+          const cityName = addr.city || addr.town || addr.village || addr.state || addr.county || item.name || '';
           const country = addr.country || '';
+          if (!cityName) return null;
           return `${cityName}, ${country}`;
         })
-        .filter((v, i, arr) => arr.indexOf(v) === i);
+        .filter(Boolean)
+        .filter((v, i, arr) => arr.indexOf(v) === i)
+        .slice(0, 6);
       setCitySuggestions(cities);
     } catch {
       setCitySuggestions([]);
@@ -68,6 +73,34 @@ function EditProfile() {
     setCitySuggestions([]);
   };
 
+  const interestGroups = [
+    {
+      label: 'Travel',
+      options: ['Hiking', 'Food & Culinary', 'History & Culture', 'Photography', 'Beach', 'Adventure', 'Shopping', 'Nature'],
+    },
+    {
+      label: 'Lifestyle',
+      options: ['Fitness', 'Tech', 'Business', 'Art', 'Reading', 'Sports', 'Volunteering', 'Language Learning'],
+    },
+    {
+      label: 'Faith',
+      options: ['Mosque Tours', 'Halal Dining', 'Quran Study', 'Islamic History', 'Dawah', 'Community Service'],
+    },
+  ];
+
+  const identityOptions = [
+    'Student', 'Young Professional', 'Solo Traveler', 'Couple',
+    'Family', 'Retiree', 'Gap Year', 'Digital Nomad',
+  ];
+
+  const toggleInterest = (interest) => {
+    setInterests(prev => prev.includes(interest) ? prev.filter(i => i !== interest) : [...prev, interest]);
+  };
+
+  const toggleIdentity = (value) => {
+    setIdentity(prev => prev.includes(value) ? prev.filter(i => i !== value) : [...prev, value]);
+  };
+
   useEffect(() => {
     if (currentUserData) {
       const data = currentUserData;
@@ -80,6 +113,8 @@ function EditProfile() {
       setLinkedin(data.linkedin || '');
       setWhatsapp(data.whatsapp || '');
       setProfileVisibility(data.profileVisibility || 'both');
+      setInterests(data.interests || []);
+      setIdentity(data.identity || []);
       setPhotoURL(data.photoURL || '');
       setLoading(false);
     }
@@ -134,6 +169,8 @@ function EditProfile() {
         age: age ? parseInt(age) : null,
         gender: gender || '',
         city: city.trim(),
+        interests: interests,
+        identity: identity,
         instagram: cleanInstagram,
         linkedin: cleanLinkedin,
         whatsapp: cleanWhatsapp,
@@ -187,7 +224,7 @@ function EditProfile() {
                 <img src={newPhotoPreview || photoURL} alt="Profile" style={styles.photoPreview} />
               ) : (
                 <div style={styles.photoPlaceholder}>
-                  <div style={{ fontSize: '36px', marginBottom: '4px' }}>📷</div>
+                  <div style={{ marginBottom: '4px', color: '#9ca3af' }}><FiCamera size={36} /></div>
                   <div style={{ fontSize: '13px', color: '#6b7280' }}>Add Photo</div>
                 </div>
               )}
@@ -283,6 +320,50 @@ function EditProfile() {
             <div style={styles.charCount}>{bio.length}/500 characters</div>
           </div>
 
+          {/* Identity */}
+          <div style={styles.sectionHeader}>Identity</div>
+          <div style={styles.fieldGroup}>
+            <label style={styles.label}>I am a...</label>
+            <div style={styles.chipGrid}>
+              {identityOptions.map(option => (
+                <button
+                  key={option}
+                  type="button"
+                  style={{
+                    ...styles.chipBtn,
+                    ...(identity.includes(option) ? styles.chipBtnActive : {}),
+                  }}
+                  onClick={() => toggleIdentity(option)}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Interests */}
+          <div style={styles.sectionHeader}>Interests</div>
+          {interestGroups.map(group => (
+            <div key={group.label} style={styles.fieldGroup}>
+              <label style={styles.groupLabel}>{group.label}</label>
+              <div style={styles.chipGrid}>
+                {group.options.map(interest => (
+                  <button
+                    key={interest}
+                    type="button"
+                    style={{
+                      ...styles.chipBtn,
+                      ...(interests.includes(interest) ? styles.chipBtnActive : {}),
+                    }}
+                    onClick={() => toggleInterest(interest)}
+                  >
+                    {interest}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+
           {/* Profile Visibility */}
           <div style={styles.sectionHeader}>Privacy</div>
           <div style={styles.fieldGroup}>
@@ -337,7 +418,7 @@ function EditProfile() {
           <div style={styles.fieldGroup}>
             <label style={styles.label}>LinkedIn</label>
             <div style={styles.inputWithIcon}>
-              <span style={styles.inputIcon}>💼</span>
+              <span style={styles.inputIcon}><FiBriefcase size={16} /></span>
               <input
                 type="text"
                 style={styles.inputWithPrefix}
@@ -596,6 +677,36 @@ const styles = {
     outline: 'none',
     boxSizing: 'border-box',
     background: '#faf9f7',
+  },
+  groupLabel: {
+    fontSize: '12px',
+    fontWeight: '700',
+    color: '#047857',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+    marginBottom: '8px',
+  },
+  chipGrid: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '8px',
+  },
+  chipBtn: {
+    padding: '10px 16px',
+    background: '#faf9f7',
+    border: '1.5px solid #e8e5e0',
+    borderRadius: '20px',
+    fontSize: '14px',
+    fontWeight: '600',
+    color: '#6b6b6b',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+    fontFamily: 'inherit',
+  },
+  chipBtnActive: {
+    background: '#f0f9f4',
+    borderColor: '#047857',
+    color: '#047857',
   },
   visibilityOptions: {
     display: 'flex',

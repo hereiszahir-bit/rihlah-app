@@ -108,7 +108,7 @@ function CommunityMap() {
               <Popup>
                 <div style={styles.popup}>
                   <h3 style={styles.popupTitle}>
-                    📍 {location.city}, {location.country}
+                    {location.city}, {location.country}
                   </h3>
                   <p style={styles.popupCount}>
                     <strong>{location.users.length}</strong> {location.users.length === 1 ? 'traveler' : 'travelers'}
@@ -116,7 +116,7 @@ function CommunityMap() {
                   <div style={styles.userList}>
                     {location.users.slice(0, 5).map((user, i) => (
                       <div key={i} style={styles.userItem}>
-                        👤 {user.name}
+                        {user.name}
                       </div>
                     ))}
                     {location.users.length > 5 && (

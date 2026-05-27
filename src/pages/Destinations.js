@@ -1,179 +1,85 @@
-import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useUser } from '../context/UserContext';
-import { FiX, FiMapPin, FiNavigation, FiMessageCircle, FiCamera, FiPlus, FiSearch } from 'react-icons/fi';
-import DestinationGrid from '../components/DestinationGrid';
-import TabBar from '../components/TabBar';
+import { FiX, FiMapPin, FiNavigation, FiMessageCircle, FiCamera, FiPlus } from 'react-icons/fi';
 
-const FEATURED_CITIES = [
-  { name: 'Mecca', country: 'Saudi Arabia', image: 'https://images.pexels.com/photos/2291789/pexels-photo-2291789.jpeg?auto=compress&w=600' },
-  { name: 'Istanbul', country: 'Turkey', image: 'https://images.pexels.com/photos/1559825/pexels-photo-1559825.jpeg?auto=compress&w=600' },
-  { name: 'Dubai', country: 'UAE', image: 'https://images.pexels.com/photos/1470405/pexels-photo-1470405.jpeg?auto=compress&w=600' },
-  { name: 'Kuala Lumpur', country: 'Malaysia', image: 'https://images.pexels.com/photos/3881104/pexels-photo-3881104.jpeg?auto=compress&w=600' },
-  { name: 'Marrakech', country: 'Morocco', image: 'https://images.pexels.com/photos/2549018/pexels-photo-2549018.jpeg?auto=compress&w=600' },
-];
+import CURATED_DESTINATIONS from '../data/destinations';
 
 const parseDate = (dateStr) => {
   const [y, m, d] = dateStr.split('-').map(Number);
   return new Date(y, m - 1, d);
 };
 
+const normalize = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
 function Destinations() {
   const navigate = useNavigate();
-  const { currentUser, currentUserData, allUsers, allUsersMap, refreshAll } = useUser();
+  const { currentUser, currentUserData, allUsers, allUsersMap, connections, refreshAll } = useUser();
   const [previewUser, setPreviewUser] = useState(null);
-  const [moreSearch, setMoreSearch] = useState('');
-  const [moreSearchOpen, setMoreSearchOpen] = useState(false);
-  const moreSearchRef = useRef(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [citySuggestions, setCitySuggestions] = useState([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const cityDebounceRef = useRef(null);
 
-  const searchCities = useCallback(async (query) => {
-    if (query.length < 2) {
-      setCitySuggestions([]);
-      return;
-    }
-    try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=6&featuretype=city`,
-        { headers: { 'Accept-Language': 'en' } }
-      );
-      const data = await res.json();
-      const cities = data
-        .filter(item => item.address && (item.address.city || item.address.town || item.address.village || item.address.state))
-        .map(item => {
-          const addr = item.address;
-          const cityName = addr.city || addr.town || addr.village || addr.state || '';
-          const country = addr.country || '';
-          return `${cityName}, ${country}`;
-        })
-        .filter((v, i, arr) => arr.indexOf(v) === i);
-      setCitySuggestions(cities);
-    } catch {
-      setCitySuggestions([]);
-    }
-  }, []);
-
-  const handleSearchChange = (value) => {
-    setSearchQuery(value);
-    setShowSuggestions(true);
-    if (cityDebounceRef.current) clearTimeout(cityDebounceRef.current);
-    cityDebounceRef.current = setTimeout(() => searchCities(value), 300);
-  };
-
-  // Check if a Nominatim suggestion matches an existing destination with travelers
-  const getMatchingDestination = (city) => {
-    const normalize = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-    const cityNorm = normalize(city.split(',')[0].trim());
-    return destinations.find(dest => {
-      const destNorm = normalize(dest.name.split(',')[0].trim());
-      return destNorm === cityNorm;
-    });
-  };
-
-  // Refresh data on mount to pick up other users' changes
   useEffect(() => {
     refreshAll();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const { destinations, connectionsGoing, travelerCounts, featuredFullNames } = useMemo(() => {
-    const destinationMap = {};
+  const { travelerCounts, connectionsGoing } = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     const myGender = currentUserData?.gender || '';
     const rawMyVis = currentUserData?.profileVisibility || 'both';
     const myVisibility = ['Male', 'Female', 'both'].includes(rawMyVis) ? rawMyVis : 'both';
+    const myConnections = (currentUserData?.connections || []).map(c => c.userId);
+
+    // Build traveler counts per curated destination
+    const counts = {};
+    CURATED_DESTINATIONS.forEach(d => {
+      counts[d.id] = { thereNow: 0, planning: 0 };
+    });
 
     allUsers.forEach((user) => {
       if (user.id === currentUser?.uid) return;
 
-      const rawTheirVis = user.profileVisibility || 'both';
-      const theirVisibility = ['Male', 'Female', 'both'].includes(rawTheirVis) ? rawTheirVis : 'both';
-      if (theirVisibility !== 'both' && theirVisibility !== myGender) return;
-      if (myVisibility !== 'both' && user.gender !== myVisibility) return;
-
-      if (user.upcomingTrips && user.upcomingTrips.length > 0) {
-        const userDestStatus = {};
-
-        user.upcomingTrips.forEach((trip) => {
-          const dest = trip.destination;
-          const startDate = parseDate(trip.startDate);
-          const endDate = parseDate(trip.endDate);
-
-          const isTripNow = today >= startDate && today <= endDate;
-
-          if (isTripNow) {
-            userDestStatus[dest] = 'hereNow';
-          } else if (today < startDate && userDestStatus[dest] !== 'hereNow') {
-            userDestStatus[dest] = 'planning';
-          }
-        });
-
-        Object.entries(userDestStatus).forEach(([dest, status]) => {
-          if (!destinationMap[dest]) {
-            destinationMap[dest] = { name: dest, planningCount: 0, thereNowCount: 0 };
-          }
-          if (status === 'hereNow') {
-            destinationMap[dest].thereNowCount++;
-          } else {
-            destinationMap[dest].planningCount++;
-          }
-        });
+      if (!myConnections.includes(user.id)) {
+        const rawTheirVis = user.profileVisibility || 'both';
+        const theirVisibility = ['Male', 'Female', 'both'].includes(rawTheirVis) ? rawTheirVis : 'both';
+        if (theirVisibility !== 'both' && theirVisibility !== myGender) return;
+        if (myVisibility !== 'both' && user.gender !== myVisibility) return;
       }
 
-      if (user.currentLocation && user.currentLocation.destination) {
-        const dest = user.currentLocation.destination;
-        const checkoutDate = user.currentLocation.checkingOutAt;
-        const isStillThere = !checkoutDate || new Date(checkoutDate) > today;
+      if (!user.upcomingTrips || user.upcomingTrips.length === 0) return;
 
-        if (isStillThere) {
-          if (!destinationMap[dest]) {
-            destinationMap[dest] = { name: dest, planningCount: 0, thereNowCount: 0 };
-          }
+      const userDestStatus = {};
+      user.upcomingTrips.forEach((trip) => {
+        const startDate = parseDate(trip.startDate);
+        const endDate = parseDate(trip.endDate);
+        const isTripNow = today >= startDate && today <= endDate;
 
-          const alreadyCounted = user.upcomingTrips?.some(trip => {
-            if (trip.destination !== dest) return false;
-            const start = parseDate(trip.startDate);
-            const end = parseDate(trip.endDate);
-            return today >= start && today <= end;
-          });
+        // Match trip destination to curated destination
+        const tripCityNorm = normalize(trip.destination.split(',')[0].trim());
+        const matched = CURATED_DESTINATIONS.find(d => normalize(d.city) === tripCityNorm);
+        if (!matched) return;
 
-          if (!alreadyCounted) {
-            destinationMap[dest].thereNowCount++;
-          }
+        if (isTripNow) {
+          userDestStatus[matched.id] = 'hereNow';
+        } else if (today < startDate && userDestStatus[matched.id] !== 'hereNow') {
+          userDestStatus[matched.id] = 'planning';
         }
-      }
-    });
+      });
 
-    // Build traveler counts for featured cities
-    const normalize = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-    const counts = {};
-    const fullNames = {};
-    const destKeys = Object.keys(destinationMap);
-    FEATURED_CITIES.forEach(city => {
-      const cityNorm = normalize(city.name);
-      const matchKey = destKeys.find(key =>
-        normalize(key) === cityNorm || normalize(key.split(',')[0].trim()) === cityNorm
-      );
-      if (matchKey) {
-        const cityData = destinationMap[matchKey];
-        counts[city.name] = { thereNow: cityData.thereNowCount, planning: cityData.planningCount };
-        fullNames[city.name] = matchKey;
-      } else {
-        counts[city.name] = { thereNow: 0, planning: 0 };
-        fullNames[city.name] = city.name;
-      }
+      Object.entries(userDestStatus).forEach(([destId, status]) => {
+        if (!counts[destId]) return;
+        if (status === 'hereNow') {
+          counts[destId].thereNow++;
+        } else {
+          counts[destId].planning++;
+        }
+      });
     });
-
 
     // Build connections list
     let connTrips = [];
     if (currentUserData && currentUserData.connections) {
       const connMap = {};
-
       currentUserData.connections.forEach(conn => {
         const connUser = allUsersMap[conn.userId];
         if (!connUser || !connUser.upcomingTrips) return;
@@ -213,104 +119,11 @@ function Destinations() {
       });
     }
 
-    // Include current user's destinations
-    if (currentUserData?.upcomingTrips) {
-      currentUserData.upcomingTrips.forEach(trip => {
-        const dest = trip.destination;
-        if (!destinationMap[dest]) {
-          destinationMap[dest] = { name: dest, planningCount: 0, thereNowCount: 0 };
-        }
-      });
-    }
-
-    const destinationsArray = Object.values(destinationMap).sort((a, b) => {
-      const totalA = a.planningCount + a.thereNowCount;
-      const totalB = b.planningCount + b.thereNowCount;
-      return totalB - totalA;
-    });
-
-    return {
-      destinations: destinationsArray,
-      connectionsGoing: connTrips,
-      travelerCounts: counts,
-      featuredFullNames: fullNames,
-    };
+    return { travelerCounts: counts, connectionsGoing: connTrips };
   }, [currentUser, currentUserData, allUsers, allUsersMap]);
 
   return (
     <div style={styles.page}>
-      <div style={styles.header}>
-        <div style={styles.headerTop}>
-          <img src="/logo192.png" alt="Rihlah" style={styles.headerLogo} />
-          <h1 style={styles.title}>Explore</h1>
-        </div>
-        <p style={styles.subtitle}>Discover where Muslims travel</p>
-        <div style={styles.searchWrapper}>
-          <div style={styles.searchBox}>
-            <FiSearch size={18} color="#6b7280" style={{ flexShrink: 0 }} />
-            <input
-              type="text"
-              placeholder="Search any city..."
-              style={styles.searchInput}
-              value={searchQuery}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') { setShowSuggestions(false); e.target.blur(); } }}
-              onFocus={() => setShowSuggestions(true)}
-              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-              autoComplete="off"
-            />
-            {searchQuery && (
-              <button
-                style={styles.searchClear}
-                onMouseDown={() => { setSearchQuery(''); setCitySuggestions([]); setShowSuggestions(false); }}
-              >
-                <FiX size={16} />
-              </button>
-            )}
-          </div>
-          {showSuggestions && citySuggestions.length > 0 && (
-            <div style={styles.suggestionsDropdown}>
-              {citySuggestions.map((city, i) => {
-                const existing = getMatchingDestination(city);
-                const totalTravelers = existing ? existing.thereNowCount + existing.planningCount : 0;
-                return (
-                  <div key={i} style={styles.suggestionItem}>
-                    <div
-                      style={styles.suggestionInfo}
-                      onMouseDown={() => {
-                        setSearchQuery('');
-                        setShowSuggestions(false);
-                        setCitySuggestions([]);
-                        navigate(`/destination/${encodeURIComponent(existing ? existing.name : city)}`);
-                      }}
-                    >
-                      <FiMapPin size={14} style={{ marginRight: '8px', flexShrink: 0, color: existing ? '#047857' : '#9ca3af' }} />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={styles.suggestionName}>{city}</div>
-                        {totalTravelers > 0 && (
-                          <div style={styles.suggestionMeta}>{totalTravelers} traveler{totalTravelers !== 1 ? 's' : ''}</div>
-                        )}
-                      </div>
-                    </div>
-                    <button
-                      style={styles.suggestionAddBtn}
-                      onMouseDown={() => {
-                        setSearchQuery('');
-                        setShowSuggestions(false);
-                        setCitySuggestions([]);
-                        navigate('/add-trip', { state: { preselectedDestination: city } });
-                      }}
-                    >
-                      <FiPlus size={16} />
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </div>
-
       {/* Connections Section */}
       {connectionsGoing.length > 0 && (
         <div style={styles.section}>
@@ -319,16 +132,17 @@ function Destinations() {
           </div>
           <div style={styles.horizontalScroll}>
             {connectionsGoing.map((conn, index) => (
-              <div
-                key={`${conn.userId}-${index}`}
-                style={styles.storyItem}
-              >
+              <div key={`${conn.userId}-${index}`} style={styles.storyItem}>
                 <div
                   style={{
                     ...styles.storyRing,
                     ...(conn.isThere ? styles.storyRingActive : styles.storyRingUpcoming),
                   }}
-                  onClick={() => setPreviewUser(allUsersMap[conn.userId] || null)}
+                  onClick={() => {
+                    const baseUser = allUsersMap[conn.userId];
+                    const connRecord = connections.find(c => c.userId === conn.userId);
+                    setPreviewUser(baseUser ? { ...baseUser, whatsapp: connRecord?.whatsapp, instagram: connRecord?.instagram } : null);
+                  }}
                 >
                   {conn.photoURL ? (
                     <img src={conn.photoURL} alt={conn.name} style={styles.storyImg} />
@@ -351,63 +165,57 @@ function Destinations() {
         </div>
       )}
 
-      {/* Featured Section */}
-      {(() => {
-        const normalize = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-        const q = normalize(searchQuery.trim());
-        const filtered = q
-          ? FEATURED_CITIES.filter(c => normalize(c.name).includes(q) || normalize(c.country).includes(q))
-          : FEATURED_CITIES;
-        if (filtered.length === 0) return null;
-        return (
+      {/* Curated Destinations Grid */}
       <div style={styles.section}>
         <div style={styles.sectionHeader}>
-          <h2 style={styles.sectionTitle}>Featured</h2>
+          <h2 style={styles.sectionTitle}>Destinations</h2>
         </div>
-        <div style={styles.horizontalScroll}>
-          {filtered.map((city) => (
-            <Link
-              key={city.name}
-              to={`/destination/${encodeURIComponent(featuredFullNames[city.name] || city.name)}`}
-              style={styles.featuredCard}
-            >
-              <div
-                style={{
-                  ...styles.featuredImage,
-                  backgroundImage: `linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.6)), url(${city.image})`,
-                }}
+        <div style={styles.destGrid}>
+          {CURATED_DESTINATIONS.map((dest) => {
+            const counts = travelerCounts[dest.id] || { thereNow: 0, planning: 0 };
+            return (
+              <Link
+                key={dest.id}
+                to={`/destination/${encodeURIComponent(dest.name)}`}
+                style={styles.destCard}
               >
-                <div style={styles.featuredOverlay}>
-                  <h3 style={styles.featuredName}>{city.name}</h3>
-                  <p style={styles.featuredCountry}>{city.country}</p>
-                  {(() => {
-                    const c = travelerCounts[city.name] || { thereNow: 0, planning: 0 };
-                    if (c.thereNow === 0 && c.planning === 0) {
-                      return <div style={styles.featuredTravelers}>Be the first</div>;
-                    }
-                    return (
-                      <div style={styles.featuredMetrics}>
-                        {c.thereNow > 0 && (
-                          <div style={styles.featuredMetric}>
-                            <FiMapPin size={12} style={{ marginRight: '3px' }} /> {c.thereNow} here now
+                <div
+                  style={{
+                    ...styles.destImage,
+                    backgroundImage: `linear-gradient(rgba(0,0,0,0.05), rgba(0,0,0,0.55)), url(${dest.image})`,
+                  }}
+                >
+                  <div style={styles.destTags}>
+                    {dest.tags.slice(0, 2).map(tag => (
+                      <span key={tag} style={styles.destTag}>{tag}</span>
+                    ))}
+                  </div>
+                  <div style={styles.destOverlay}>
+                    <h3 style={styles.destName}>{dest.city}</h3>
+                    <p style={styles.destCountry}>{dest.country}</p>
+                    {counts.thereNow === 0 && counts.planning === 0 ? (
+                      <div style={styles.destBadge}>Be the first</div>
+                    ) : (
+                      <div style={styles.destMetrics}>
+                        {counts.thereNow > 0 && (
+                          <div style={styles.destMetric}>
+                            <FiMapPin size={12} /> {counts.thereNow} here now
                           </div>
                         )}
-                        {c.planning > 0 && (
-                          <div style={styles.featuredMetric}>
-                            <FiNavigation size={12} style={{ marginRight: '3px' }} /> {c.planning} planning
+                        {counts.planning > 0 && (
+                          <div style={styles.destMetric}>
+                            <FiNavigation size={12} /> {counts.planning} planning
                           </div>
                         )}
                       </div>
-                    );
-                  })()}
+                    )}
+                  </div>
                 </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
         </div>
       </div>
-        );
-      })()}
 
       {/* Profile Preview Modal */}
       {previewUser && (
@@ -464,7 +272,7 @@ function Destinations() {
                   const isUpcoming = now < start;
                   return (
                     <div key={i} style={styles.modalTripItem}>
-                      <span style={styles.modalTripIcon}>{isThere ? <FiMapPin size={14} color="#047857" /> : isUpcoming ? <FiNavigation size={14} color="#6b7280" /> : '✓'}</span>
+                      <span style={styles.modalTripIcon}>{isThere ? <FiMapPin size={14} color="#047857" /> : isUpcoming ? <FiNavigation size={14} color="#6b7280" /> : null}</span>
                       <div style={styles.modalTripInfo}>
                         <div style={styles.modalTripDest}>{trip.destination.split(',')[0]}</div>
                         <div style={styles.modalTripDates}>
@@ -483,63 +291,6 @@ function Destinations() {
         </div>
       )}
 
-      {/* More Destinations Section */}
-      {(() => {
-        const normalize = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-        const featuredNorm = new Set(FEATURED_CITIES.map(c => normalize(c.name)));
-        const q = normalize(searchQuery.trim());
-        const mq = normalize(moreSearch.trim());
-        const allNonFeatured = destinations
-          .filter(dest => !featuredNorm.has(normalize(dest.name.split(',')[0].trim())))
-          .filter(dest => !q || normalize(dest.name).includes(q));
-        const filtered = mq
-          ? allNonFeatured.filter(dest => normalize(dest.name).includes(mq))
-          : allNonFeatured;
-        const showSearchIcon = allNonFeatured.length >= 10;
-        return allNonFeatured.length > 0 ? (
-          <div style={styles.section}>
-            <div style={styles.sectionHeader}>
-              {moreSearchOpen ? (
-                <div style={styles.moreSearchBar}>
-                  <FiSearch size={16} color="#9ca3af" style={{ flexShrink: 0 }} />
-                  <input
-                    ref={moreSearchRef}
-                    type="text"
-                    placeholder="Search destinations..."
-                    style={styles.moreSearchInput}
-                    value={moreSearch}
-                    onChange={(e) => setMoreSearch(e.target.value)}
-                    autoComplete="off"
-                  />
-                  <button
-                    style={styles.moreSearchClose}
-                    onClick={() => { setMoreSearchOpen(false); setMoreSearch(''); }}
-                  >
-                    <FiX size={16} />
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <h2 style={styles.sectionTitle}>More Destinations</h2>
-                  {showSearchIcon && (
-                    <button
-                      style={styles.moreSearchIcon}
-                      onClick={() => {
-                        setMoreSearchOpen(true);
-                        setTimeout(() => moreSearchRef.current?.focus(), 50);
-                      }}
-                    >
-                      <FiSearch size={18} />
-                    </button>
-                  )}
-                </>
-              )}
-            </div>
-            <DestinationGrid destinations={filtered} />
-          </div>
-        ) : null;
-      })()}
-
       <button
         style={styles.fab}
         onClick={() => navigate('/add-trip')}
@@ -547,7 +298,7 @@ function Destinations() {
         <FiPlus size={28} color="#fff" />
       </button>
 
-      <TabBar />
+
     </div>
   );
 }
@@ -556,12 +307,7 @@ const styles = {
   page: {
     minHeight: '100vh',
     background: '#faf9f7',
-    paddingBottom: '80px',
-  },
-  header: {
-    padding: '24px 20px 16px 20px',
-    background: '#ffffff',
-    borderBottom: '1px solid #e8e5e0',
+    paddingBottom: '70px',
   },
   headerTop: {
     display: 'flex',
@@ -582,97 +328,7 @@ const styles = {
   subtitle: {
     fontSize: '15px',
     color: '#6b6b6b',
-    margin: '0 0 16px 0',
-  },
-  searchWrapper: {
-    position: 'relative',
-  },
-  searchBox: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    padding: '12px 16px',
-    background: '#f5f3f0',
-    border: 'none',
-    borderRadius: '12px',
-  },
-  searchInput: {
-    flex: 1,
-    border: 'none',
-    outline: 'none',
-    fontSize: '15px',
-    color: '#1f2937',
-    background: 'transparent',
-    fontFamily: 'inherit',
-  },
-  suggestionsDropdown: {
-    position: 'absolute',
-    top: '100%',
-    left: 0,
-    right: 0,
-    background: '#fff',
-    border: '1px solid #e5e7eb',
-    borderRadius: '0 0 12px 12px',
-    zIndex: 50,
-    maxHeight: '240px',
-    overflowY: 'auto',
-    boxShadow: '0 4px 6px rgba(0,0,0,0.04), 0 10px 24px rgba(0,0,0,0.08)',
-  },
-  searchClear: {
-    background: 'none',
-    border: 'none',
-    color: '#9ca3af',
-    cursor: 'pointer',
-    padding: '4px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  suggestionItem: {
-    width: '100%',
-    padding: '10px 16px',
-    background: 'none',
-    borderBottom: '1px solid #f3f4f6',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-  },
-  suggestionInfo: {
-    flex: 1,
-    minWidth: 0,
-    display: 'flex',
-    alignItems: 'center',
-    cursor: 'pointer',
-    padding: '4px 0',
-  },
-  suggestionName: {
-    fontSize: '15px',
-    fontWeight: '500',
-    color: '#1f2937',
-    whiteSpace: 'nowrap',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-  },
-  suggestionMeta: {
-    fontSize: '12px',
-    fontWeight: '600',
-    color: '#047857',
-    marginTop: '1px',
-  },
-  suggestionAddBtn: {
-    width: '32px',
-    height: '32px',
-    borderRadius: '50%',
-    background: 'linear-gradient(135deg, #047857, #059669)',
-    border: 'none',
-    color: '#fff',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-    boxShadow: '0 2px 6px rgba(4,120,87,0.3)',
+    margin: '4px 0 0 0',
   },
 
   // Sections
@@ -693,7 +349,7 @@ const styles = {
     margin: 0,
   },
 
-  // Horizontal scroll container
+  // Horizontal scroll
   horizontalScroll: {
     display: 'flex',
     overflowX: 'auto',
@@ -706,41 +362,62 @@ const styles = {
     WebkitOverflowScrolling: 'touch',
   },
 
-  // Featured cards
-  featuredCard: {
-    flexShrink: 0,
-    width: '180px',
+  // Destination grid (2-column)
+  destGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, 1fr)',
+    gap: '12px',
+    padding: '0 20px',
+  },
+  destCard: {
     borderRadius: '16px',
     overflow: 'hidden',
     textDecoration: 'none',
     boxShadow: '0 4px 6px rgba(0,0,0,0.04), 0 10px 24px rgba(0,0,0,0.08)',
   },
-  featuredImage: {
-    width: '180px',
-    height: '240px',
+  destImage: {
+    width: '100%',
+    height: '200px',
     backgroundSize: 'cover',
     backgroundPosition: 'center',
     display: 'flex',
-    alignItems: 'flex-end',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    position: 'relative',
   },
-  featuredOverlay: {
-    width: '100%',
-    padding: '16px',
+  destTags: {
+    display: 'flex',
+    gap: '4px',
+    padding: '10px 10px 0 10px',
   },
-  featuredName: {
+  destTag: {
+    fontSize: '10px',
+    fontWeight: '700',
+    color: '#fff',
+    background: 'rgba(255,255,255,0.2)',
+    backdropFilter: 'blur(4px)',
+    padding: '3px 8px',
+    borderRadius: '6px',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+  },
+  destOverlay: {
+    padding: '12px',
+  },
+  destName: {
     fontSize: '18px',
     fontWeight: '800',
     color: '#fff',
-    margin: '0 0 2px 0',
+    margin: '0 0 1px 0',
     textShadow: '0 2px 8px rgba(0,0,0,0.5)',
   },
-  featuredCountry: {
-    fontSize: '13px',
+  destCountry: {
+    fontSize: '12px',
     color: 'rgba(255,255,255,0.85)',
-    margin: '0 0 8px 0',
+    margin: '0 0 6px 0',
     textShadow: '0 1px 4px rgba(0,0,0,0.4)',
   },
-  featuredTravelers: {
+  destBadge: {
     fontSize: '12px',
     fontWeight: '700',
     color: '#6ee7b7',
@@ -751,12 +428,12 @@ const styles = {
     display: 'inline-block',
     textShadow: '0 1px 2px rgba(0,0,0,0.3)',
   },
-  featuredMetrics: {
+  destMetrics: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '4px',
+    gap: '3px',
   },
-  featuredMetric: {
+  destMetric: {
     fontSize: '12px',
     fontWeight: '700',
     color: '#fff',
@@ -765,9 +442,16 @@ const styles = {
     alignItems: 'center',
     gap: '4px',
   },
-  featuredMetricIcon: {
-    fontSize: '13px',
-  },
+
+  // Stories-style connection items
+  storyItem: { flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', width: '76px', gap: '6px' },
+  storyRing: { width: '64px', height: '64px', borderRadius: '50%', padding: '3px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  storyRingActive: { background: 'linear-gradient(135deg, #047857, #059669)' },
+  storyRingUpcoming: { background: 'linear-gradient(135deg, #d1d5db, #9ca3af)' },
+  storyImg: { width: '56px', height: '56px', borderRadius: '50%', objectFit: 'cover', border: '3px solid #fff' },
+  storyPlaceholder: { width: '56px', height: '56px', borderRadius: '50%', background: '#f3f4f6', border: '3px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', fontWeight: '700', color: '#6b7280' },
+  storyDest: { fontSize: '11px', fontWeight: '700', color: '#047857', textDecoration: 'none', textAlign: 'center', lineHeight: 1.2, maxWidth: '76px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  storyName: { fontSize: '11px', color: '#6b7280', fontWeight: '600', textAlign: 'center', maxWidth: '76px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
 
   // Profile Preview Modal
   modalOverlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' },
@@ -777,7 +461,6 @@ const styles = {
   modalPhoto: { width: '100px', height: '100px', borderRadius: '50%', objectFit: 'cover', border: '4px solid #f0fdf4' },
   modalPhotoPlaceholder: { width: '100px', height: '100px', borderRadius: '50%', background: 'linear-gradient(135deg, #047857, #059669)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '40px', fontWeight: '800', margin: '0 auto' },
   modalName: { fontSize: '22px', fontWeight: '800', color: '#1a1a1a', margin: '0 0 4px 0' },
-  modalGender: { fontSize: '14px', color: '#6b7280', margin: '0 0 12px 0' },
   modalBio: { fontSize: '15px', color: '#374151', fontStyle: 'italic', lineHeight: 1.5, margin: '0 0 16px 0', padding: '0 8px' },
   modalInterests: { display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center', marginBottom: '16px' },
   modalInterestChip: { padding: '6px 14px', background: '#f5f3f0', borderRadius: '20px', fontSize: '13px', fontWeight: '600', color: '#374151' },
@@ -792,59 +475,6 @@ const styles = {
   modalTripDates: { fontSize: '12px', color: '#6b7280', marginTop: '2px' },
   modalTripBadge: { fontSize: '11px', fontWeight: '700', color: '#047857', background: '#f0f9f4', padding: '4px 8px', borderRadius: '6px', flexShrink: 0 },
   modalConnectedBadge: { width: '100%', padding: '14px', background: '#f0f9f4', color: '#047857', border: '2px solid #bbf7d0', borderRadius: '14px', fontSize: '16px', fontWeight: '700', textAlign: 'center' },
-
-  // Stories-style connection items
-  storyItem: { flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', width: '76px', gap: '6px' },
-  storyRing: { width: '64px', height: '64px', borderRadius: '50%', padding: '3px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  storyRingActive: { background: 'linear-gradient(135deg, #047857, #059669)' },
-  storyRingUpcoming: { background: 'linear-gradient(135deg, #d1d5db, #9ca3af)' },
-  storyImg: { width: '56px', height: '56px', borderRadius: '50%', objectFit: 'cover', border: '3px solid #fff' },
-  storyPlaceholder: { width: '56px', height: '56px', borderRadius: '50%', background: '#f3f4f6', border: '3px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', fontWeight: '700', color: '#6b7280' },
-  storyDest: { fontSize: '11px', fontWeight: '700', color: '#047857', textDecoration: 'none', textAlign: 'center', lineHeight: 1.2, maxWidth: '76px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
-  storyName: { fontSize: '11px', color: '#6b7280', fontWeight: '600', textAlign: 'center', maxWidth: '76px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
-
-  // More Destinations search
-  moreSearchIcon: {
-    background: 'none',
-    border: 'none',
-    color: '#9ca3af',
-    cursor: 'pointer',
-    padding: '6px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: '50%',
-    transition: 'color 0.2s',
-  },
-  moreSearchBar: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    flex: 1,
-    padding: '8px 14px',
-    background: '#f5f3f0',
-    borderRadius: '10px',
-  },
-  moreSearchInput: {
-    flex: 1,
-    border: 'none',
-    outline: 'none',
-    fontSize: '14px',
-    color: '#1f2937',
-    background: 'transparent',
-    fontFamily: 'inherit',
-  },
-  moreSearchClose: {
-    background: 'none',
-    border: 'none',
-    color: '#9ca3af',
-    cursor: 'pointer',
-    padding: '2px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
 
   // FAB
   fab: {

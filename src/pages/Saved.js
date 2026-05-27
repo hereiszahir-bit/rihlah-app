@@ -3,12 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { db } from '../firebase';
 import { doc, updateDoc, addDoc, collection } from 'firebase/firestore';
 import { useUser } from '../context/UserContext';
-import { FiX, FiEdit2, FiTrash2, FiChevronDown, FiMapPin, FiNavigation, FiMessageCircle, FiCamera } from 'react-icons/fi';
-import TabBar from '../components/TabBar';
+import { FiX, FiEdit2, FiTrash2, FiChevronDown, FiMapPin, FiNavigation, FiMessageCircle, FiCamera, FiCrosshair, FiSend, FiMap } from 'react-icons/fi';
+
 
 function Saved() {
   const navigate = useNavigate();
-  const { currentUser, currentUserData, allUsers, sentRequestUserIds, receivedRequestUserIds, refreshCurrentUser } = useUser();
+  const { currentUser, currentUserData, allUsers, connections: myConnections_enriched, sentRequestUserIds, receivedRequestUserIds, refreshCurrentUser } = useUser();
   const [activeSubTab, setActiveSubTab] = useState('upcoming');
   const [expandedYears, setExpandedYears] = useState({});
   const [editingTrip, setEditingTrip] = useState(null);
@@ -47,11 +47,14 @@ function Saved() {
 
       allUsers.forEach((u) => {
         if (u.id === currentUser.uid) return;
-
-        const theirVis = u.profileVisibility || 'both';
-        if (theirVis !== 'both' && theirVis !== myGender) return;
-        if (myVisibility !== 'both' && u.gender !== myVisibility) return;
         if (!Array.isArray(u.upcomingTrips) || u.upcomingTrips.length === 0) return;
+
+        // Skip gender visibility filter for existing connections
+        if (!myConnections.includes(u.id)) {
+          const theirVis = u.profileVisibility || 'both';
+          if (theirVis !== 'both' && theirVis !== myGender) return;
+          if (myVisibility !== 'both' && u.gender !== myVisibility) return;
+        }
 
         u.upcomingTrips.forEach(ut => {
           if (ut.destination !== trip.destination) return;
@@ -59,13 +62,17 @@ function Saved() {
           const uEnd = parseDate(ut.endDate);
           if (uStart <= myEnd && uEnd >= myStart) {
             const isThere = today >= uStart && today <= uEnd;
+            const isConn = myConnections.includes(u.id);
+            // Merge contact info from connection record for connected users
+            const connRecord = isConn ? myConnections_enriched.find(c => c.userId === u.id) : null;
             people.push({
               id: u.id,
               ...u,
+              ...(connRecord ? { whatsapp: connRecord.whatsapp, instagram: connRecord.instagram } : {}),
               tripStart: ut.startDate,
               tripEnd: ut.endDate,
               isThere,
-              isConnected: myConnections.includes(u.id),
+              isConnected: isConn,
             });
           }
         });
@@ -88,7 +95,7 @@ function Saved() {
     });
 
     return peopleByTrip;
-  }, [currentUserData, allUsers, currentUser]);
+  }, [currentUserData, allUsers, currentUser, myConnections_enriched]);
 
   const handleSendConnectionRequest = async (toUser) => {
     try {
@@ -326,7 +333,7 @@ function Saved() {
                 <div style={styles.expSectionLabel}>Experiences ({expCount})</div>
                 {trip.experiences.map((exp, expIndex) => (
                   <div key={expIndex} style={styles.expCard}>
-                    <div style={styles.expIcon}>{exp.icon || '🎯'}</div>
+                    <div style={styles.expIcon}>{exp.icon ? exp.icon : <FiCrosshair size={20} color="#047857" />}</div>
                     <div style={styles.expDetails}>
                       <div style={styles.expName}>{exp.name}</div>
                       <div style={styles.expPrice}>${exp.price}</div>
@@ -426,7 +433,7 @@ function Saved() {
               <div style={styles.pastExpList}>
                 {trip.experiences.map((exp, i) => (
                   <div key={i} style={styles.pastExpItem}>
-                    <span>{exp.icon || '🎯'} {exp.name}</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>{exp.icon ? exp.icon : <FiCrosshair size={14} color="#047857" />} {exp.name}</span>
                     <span style={styles.pastExpPrice}>${exp.price}</span>
                     {exp.bookingUrl && (
                       <button style={styles.rebookBtn} onClick={() => window.open(exp.bookingUrl, '_blank')}>
@@ -447,7 +454,7 @@ function Saved() {
     if (grouped.sortedYears.length === 0) {
       return (
         <div style={styles.emptyState}>
-          <div style={styles.emptyIcon}>{prefix === 'upcoming' ? '✈️' : '🗺️'}</div>
+          <div style={styles.emptyIcon}>{prefix === 'upcoming' ? <FiSend size={48} color="#047857" /> : <FiMap size={48} color="#9ca3af" />}</div>
           <div style={styles.emptyTitle}>
             {prefix === 'upcoming' ? 'No upcoming trips' : 'No past trips'}
           </div>
@@ -502,20 +509,12 @@ function Saved() {
     return (
       <div style={styles.container}>
         <div style={styles.loading}>Loading...</div>
-        <TabBar />
-      </div>
+        </div>
     );
   }
 
   return (
     <div style={styles.container}>
-      <div style={styles.header}>
-        <h1 style={styles.title}>My Trips</h1>
-        <p style={styles.subtitle}>
-          {upcomingTrips.length} upcoming • {pastTrips.length} past
-        </p>
-      </div>
-
       {/* Sub-tabs */}
       <div style={styles.subTabsWrapper}>
         <div style={styles.subTabs}>
@@ -636,17 +635,16 @@ function Saved() {
         );
       })()}
 
-      <TabBar />
     </div>
   );
 }
 
 const styles = {
-  container: { minHeight: '100vh', background: '#faf9f7', paddingBottom: '80px' },
+  container: { minHeight: '100vh', background: '#faf9f7', paddingBottom: '70px' },
   loading: { display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', color: '#6b7280', fontSize: '18px' },
 
   // Header
-  header: { background: '#fff', padding: '24px 20px 16px 20px', borderBottom: '1px solid #e8e5e0' },
+  header: { background: '#fff', padding: '8px 20px', borderBottom: '1px solid #e8e5e0' },
   title: { fontSize: '28px', fontWeight: '800', color: '#1a1a1a', margin: '0 0 4px 0' },
   subtitle: { fontSize: '14px', color: '#6b6b6b', margin: 0 },
 
@@ -671,7 +669,7 @@ const styles = {
 
   // Empty
   emptyState: { display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '60px 20px', textAlign: 'center' },
-  emptyIcon: { fontSize: '64px', marginBottom: '16px' },
+  emptyIcon: { marginBottom: '16px', display: 'flex', justifyContent: 'center' },
   emptyTitle: { fontSize: '20px', fontWeight: '700', color: '#1f2937', marginBottom: '8px' },
   emptyText: { fontSize: '15px', color: '#6b7280', marginBottom: '24px' },
   emptyButton: { background: 'linear-gradient(135deg, #047857, #059669)', color: '#fff', border: 'none', padding: '14px 28px', borderRadius: '12px', fontSize: '15px', fontWeight: '600', cursor: 'pointer', boxShadow: '0 2px 8px rgba(4,120,87,0.3)' },

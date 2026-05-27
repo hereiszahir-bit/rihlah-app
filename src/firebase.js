@@ -1,7 +1,9 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { initializeAuth, getAuth, browserLocalPersistence, indexedDBLocalPersistence } from 'firebase/auth';
+import { Capacitor } from '@capacitor/core';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
+import { getAnalytics, logEvent } from 'firebase/analytics';
 
 // Your Firebase configuration
 const firebaseConfig = {
@@ -17,9 +19,21 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Initialize services
-export const auth = getAuth(app);
+// Initialize Auth — use browserLocalPersistence on native to avoid indexedDB issues
+export const auth = Capacitor.isNativePlatform()
+  ? initializeAuth(app, { persistence: browserLocalPersistence })
+  : getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+
+// Initialize Analytics
+let analytics = null;
+try {
+  analytics = getAnalytics(app);
+} catch (e) {
+  // Analytics may not be available in all environments
+}
+
+export { analytics, logEvent };
 
 export default app;

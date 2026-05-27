@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { auth, db } from '../firebase';
-import { doc, updateDoc, deleteDoc, collection, getDocs, runTransaction, getDoc } from 'firebase/firestore';
+import { doc, deleteDoc, runTransaction } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../context/UserContext';
 import { FiX, FiMapPin, FiNavigation, FiMessageCircle, FiCamera, FiBell } from 'react-icons/fi';
-import TabBar from '../components/TabBar';
+
 
 const parseDate = (dateStr) => {
   if (!dateStr) return new Date();
@@ -134,42 +134,6 @@ function Profile() {
     }
   };
 
-  const handleCleanupDuplicates = async () => {
-    try {
-      const currentUser = auth.currentUser;
-      if (!currentUser) return;
-      const usersSnapshot = await getDocs(collection(db, 'users'));
-      let totalRemoved = 0;
-      for (const userDoc of usersSnapshot.docs) {
-        const uData = userDoc.data();
-        const conns = uData.connections || [];
-        if (conns.length <= 1) continue;
-        const seen = new Set();
-        const unique = [];
-        for (const c of conns) {
-          if (!seen.has(c.userId)) {
-            seen.add(c.userId);
-            unique.push(c);
-          }
-        }
-        const removed = conns.length - unique.length;
-        if (removed > 0) {
-          await updateDoc(doc(db, 'users', userDoc.id), { connections: unique });
-          totalRemoved += removed;
-        }
-      }
-      if (totalRemoved === 0) {
-        alert('No duplicates found!');
-      } else {
-        alert(`Cleaned up ${totalRemoved} duplicate connection(s)!`);
-        refreshAll();
-      }
-    } catch (error) {
-      console.error('Error cleaning duplicates:', error);
-      alert('Failed to clean duplicates');
-    }
-  };
-
   const handleLogout = async () => {
     try {
       await auth.signOut();
@@ -258,6 +222,18 @@ function Profile() {
         </button>
       )}
 
+      {/* Identity */}
+      {userData.identity && userData.identity.length > 0 && (
+        <div style={styles.section}>
+          <div style={styles.sectionTitle}>Identity</div>
+          <div style={styles.interestsList}>
+            {userData.identity.map((item, i) => (
+              <div key={i} style={styles.identityTag}>{item}</div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Interests */}
       {userData.interests && userData.interests.length > 0 && (
         <div style={styles.section}>
@@ -276,10 +252,6 @@ function Profile() {
           Edit Profile
         </button>
       </div>
-
-      <button style={styles.cleanupBtn} onClick={handleCleanupDuplicates}>
-        Clean Up Duplicate Connections
-      </button>
 
       <button style={styles.logoutBtn} onClick={handleLogout}>
         Logout
@@ -497,17 +469,16 @@ function Profile() {
         </div>
       )}
 
-      <TabBar />
     </div>
   );
 }
 
 const styles = {
-  container: { minHeight: '100vh', background: '#faf9f7', paddingBottom: '80px' },
+  container: { minHeight: '100vh', background: '#faf9f7', paddingBottom: '70px' },
   loading: { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', color: '#6b7280' },
 
   // Header
-  header: { background: 'linear-gradient(135deg, #047857 0%, #059669 50%, #10b981 100%)', padding: '40px 20px 24px', color: '#fff', textAlign: 'center', position: 'relative' },
+  header: { background: 'linear-gradient(135deg, #047857 0%, #059669 50%, #10b981 100%)', padding: '8px 20px 20px', color: '#fff', textAlign: 'center', position: 'relative' },
   headerLogo: { position: 'absolute', top: '16px', left: '16px', width: 'min(110px, 28vw)', height: 'auto', borderRadius: '6px', opacity: 0.9, filter: 'brightness(0) invert(1)' },
   photoSection: { marginBottom: '16px' },
   profilePhoto: { width: '100px', height: '100px', borderRadius: '50%', objectFit: 'cover', border: '4px solid #fff' },
@@ -515,6 +486,7 @@ const styles = {
   name: { fontSize: '22px', fontWeight: '800', margin: '0 0 2px 0' },
   city: { fontSize: '14px', opacity: 0.9, marginBottom: '8px' },
   bio: { fontSize: '14px', opacity: 0.95, fontStyle: 'italic', lineHeight: 1.5, maxWidth: '300px', margin: '0 auto' },
+
 
   // Stats Row
   statsRow: { display: 'flex', alignItems: 'center', background: '#fff', padding: '16px 0', borderBottom: '1px solid #e8e5e0' },
@@ -533,12 +505,12 @@ const styles = {
   section: { padding: '20px', background: '#fff', marginTop: '8px' },
   sectionTitle: { fontSize: '16px', fontWeight: '700', color: '#1a1a1a', marginBottom: '12px' },
   interestsList: { display: 'flex', flexWrap: 'wrap', gap: '8px' },
+  identityTag: { padding: '8px 16px', background: '#eff6ff', color: '#2563eb', borderRadius: '20px', fontSize: '14px', fontWeight: '600' },
   interestTag: { padding: '8px 16px', background: '#f0f9f4', color: '#047857', borderRadius: '20px', fontSize: '14px', fontWeight: '600' },
 
   // Action Buttons
   actionsSection: { padding: '20px 20px 0' },
   editProfileBtn: { width: '100%', padding: '14px 24px', background: 'linear-gradient(135deg, #047857, #059669)', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', boxShadow: '0 2px 8px rgba(4,120,87,0.3)' },
-  cleanupBtn: { width: 'calc(100% - 40px)', margin: '12px 20px 0', padding: '14px', background: 'transparent', color: '#047857', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' },
   logoutBtn: { width: 'calc(100% - 40px)', margin: '12px 20px 0', padding: '14px', background: '#fef2f2', color: '#dc2626', border: 'none', borderRadius: '12px', fontSize: '16px', fontWeight: '700', cursor: 'pointer' },
 
   // Modals shared

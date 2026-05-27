@@ -22,6 +22,8 @@ export function UserProvider({ children }) {
   }, [allUsers]);
 
   // Derive enriched connections from currentUserData + allUsersMap (eliminates N+1)
+  // Note: whatsapp/instagram come from the connection record (stored at accept time),
+  // not from allUsersMap, since allUsers no longer includes PII fields.
   const connections = useMemo(() => {
     if (!currentUserData || !currentUserData.connections) return [];
     return currentUserData.connections.map(conn => {
@@ -30,13 +32,14 @@ export function UserProvider({ children }) {
         return {
           ...conn,
           upcomingTrips: liveUser.upcomingTrips || [],
-          whatsapp: liveUser.whatsapp,
-          instagram: liveUser.instagram,
           bio: liveUser.bio || conn.bio,
           interests: liveUser.interests || conn.interests,
           photoURL: liveUser.photoURL || conn.photoURL,
           name: liveUser.name || conn.name,
           age: liveUser.age || conn.age,
+          // Preserve contact info from connection record (not stripped from allUsers)
+          whatsapp: conn.whatsapp,
+          instagram: conn.instagram,
         };
       }
       return conn;
@@ -82,11 +85,26 @@ export function UserProvider({ children }) {
     return null;
   }, []);
 
+  // Fetch all users with only public-safe fields (exclude PII like whatsapp, instagram, email)
   const fetchAllUsers = useCallback(async () => {
     const snapshot = await getDocs(collection(db, 'users'));
     const users = [];
     snapshot.forEach(docSnap => {
-      users.push({ id: docSnap.id, ...docSnap.data() });
+      const data = docSnap.data();
+      users.push({
+        id: docSnap.id,
+        name: data.name,
+        age: data.age,
+        gender: data.gender,
+        bio: data.bio,
+        photoURL: data.photoURL,
+        interests: data.interests,
+        identity: data.identity,
+        city: data.city,
+        profileVisibility: data.profileVisibility,
+        upcomingTrips: data.upcomingTrips,
+        onboardingComplete: data.onboardingComplete,
+      });
     });
     return users;
   }, []);

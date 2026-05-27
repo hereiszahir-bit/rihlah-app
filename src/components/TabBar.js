@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FiCompass, FiHeart, FiUser } from 'react-icons/fi';
+import { FiCompass, FiHeart, FiMessageCircle, FiUser } from 'react-icons/fi';
 import { auth, db } from '../firebase';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, onSnapshot } from 'firebase/firestore';
 
 function TabBar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [badgeCount, setBadgeCount] = useState(0);
+  const [msgBadge, setMsgBadge] = useState(0);
 
   useEffect(() => {
     const fetchPendingRequests = async () => {
@@ -30,9 +31,30 @@ function TabBar() {
     fetchPendingRequests();
   }, []);
 
+  // Real-time unread message count
+  useEffect(() => {
+    const currentUser = auth.currentUser;
+    if (!currentUser) return;
+
+    const convRef = collection(db, 'conversations');
+    const q = query(convRef, where('participants', 'array-contains', currentUser.uid));
+
+    const unsub = onSnapshot(q, (snapshot) => {
+      let total = 0;
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        total += data[`unread_${currentUser.uid}`] || 0;
+      });
+      setMsgBadge(total);
+    });
+
+    return unsub;
+  }, []);
+
   const tabs = [
     { path: '/destinations', icon: FiCompass, label: 'Explore' },
     { path: '/saved', icon: FiHeart, label: 'Saved' },
+    { path: '/messages', icon: FiMessageCircle, label: 'Messages', badge: msgBadge },
     { path: '/profile', icon: FiUser, label: 'Profile', badge: badgeCount }
   ];
 
@@ -76,16 +98,16 @@ function TabBar() {
 
 const styles = {
   container: {
-    position: 'fixed',
-    bottom: 0,
-    left: 0,
-    right: 0,
     display: 'flex',
     justifyContent: 'space-around',
     background: '#ffffff',
     borderTop: '1px solid #e8e5e0',
-    padding: '10px 0 20px',
-    zIndex: 100,
+    position: 'fixed',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: '4px 0 env(safe-area-inset-bottom, 0px)',
+    zIndex: 9999,
   },
   tab: {
     flex: 1,
@@ -101,7 +123,7 @@ const styles = {
   tabActive: {},
   iconContainer: {
     position: 'relative',
-    marginBottom: '4px',
+    marginBottom: '2px',
   },
   badge: {
     position: 'absolute',

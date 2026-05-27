@@ -18,12 +18,11 @@ function tripsOverlap(a, b) {
   const bStart = parseDate(b.startDate);
   const bEnd = parseDate(b.endDate);
 
-  // Overlap if one starts before the other ends (strict — same-day transitions allowed)
   return aStart.getTime() < bEnd.getTime() && bStart.getTime() < aEnd.getTime();
 }
 
 async function cleanupOverlappingTrips() {
-  console.log('🔍 Scanning for overlapping trips...\n');
+  console.log('Scanning for overlapping trips...\n');
 
   const usersSnapshot = await db.collection('users').get();
   let totalRemoved = 0;
@@ -34,12 +33,10 @@ async function cleanupOverlappingTrips() {
 
     if (trips.length < 2) continue;
 
-    // Sort by start date
     const sorted = [...trips].sort((a, b) =>
       parseDate(a.startDate).getTime() - parseDate(b.startDate).getTime()
     );
 
-    // Keep non-overlapping trips (greedy — keep earlier trip)
     const kept = [sorted[0]];
     const removed = [];
 
@@ -54,11 +51,11 @@ async function cleanupOverlappingTrips() {
 
     if (removed.length > 0) {
       const email = userData.email || userDoc.id;
-      console.log(`👤 ${email}`);
-      console.log(`   Keeping ${kept.length} trip(s):`);
-      kept.forEach(t => console.log(`     ✅ ${t.destination} (${t.startDate} → ${t.endDate})`));
-      console.log(`   Removing ${removed.length} overlapping trip(s):`);
-      removed.forEach(t => console.log(`     ❌ ${t.destination} (${t.startDate} → ${t.endDate})`));
+      console.log(`${email}`);
+      console.log(`  Keeping ${kept.length} trip(s):`);
+      kept.forEach(t => console.log(`    ${t.destination} (${t.startDate} -> ${t.endDate})`));
+      console.log(`  Removing ${removed.length} overlapping trip(s):`);
+      removed.forEach(t => console.log(`    ${t.destination} (${t.startDate} -> ${t.endDate})`));
       console.log('');
 
       await userDoc.ref.update({ upcomingTrips: kept });
@@ -67,9 +64,9 @@ async function cleanupOverlappingTrips() {
   }
 
   if (totalRemoved === 0) {
-    console.log('✅ No overlapping trips found. Database is clean!');
+    console.log('No overlapping trips found. Database is clean!');
   } else {
-    console.log(`🎉 Done! Removed ${totalRemoved} overlapping trip(s).`);
+    console.log(`Done! Removed ${totalRemoved} overlapping trip(s).`);
   }
 
   process.exit(0);

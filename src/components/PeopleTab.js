@@ -109,7 +109,7 @@ function PeopleTab({ destination }) {
       setLocalSentRequests(prev => [...prev, selectedPerson.userId]);
       refreshConnections();
 
-      alert('Connection request sent! 🎉');
+      alert('Connection request sent!');
       setShowProfileModal(false);
 
     } catch (error) {
@@ -149,16 +149,16 @@ function PeopleTab({ destination }) {
   };
 
   const interestEmojis = {
-    food: '🍽️',
-    adventure: '⛰️',
-    culture: '🏛️',
-    photography: '📸',
-    art: '🎨',
-    history: '🏛️',
-    nature: '🌿',
-    shopping: '🛍️',
-    nightlife: '🌃',
-    wellness: '🧘'
+    food: '',
+    adventure: '',
+    culture: '',
+    photography: '',
+    art: '',
+    history: '',
+    nature: '',
+    shopping: '',
+    nightlife: '',
+    wellness: ''
   };
 
   return (
@@ -190,7 +190,6 @@ function PeopleTab({ destination }) {
         {travelers.length === 0 ? (
           <div style={styles.empty}>
             <div style={styles.emptyIcon}>
-              {timeFilter === 'now' ? '📍' : '✈️'}
             </div>
             <div style={styles.emptyText}>
               {timeFilter === 'now'
@@ -235,7 +234,7 @@ function PeopleTab({ destination }) {
                 <div style={styles.interestIcons}>
                   {person.interests.slice(0, 4).map((interest, i) => (
                     <span key={i} style={styles.interestIcon}>
-                      {interestEmojis[interest.toLowerCase()] || '✨'}
+                      {interestEmojis[interest.toLowerCase()]}
                     </span>
                   ))}
                 </div>
@@ -307,7 +306,7 @@ function PeopleTab({ destination }) {
                   <div style={styles.interestsList}>
                     {selectedPerson.interests.map((interest, i) => (
                       <div key={i} style={styles.interestTag}>
-                        {interestEmojis[interest.toLowerCase()] || '✨'} {interest}
+                        {interestEmojis[interest.toLowerCase()]} {interest}
                       </div>
                     ))}
                   </div>

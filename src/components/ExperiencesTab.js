@@ -133,7 +133,7 @@ function ExperiencesTab({ destination }) {
       // Reload counts
       await loadExperienceCounts();
       
-      alert(`✅ Saved to your ${trip.destination} trip!`);
+      alert(`Saved to your ${trip.destination} trip!`);
       
     } catch (error) {
       console.error('Error saving experience:', error);
@@ -348,12 +348,12 @@ function ExperiencesTab({ destination }) {
   ];
 
   const categories = [
-    { value: 'all', label: 'All', emoji: '✨' },
-    { value: 'tour', label: 'Tours', emoji: '🗺️' },
-    { value: 'food', label: 'Food', emoji: '🍽️' },
-    { value: 'culture', label: 'Culture', emoji: '🕌' },
-    { value: 'wellness', label: 'Wellness', emoji: '🧘' },
-    { value: 'shopping', label: 'Shopping', emoji: '🛍️' },
+    { value: 'all', label: 'All' },
+    { value: 'tour', label: 'Tours' },
+    { value: 'food', label: 'Food' },
+    { value: 'culture', label: 'Culture' },
+    { value: 'wellness', label: 'Wellness' },
+    { value: 'shopping', label: 'Shopping' },
   ];
 
   const filteredExperiences = selectedCategory === 'all'
@@ -374,7 +374,7 @@ function ExperiencesTab({ destination }) {
               }}
               onClick={() => setSelectedCategory(cat.value)}
             >
-              {cat.emoji} {cat.label}
+              {cat.label}
             </button>
           ))}
         </div>
@@ -396,7 +396,7 @@ function ExperiencesTab({ destination }) {
               {/* Who's Going Badge */}
               {count > 0 && (
                 <div style={styles.travelersGoing}>
-                  👥 {count} {count === 1 ? 'traveler' : 'travelers'} interested
+                  {count} {count === 1 ? 'traveler' : 'travelers'} interested
                 </div>
               )}
               
@@ -415,7 +415,7 @@ function ExperiencesTab({ destination }) {
                     style={styles.whosGoingBtn}
                     onClick={() => handleShowWhosGoing(exp)}
                   >
-                    👥 See who's going your dates
+                    See who's going your dates
                   </button>
                 )}
                 
@@ -425,14 +425,14 @@ function ExperiencesTab({ destination }) {
                     style={styles.saveBtn}
                     onClick={() => handleSaveToTrip(exp)}
                   >
-                    ⭐ Save
+                    Save
                   </button>
                   
                   <button
                     style={styles.bookNowBtn}
                     onClick={() => handleBookNow(exp)}
                   >
-                    🎫 Book Now
+                    Book Now
                   </button>
                 </div>
                 
@@ -444,7 +444,7 @@ function ExperiencesTab({ destination }) {
                 {/* No trip warning */}
                 {userTrips.length === 0 && (
                   <div style={styles.noTripHint}>
-                    💡 Add a trip to {destination.split(',')[0]} to save experiences
+                    Add a trip to {destination.split(',')[0]} to save experiences
                   </div>
                 )}
               </div>
@@ -455,7 +455,7 @@ function ExperiencesTab({ destination }) {
 
       {filteredExperiences.length === 0 && (
         <div style={styles.empty}>
-          <div style={styles.emptyIcon}>🔍</div>
+          <div style={styles.emptyIcon}></div>
           <div style={styles.emptyText}>No experiences in this category</div>
           <div style={styles.emptySubtext}>Try selecting a different category</div>
         </div>
@@ -515,7 +515,7 @@ function ExperiencesTab({ destination }) {
             
             {whosGoingData.length === 0 ? (
               <div style={styles.noTravelers}>
-                No other Rihlah users going during your trip dates yet. Be the first! 🎉
+                No other Rihlah users going during your trip dates yet. Be the first!
               </div>
             ) : (
               <>
@@ -523,7 +523,7 @@ function ExperiencesTab({ destination }) {
                 {whosGoingData.filter(t => t.isConnection).length > 0 && (
                   <div style={styles.travelerSection}>
                     <div style={styles.travelerSectionTitle}>
-                      🟢 Your Connections ({whosGoingData.filter(t => t.isConnection).length})
+                      Your Connections ({whosGoingData.filter(t => t.isConnection).length})
                     </div>
                     {whosGoingData.filter(t => t.isConnection).map((traveler, index) => (
                       <div key={index} style={styles.travelerCard}>
@@ -543,7 +543,7 @@ function ExperiencesTab({ destination }) {
                             style={styles.whatsappBtn}
                             onClick={() => handleWhatsAppDirect(traveler)}
                           >
-                            💬
+                            Message
                           </button>
                         )}
                       </div>
@@ -555,7 +555,7 @@ function ExperiencesTab({ destination }) {
                 {whosGoingData.filter(t => !t.isConnection).length > 0 && (
                   <div style={styles.travelerSection}>
                     <div style={styles.travelerSectionTitle}>
-                      ⚪ Other Rihlah Users ({whosGoingData.filter(t => !t.isConnection).length})
+                      Other Rihlah Users ({whosGoingData.filter(t => !t.isConnection).length})
                     </div>
                     {whosGoingData.filter(t => !t.isConnection).map((traveler, index) => (
                       <div key={index} style={styles.travelerCard}>
@@ -584,7 +584,7 @@ function ExperiencesTab({ destination }) {
                     style={styles.groupChatBtn}
                     onClick={handleCreateWhatsAppGroup}
                   >
-                    📱 Create WhatsApp Group
+                    Create WhatsApp Group
                   </button>
                 )}
               </>
