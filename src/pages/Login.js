@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { signInWithEmailAndPassword, signInWithPopup, signInWithCredential, GoogleAuthProvider } from 'firebase/auth';
 import { Capacitor } from '@capacitor/core';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
@@ -16,7 +16,6 @@ const nativeGoogleSignIn = () => {
 };
 
 function Login() {
-  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -26,11 +25,11 @@ function Login() {
     const pendingInvite = localStorage.getItem('rihlah_pending_invite');
     if (pendingInvite && fallback !== '/onboarding') {
       localStorage.removeItem('rihlah_pending_invite');
-      navigate(`/join/${pendingInvite}`);
+      window.location.href = `/join/${pendingInvite}`;
     } else {
-      // If heading to onboarding, keep the invite in localStorage.
-      // Onboarding picks it up after profile creation.
-      navigate(fallback);
+      // Full reload ensures onAuthStateChanged has fired and
+      // UserContext has currentUser set before routes evaluate.
+      window.location.href = fallback;
     }
   };
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { createUserWithEmailAndPassword, signInWithPopup, signInWithCredential, GoogleAuthProvider } from 'firebase/auth';
 import { Capacitor } from '@capacitor/core';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
@@ -16,7 +16,6 @@ const nativeGoogleSignIn = () => {
 };
 
 function Signup() {
-  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -25,7 +24,7 @@ function Signup() {
   const redirectAfterAuth = (fallback) => {
     // Don't consume the pending invite here — let onboarding complete first.
     // The invite stays in localStorage and is picked up after onboarding.
-    navigate(fallback);
+    window.location.href = fallback;
   };
 
   const handleEmailSignup = async (e) => {
