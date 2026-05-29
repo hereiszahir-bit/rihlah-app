@@ -3,7 +3,8 @@ import { auth, db } from '../firebase';
 import { doc, deleteDoc, runTransaction } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../context/UserContext';
-import { FiX, FiMapPin, FiNavigation, FiMessageCircle, FiCamera, FiBell } from 'react-icons/fi';
+import { FiX, FiMapPin, FiNavigation, FiMessageCircle, FiCamera } from 'react-icons/fi';
+import { colors, fonts, radius, components, type } from '../design';
 
 
 const parseDate = (dateStr) => {
@@ -78,22 +79,18 @@ function Profile() {
         transaction.delete(requestRef);
       });
 
-      alert('Connection accepted!');
       refreshAll();
     } catch (error) {
       console.error('Error accepting request:', error);
-      alert('Failed to accept. Please try again.');
     }
   };
 
   const handleDecline = async (request) => {
     try {
       await deleteDoc(doc(db, 'connectionRequests', request.id));
-      alert('Request declined');
       refreshConnections();
     } catch (error) {
       console.error('Error declining request:', error);
-      alert('Failed to decline. Please try again.');
     }
   };
 
@@ -130,7 +127,6 @@ function Profile() {
       refreshAll();
     } catch (error) {
       console.error('Error removing connection:', error);
-      alert('Failed to remove connection. Please try again.');
     }
   };
 
@@ -145,26 +141,22 @@ function Profile() {
 
   const openWhatsApp = (phone) => {
     const cleanPhone = phone.replace(/\D/g, '');
-    window.open(`https://wa.me/${cleanPhone}?text=Hey! We connected on Rihlah`, '_blank');
+    window.open(`https://wa.me/${cleanPhone}`, '_blank');
   };
 
   const openInstagram = (handle) => {
     const cleanHandle = handle.replace('@', '');
-    const link = document.createElement('a');
-    link.href = `https://www.instagram.com/${cleanHandle}`;
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    window.open(`https://www.instagram.com/${cleanHandle}`, '_blank');
   };
 
   // Stats
   const tripsCount = userData?.upcomingTrips?.length || 0;
+  const pastTripsCount = userData?.pastTrips?.length || 0;
   const connectionsCount = connections.length;
-  const experiencesCount = (userData?.upcomingTrips || []).reduce(
-    (sum, trip) => sum + (trip.experiences?.length || 0), 0
-  );
+  const countriesCount = new Set([
+    ...(userData?.upcomingTrips || []).map(t => t.destination?.split(',').pop()?.trim()),
+    ...(userData?.pastTrips || []).map(t => t.destination?.split(',').pop()?.trim()),
+  ].filter(Boolean)).size;
 
   if (!userData) {
     return (
@@ -178,7 +170,6 @@ function Profile() {
     <div style={styles.container}>
       {/* Header */}
       <div style={styles.header}>
-        <img src="/logo192.png" alt="Rihlah" style={styles.headerLogo} />
         <div style={styles.photoSection}>
           {userData.photoURL ? (
             <img src={userData.photoURL} alt="Profile" style={styles.profilePhoto} />
@@ -188,37 +179,36 @@ function Profile() {
             </div>
           )}
         </div>
-        <h2 style={styles.name}>{userData.name}, {userData.age}</h2>
+        <h2 style={styles.name}>{userData.name}{userData.age ? `, ${userData.age}` : ''}</h2>
         {userData.city && <div style={styles.city}>{userData.city}</div>}
         {userData.bio && <div style={styles.bio}>{userData.bio}</div>}
       </div>
 
       {/* Stats Row */}
       <div style={styles.statsRow}>
-        <button style={styles.statItem} onClick={() => navigate('/saved')}>
-          <div style={styles.statNumber}>{tripsCount}</div>
-          <div style={styles.statLabel}>Trips</div>
+        <div style={styles.statItem}>
+          <div style={styles.statNumber}>{countriesCount}</div>
+          <div style={styles.statLabel}>Countries</div>
+        </div>
+        <div style={styles.statDivider} />
+        <button style={styles.statItem} onClick={() => navigate('/trips')}>
+          <div style={styles.statNumber}>{tripsCount + pastTripsCount}</div>
+          <div style={styles.statLabel}>Journeys</div>
         </button>
         <div style={styles.statDivider} />
         <button style={styles.statItem} onClick={() => setShowConnections(true)}>
           <div style={styles.statNumber}>{connectionsCount}</div>
-          <div style={styles.statLabel}>Connections</div>
-        </button>
-        <div style={styles.statDivider} />
-        <button style={styles.statItem} onClick={() => navigate('/saved')}>
-          <div style={styles.statNumber}>{experiencesCount}</div>
-          <div style={styles.statLabel}>Experiences</div>
+          <div style={styles.statLabel}>Companions</div>
         </button>
       </div>
 
-      {/* Connection Requests Banner */}
+      {/* Connection Requests */}
       {connectionRequests.length > 0 && (
         <button style={styles.requestsBanner} onClick={() => setShowConnections(true)}>
-          <span style={styles.requestsBannerIcon}><FiBell size={18} /></span>
           <span style={styles.requestsBannerText}>
             {connectionRequests.length} connection request{connectionRequests.length > 1 ? 's' : ''}
           </span>
-          <span style={styles.requestsBannerArrow}>→</span>
+          <span style={styles.requestsBannerArrow}>View</span>
         </button>
       )}
 
@@ -226,9 +216,9 @@ function Profile() {
       {userData.identity && userData.identity.length > 0 && (
         <div style={styles.section}>
           <div style={styles.sectionTitle}>Identity</div>
-          <div style={styles.interestsList}>
+          <div style={styles.tagsList}>
             {userData.identity.map((item, i) => (
-              <div key={i} style={styles.identityTag}>{item}</div>
+              <div key={i} style={styles.tag}>{item}</div>
             ))}
           </div>
         </div>
@@ -238,9 +228,9 @@ function Profile() {
       {userData.interests && userData.interests.length > 0 && (
         <div style={styles.section}>
           <div style={styles.sectionTitle}>Interests</div>
-          <div style={styles.interestsList}>
+          <div style={styles.tagsList}>
             {userData.interests.map((interest, i) => (
-              <div key={i} style={styles.interestTag}>{interest}</div>
+              <div key={i} style={styles.tag}>{interest}</div>
             ))}
           </div>
         </div>
@@ -251,18 +241,17 @@ function Profile() {
         <button style={styles.editProfileBtn} onClick={() => navigate('/edit-profile')}>
           Edit Profile
         </button>
+        <button style={styles.logoutBtn} onClick={handleLogout}>
+          Sign Out
+        </button>
       </div>
-
-      <button style={styles.logoutBtn} onClick={handleLogout}>
-        Logout
-      </button>
 
       {/* Connections Modal */}
       {showConnections && (
         <div style={styles.modalOverlay} onClick={() => setShowConnections(false)}>
           <div style={styles.connectionsModal} onClick={(e) => e.stopPropagation()}>
             <div style={styles.modalHeader}>
-              <h3 style={styles.modalTitle}>Connections</h3>
+              <h3 style={styles.modalTitle}>Companions</h3>
               <button style={styles.modalClose} onClick={() => setShowConnections(false)}>
                 <FiX size={20} />
               </button>
@@ -277,27 +266,22 @@ function Profile() {
                   </div>
                   {connectionRequests.map((request, index) => (
                     <div key={index} style={styles.requestCard}>
-                      <div style={styles.requestBackdrop}>
+                      <div style={styles.requestInfo}>
                         {request.photoURL ? (
-                          <img src={request.photoURL} alt={request.name} style={styles.requestBackdropImg} />
+                          <img src={request.photoURL} alt={request.name} style={styles.requestAvatar} />
                         ) : (
-                          <div style={styles.requestBackdropPlaceholder}>
+                          <div style={styles.requestAvatarPlaceholder}>
                             {request.name.charAt(0).toUpperCase()}
                           </div>
                         )}
-                        <div style={styles.requestGradient} />
-                      </div>
-                      <div style={styles.requestOverlay}>
-                        <div style={styles.requestName}>{request.name}, {request.age}</div>
-                        {request.bio && <div style={styles.requestBio}>"{request.bio}"</div>}
-                        <div style={styles.requestActions}>
-                          <button style={styles.acceptBtn} onClick={() => handleAccept(request)}>
-                            Accept
-                          </button>
-                          <button style={styles.declineBtn} onClick={() => handleDecline(request)}>
-                            Decline
-                          </button>
+                        <div style={styles.requestDetails}>
+                          <div style={styles.requestName}>{request.name}{request.age ? `, ${request.age}` : ''}</div>
+                          {request.bio && <div style={styles.requestBio}>{request.bio}</div>}
                         </div>
+                      </div>
+                      <div style={styles.requestActions}>
+                        <button style={styles.acceptBtn} onClick={() => handleAccept(request)}>Accept</button>
+                        <button style={styles.declineBtn} onClick={() => handleDecline(request)}>Decline</button>
                       </div>
                     </div>
                   ))}
@@ -307,11 +291,11 @@ function Profile() {
               {/* All Connections */}
               <div style={styles.modalSection}>
                 <div style={styles.modalSectionTitle}>
-                  All Connections ({connections.length})
+                  All ({connections.length})
                 </div>
                 {connections.length === 0 ? (
                   <div style={styles.emptyState}>
-                    No connections yet. Explore destinations to connect with travelers!
+                    No companions yet. Explore destinations and connect with travelers.
                   </div>
                 ) : (
                   connections.map((conn, index) => {
@@ -328,57 +312,34 @@ function Profile() {
 
                     return (
                     <div key={index} style={styles.connectionCard} onClick={() => setPreviewUser(conn)}>
-                      <div style={styles.connBackdrop}>
+                      <div style={styles.connInfo}>
                         {conn.photoURL ? (
-                          <img src={conn.photoURL} alt={conn.name} style={styles.connBackdropImg} />
+                          <img src={conn.photoURL} alt={conn.name} style={styles.connAvatar} />
                         ) : (
-                          <div style={styles.connBackdropPlaceholder}>
+                          <div style={styles.connAvatarPlaceholder}>
                             {conn.name?.charAt(0).toUpperCase()}
                           </div>
                         )}
-                        <div style={styles.connGradient} />
-                      </div>
-                      <div style={styles.connOverlay}>
-                        <div style={styles.connName}>{conn.name}, {conn.age}</div>
-                        {conn.bio && <div style={styles.connBio}>"{conn.bio}"</div>}
-
-                        {conn.interests && conn.interests.length > 0 && (
-                          <div style={styles.connInterests}>
-                            {conn.interests.map((interest, i) => (
-                              <span key={i} style={styles.connInterestTag}>{interest}</span>
-                            ))}
-                          </div>
-                        )}
-
-                        {trips.length > 0 && (
-                          <div style={styles.connTrips}>
-                            {trips.map((trip, i) => {
-                              const fmt = { month: 'short', day: 'numeric' };
-                              const dateRange = `${trip.start.toLocaleDateString('en-US', fmt)} – ${trip.end.toLocaleDateString('en-US', fmt)}`;
-                              return (
-                                <div key={i} style={{
-                                  ...styles.connTrip,
-                                  color: trip.isHereNow ? '#6ee7b7' : 'rgba(255,255,255,0.7)'
-                                }}>
-                                  {trip.isHereNow ? <FiMapPin size={12} style={{ marginRight: '3px', verticalAlign: '-1px' }} /> : <FiNavigation size={12} style={{ marginRight: '3px', verticalAlign: '-1px' }} />} {trip.destination} • {dateRange}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-
-                        <div style={styles.contactButtons}>
-                          {conn.whatsapp && (
-                            <button type="button" style={styles.whatsappBtn} onClick={(e) => { e.stopPropagation(); e.preventDefault(); openWhatsApp(conn.whatsapp); }}>
-                              <FiMessageCircle size={14} style={{ marginRight: '4px', verticalAlign: '-2px' }} /> WhatsApp
-                            </button>
-                          )}
-                          {conn.instagram && (
-                            <button type="button" style={styles.instagramBtn} onClick={(e) => { e.stopPropagation(); e.preventDefault(); openInstagram(conn.instagram); }}>
-                              <FiCamera size={14} style={{ marginRight: '4px', verticalAlign: '-2px' }} /> Instagram
-                            </button>
+                        <div style={styles.connDetails}>
+                          <div style={styles.connName}>{conn.name}{conn.age ? `, ${conn.age}` : ''}</div>
+                          {trips.length > 0 && (
+                            <div style={styles.connTrip}>
+                              {trips[0].isHereNow ? 'In ' : 'Going to '}{trips[0].destination.split(',')[0]}
+                            </div>
                           )}
                         </div>
+                      </div>
+                      <div style={styles.connActions}>
+                        {conn.whatsapp && (
+                          <button style={styles.connSocialBtn} onClick={(e) => { e.stopPropagation(); openWhatsApp(conn.whatsapp); }}>
+                            <FiMessageCircle size={16} />
+                          </button>
+                        )}
+                        {conn.instagram && (
+                          <button style={styles.connSocialBtn} onClick={(e) => { e.stopPropagation(); openInstagram(conn.instagram); }}>
+                            <FiCamera size={16} />
+                          </button>
+                        )}
                       </div>
                     </div>
                     );
@@ -403,7 +364,7 @@ function Profile() {
                   {previewUser.name?.charAt(0).toUpperCase()}
                 </div>
               )}
-              <div style={styles.previewName}>{previewUser.name}, {previewUser.age}</div>
+              <div style={styles.previewName}>{previewUser.name}{previewUser.age ? `, ${previewUser.age}` : ''}</div>
             </div>
 
             {previewUser.bio && <p style={styles.previewBio}>{previewUser.bio}</p>}
@@ -430,14 +391,14 @@ function Profile() {
 
               return trips.length > 0 ? (
                 <div style={styles.previewTrips}>
-                  <div style={styles.previewTripsTitle}>Trips</div>
+                  <div style={styles.previewTripsTitle}>Journeys</div>
                   {trips.map((trip, i) => {
                     const fmt = { month: 'short', day: 'numeric' };
-                    const dateRange = `${trip.start.toLocaleDateString('en-US', fmt)} – ${trip.end.toLocaleDateString('en-US', fmt)}`;
+                    const dateRange = `${trip.start.toLocaleDateString('en-US', fmt)} — ${trip.end.toLocaleDateString('en-US', fmt)}`;
                     return (
                       <div key={i} style={styles.previewTrip}>
                         <span>{trip.isHereNow ? <FiMapPin size={13} style={{ marginRight: '4px', verticalAlign: '-2px' }} /> : <FiNavigation size={13} style={{ marginRight: '4px', verticalAlign: '-2px' }} />}{trip.destination}</span>
-                        <span style={{ color: '#6b7280', fontSize: '13px' }}>{dateRange}</span>
+                        <span style={{ color: colors.textTertiary, fontSize: '13px' }}>{dateRange}</span>
                       </div>
                     );
                   })}
@@ -445,21 +406,20 @@ function Profile() {
               ) : null;
             })()}
 
-            <div style={styles.previewActions}>
+            <div style={styles.previewSocials}>
               {previewUser.whatsapp && (
-                <button type="button" style={styles.whatsappBtn} onClick={(e) => { e.preventDefault(); openWhatsApp(previewUser.whatsapp); }}>
-                  <FiMessageCircle size={14} style={{ marginRight: '4px', verticalAlign: '-2px' }} /> WhatsApp
+                <button style={styles.socialBtn} onClick={(e) => { e.preventDefault(); openWhatsApp(previewUser.whatsapp); }}>
+                  <FiMessageCircle size={14} style={{ marginRight: '6px', verticalAlign: '-2px' }} /> WhatsApp
                 </button>
               )}
               {previewUser.instagram && (
-                <button type="button" style={styles.instagramBtn} onClick={(e) => { e.preventDefault(); openInstagram(previewUser.instagram); }}>
-                  <FiCamera size={14} style={{ marginRight: '4px', verticalAlign: '-2px' }} /> Instagram
+                <button style={styles.socialBtn} onClick={(e) => { e.preventDefault(); openInstagram(previewUser.instagram); }}>
+                  <FiCamera size={14} style={{ marginRight: '6px', verticalAlign: '-2px' }} /> Instagram
                 </button>
               )}
             </div>
 
             <button
-              type="button"
               style={styles.removeConnectionBtn}
               onClick={() => handleRemoveConnection(previewUser)}
             >
@@ -474,104 +434,92 @@ function Profile() {
 }
 
 const styles = {
-  container: { minHeight: '100vh', background: '#faf9f7', paddingBottom: '70px' },
-  loading: { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', color: '#6b7280' },
+  container: { minHeight: '100vh', background: colors.bg, paddingBottom: '90px' },
+  loading: { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', color: colors.textTertiary },
 
   // Header
-  header: { background: 'linear-gradient(135deg, #047857 0%, #059669 50%, #10b981 100%)', padding: '8px 20px 20px', color: '#fff', textAlign: 'center', position: 'relative' },
-  headerLogo: { position: 'absolute', top: '16px', left: '16px', width: 'min(110px, 28vw)', height: 'auto', borderRadius: '6px', opacity: 0.9, filter: 'brightness(0) invert(1)' },
-  photoSection: { marginBottom: '16px' },
-  profilePhoto: { width: '100px', height: '100px', borderRadius: '50%', objectFit: 'cover', border: '4px solid #fff' },
-  photoPlaceholder: { width: '100px', height: '100px', borderRadius: '50%', background: '#fff', color: '#047857', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '40px', fontWeight: '700', border: '4px solid #fff' },
-  name: { fontSize: '22px', fontWeight: '800', margin: '0 0 2px 0' },
-  city: { fontSize: '14px', opacity: 0.9, marginBottom: '8px' },
-  bio: { fontSize: '14px', opacity: 0.95, fontStyle: 'italic', lineHeight: 1.5, maxWidth: '300px', margin: '0 auto' },
-
+  header: { padding: '24px 24px 28px', textAlign: 'center' },
+  photoSection: { marginBottom: '14px' },
+  profilePhoto: { width: '88px', height: '88px', borderRadius: '50%', objectFit: 'cover', border: `3px solid ${colors.warmGray}` },
+  photoPlaceholder: { width: '88px', height: '88px', borderRadius: '50%', background: colors.dark, color: colors.gold, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px', fontWeight: '600', fontFamily: fonts.serif },
+  name: { fontFamily: fonts.serif, fontSize: '22px', fontWeight: '500', margin: '0 0 2px 0', color: colors.text },
+  city: { fontSize: '14px', color: colors.textSecondary, marginBottom: '8px' },
+  bio: { fontSize: '14px', color: colors.textSecondary, fontStyle: 'italic', lineHeight: 1.5, maxWidth: '300px', margin: '0 auto' },
 
   // Stats Row
-  statsRow: { display: 'flex', alignItems: 'center', background: '#fff', padding: '16px 0', borderBottom: '1px solid #e8e5e0' },
-  statItem: { flex: 1, background: 'none', border: 'none', cursor: 'pointer', padding: '8px', textAlign: 'center' },
-  statNumber: { fontSize: '22px', fontWeight: '800', color: '#1a1a1a' },
-  statLabel: { fontSize: '13px', color: '#6b6b6b', fontWeight: '500' },
-  statDivider: { width: '1px', height: '36px', background: '#e8e5e0' },
+  statsRow: { display: 'flex', alignItems: 'center', background: colors.surface, padding: '18px 0', borderTop: `1px solid ${colors.border}`, borderBottom: `1px solid ${colors.border}` },
+  statItem: { flex: 1, background: 'none', border: 'none', cursor: 'pointer', padding: '4px', textAlign: 'center' },
+  statNumber: { fontFamily: fonts.serif, fontSize: '24px', fontWeight: '600', color: colors.text },
+  statLabel: { fontSize: '12px', color: colors.textTertiary, marginTop: '2px', fontWeight: '500' },
+  statDivider: { width: '1px', height: '32px', background: colors.border },
 
   // Requests Banner
-  requestsBanner: { display: 'flex', alignItems: 'center', width: '100%', padding: '14px 20px', background: '#fef3c7', border: 'none', borderBottom: '1px solid #fde68a', cursor: 'pointer', gap: '10px' },
-  requestsBannerIcon: { fontSize: '20px' },
-  requestsBannerText: { flex: 1, fontSize: '15px', fontWeight: '600', color: '#92400e', textAlign: 'left' },
-  requestsBannerArrow: { fontSize: '18px', color: '#92400e' },
+  requestsBanner: { display: 'flex', alignItems: 'center', width: '100%', padding: '14px 24px', background: colors.surface, border: 'none', borderBottom: `1px solid ${colors.border}`, cursor: 'pointer', gap: '10px' },
+  requestsBannerText: { flex: 1, fontSize: '14px', fontWeight: '600', color: colors.text, textAlign: 'left' },
+  requestsBannerArrow: { fontSize: '13px', color: colors.textTertiary, fontWeight: '500' },
 
-  // Interests
-  section: { padding: '20px', background: '#fff', marginTop: '8px' },
-  sectionTitle: { fontSize: '16px', fontWeight: '700', color: '#1a1a1a', marginBottom: '12px' },
-  interestsList: { display: 'flex', flexWrap: 'wrap', gap: '8px' },
-  identityTag: { padding: '8px 16px', background: '#eff6ff', color: '#2563eb', borderRadius: '20px', fontSize: '14px', fontWeight: '600' },
-  interestTag: { padding: '8px 16px', background: '#f0f9f4', color: '#047857', borderRadius: '20px', fontSize: '14px', fontWeight: '600' },
+  // Sections
+  section: { padding: '20px 24px', background: colors.surface, marginTop: '8px' },
+  sectionTitle: { ...type.label, marginBottom: '12px' },
+  tagsList: { display: 'flex', flexWrap: 'wrap', gap: '8px' },
+  tag: { ...components.pill },
 
   // Action Buttons
-  actionsSection: { padding: '20px 20px 0' },
-  editProfileBtn: { width: '100%', padding: '14px 24px', background: 'linear-gradient(135deg, #047857, #059669)', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', boxShadow: '0 2px 8px rgba(4,120,87,0.3)' },
-  logoutBtn: { width: 'calc(100% - 40px)', margin: '12px 20px 0', padding: '14px', background: '#fef2f2', color: '#dc2626', border: 'none', borderRadius: '12px', fontSize: '16px', fontWeight: '700', cursor: 'pointer' },
+  actionsSection: { padding: '24px' },
+  editProfileBtn: { ...components.btnPrimary, marginBottom: '10px' },
+  logoutBtn: { ...components.btnOutline, color: colors.textTertiary, borderColor: colors.warmGray },
 
   // Modals shared
-  modalOverlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 1000 },
+  modalOverlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 1000 },
   modalHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' },
-  modalTitle: { fontSize: '20px', fontWeight: '800', color: '#1a1a1a', margin: 0 },
-  modalClose: { background: 'none', border: 'none', fontSize: '24px', color: '#a3a3a3', cursor: 'pointer' },
+  modalTitle: { fontFamily: fonts.serif, fontSize: '20px', fontWeight: '500', color: colors.text, margin: 0 },
+  modalClose: { background: 'none', border: 'none', color: colors.textTertiary, cursor: 'pointer', padding: '4px' },
 
   // Connections Modal
-  connectionsModal: { background: '#fff', borderRadius: '20px 20px 0 0', padding: '24px', width: '100%', maxWidth: '500px', maxHeight: '85vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 8px 16px rgba(0,0,0,0.06), 0 20px 40px rgba(0,0,0,0.1)' },
+  connectionsModal: { background: colors.surface, borderRadius: `${radius.lg} ${radius.lg} 0 0`, padding: '24px', width: '100%', maxWidth: '500px', maxHeight: '85vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' },
   connectionsModalBody: { overflowY: 'auto', flex: 1 },
   modalSection: { marginBottom: '24px' },
-  modalSectionTitle: { fontSize: '14px', fontWeight: '700', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px' },
+  modalSectionTitle: { ...type.label, marginBottom: '12px' },
 
-  // Request Cards
-  requestCard: { position: 'relative', borderRadius: '16px', overflow: 'hidden', marginBottom: '12px', height: '220px' },
-  requestBackdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
-  requestBackdropImg: { width: '100%', height: '100%', objectFit: 'cover' },
-  requestBackdropPlaceholder: { width: '100%', height: '100%', background: 'linear-gradient(135deg, #047857 0%, #059669 50%, #10b981 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '64px', fontWeight: '800', color: 'rgba(255,255,255,0.35)' },
-  requestGradient: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '75%', background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 50%, transparent 100%)' },
-  requestOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: '16px', zIndex: 2 },
-  requestName: { fontSize: '16px', fontWeight: '700', color: '#fff', marginBottom: '2px' },
-  requestGender: { fontSize: '13px', color: 'rgba(255,255,255,0.75)', marginBottom: '4px' },
-  requestBio: { fontSize: '13px', color: 'rgba(255,255,255,0.8)', fontStyle: 'italic', marginBottom: '10px' },
+  // Request Cards (simplified)
+  requestCard: { background: colors.bg, borderRadius: radius.md, padding: '16px', marginBottom: '10px' },
+  requestInfo: { display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' },
+  requestAvatar: { width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover' },
+  requestAvatarPlaceholder: { width: '48px', height: '48px', borderRadius: '50%', background: colors.dark, color: colors.gold, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: '600', fontFamily: fonts.serif },
+  requestDetails: { flex: 1 },
+  requestName: { fontSize: '15px', fontWeight: '600', color: colors.text },
+  requestBio: { fontSize: '13px', color: colors.textSecondary, marginTop: '2px', fontStyle: 'italic' },
   requestActions: { display: 'flex', gap: '8px' },
-  acceptBtn: { flex: 1, padding: '10px', background: 'linear-gradient(135deg, #047857, #059669)', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: '600', cursor: 'pointer', boxShadow: '0 2px 8px rgba(4,120,87,0.3)' },
-  declineBtn: { flex: 1, padding: '10px', background: 'rgba(255,255,255,0.2)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)', borderRadius: '12px', fontSize: '14px', fontWeight: '600', cursor: 'pointer', backdropFilter: 'blur(4px)' },
+  acceptBtn: { flex: 1, padding: '10px', background: colors.dark, color: colors.cream, border: 'none', borderRadius: radius.sm, fontSize: '14px', fontWeight: '600', cursor: 'pointer' },
+  declineBtn: { flex: 1, padding: '10px', background: 'transparent', color: colors.textTertiary, border: `1px solid ${colors.warmGray}`, borderRadius: radius.sm, fontSize: '14px', fontWeight: '500', cursor: 'pointer' },
 
-  // Connection Cards
-  connectionCard: { position: 'relative', borderRadius: '16px', overflow: 'hidden', marginBottom: '12px', minHeight: '280px' },
-  connBackdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
-  connBackdropImg: { width: '100%', height: '100%', objectFit: 'cover' },
-  connBackdropPlaceholder: { width: '100%', height: '100%', background: 'linear-gradient(135deg, #047857 0%, #059669 50%, #10b981 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '72px', fontWeight: '800', color: 'rgba(255,255,255,0.35)' },
-  connGradient: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '80%', background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 50%, transparent 100%)' },
-  connOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: '16px', zIndex: 2, maxHeight: '75%', overflowY: 'auto' },
-  connName: { fontSize: '17px', fontWeight: '700', color: '#fff', marginBottom: '2px' },
-  connGender: { fontSize: '13px', color: 'rgba(255,255,255,0.75)', marginBottom: '6px' },
-  connBio: { fontSize: '13px', color: 'rgba(255,255,255,0.8)', fontStyle: 'italic', marginBottom: '8px' },
-  connInterests: { display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '10px' },
-  connInterestTag: { padding: '4px 10px', background: 'rgba(255,255,255,0.15)', color: '#6ee7b7', borderRadius: '12px', fontSize: '12px', fontWeight: '600', backdropFilter: 'blur(4px)' },
-  connTrips: { marginBottom: '10px' },
-  connTrip: { fontSize: '13px', color: '#6ee7b7', fontWeight: '600', marginBottom: '4px' },
-  contactButtons: { display: 'flex', gap: '8px' },
-  whatsappBtn: { flex: 1, padding: '10px', background: '#25D366', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' },
-  instagramBtn: { flex: 1, padding: '10px', background: 'linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' },
-  emptyState: { padding: '40px 20px', textAlign: 'center', color: '#a3a3a3', fontSize: '14px' },
+  // Connection Cards (simplified list)
+  connectionCard: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: `1px solid ${colors.lightGray}`, cursor: 'pointer' },
+  connInfo: { display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 },
+  connAvatar: { width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 },
+  connAvatarPlaceholder: { width: '44px', height: '44px', borderRadius: '50%', background: colors.dark, color: colors.gold, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', fontWeight: '600', fontFamily: fonts.serif, flexShrink: 0 },
+  connDetails: { flex: 1, minWidth: 0 },
+  connName: { fontSize: '15px', fontWeight: '600', color: colors.text },
+  connTrip: { fontSize: '13px', color: colors.textTertiary, marginTop: '2px' },
+  connActions: { display: 'flex', gap: '8px', flexShrink: 0 },
+  connSocialBtn: { width: '36px', height: '36px', borderRadius: '50%', background: colors.lightGray, border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: colors.text },
+  emptyState: { padding: '32px 16px', textAlign: 'center', color: colors.textTertiary, fontSize: '14px', lineHeight: 1.5 },
 
   // Preview Modal
-  previewModal: { background: '#fff', borderRadius: '20px 20px 0 0', padding: '24px', width: '100%', maxWidth: '500px', maxHeight: '85vh', overflowY: 'auto', position: 'relative', boxShadow: '0 8px 16px rgba(0,0,0,0.06), 0 20px 40px rgba(0,0,0,0.1)' },
+  previewModal: { background: colors.surface, borderRadius: `${radius.lg} ${radius.lg} 0 0`, padding: '24px', width: '100%', maxWidth: '500px', maxHeight: '85vh', overflowY: 'auto', position: 'relative' },
   previewHeader: { textAlign: 'center', marginBottom: '16px' },
-  previewPhoto: { width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover', marginBottom: '12px' },
-  previewPhotoPlaceholder: { width: '80px', height: '80px', borderRadius: '50%', background: '#047857', color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px', fontWeight: '700', marginBottom: '12px' },
-  previewName: { fontSize: '20px', fontWeight: '800', color: '#1a1a1a' },
-  previewBio: { fontSize: '14px', color: '#4b5563', lineHeight: 1.6, margin: '0 0 16px 0', textAlign: 'center' },
+  previewPhoto: { width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover', marginBottom: '12px', border: `3px solid ${colors.warmGray}` },
+  previewPhotoPlaceholder: { width: '80px', height: '80px', borderRadius: '50%', background: colors.dark, color: colors.gold, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', fontWeight: '600', fontFamily: fonts.serif, marginBottom: '12px' },
+  previewName: { fontFamily: fonts.serif, fontSize: '20px', fontWeight: '500', color: colors.text },
+  previewBio: { fontSize: '14px', color: colors.textSecondary, lineHeight: 1.6, margin: '0 0 16px 0', textAlign: 'center' },
   previewInterests: { display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center', marginBottom: '16px' },
-  previewInterestTag: { padding: '6px 14px', background: '#f0f9f4', color: '#047857', borderRadius: '16px', fontSize: '13px', fontWeight: '600' },
+  previewInterestTag: { ...components.pill },
   previewTrips: { marginBottom: '16px' },
-  previewTripsTitle: { fontSize: '14px', fontWeight: '700', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' },
-  previewTrip: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: '#faf9f7', borderRadius: '10px', marginBottom: '6px', fontSize: '14px', fontWeight: '600', color: '#1a1a1a' },
-  previewActions: { display: 'flex', gap: '8px', marginTop: '8px' },
-  removeConnectionBtn: { background: 'none', border: 'none', color: '#a3a3a3', fontSize: '13px', fontWeight: '500', cursor: 'pointer', padding: '12px 0 0', margin: '0 auto', display: 'block' },
+  previewTripsTitle: { ...type.label, marginBottom: '10px' },
+  previewTrip: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: colors.bg, borderRadius: radius.sm, marginBottom: '6px', fontSize: '14px', fontWeight: '600', color: colors.text },
+  previewSocials: { display: 'flex', gap: '8px', marginTop: '8px' },
+  socialBtn: { flex: 1, padding: '12px', background: colors.lightGray, color: colors.text, border: 'none', borderRadius: radius.sm, fontSize: '14px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  removeConnectionBtn: { background: 'none', border: 'none', color: colors.textMuted, fontSize: '13px', fontWeight: '500', cursor: 'pointer', padding: '16px 0 0', margin: '0 auto', display: 'block' },
 };
 
 export default Profile;

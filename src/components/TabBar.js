@@ -1,61 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FiCompass, FiHeart, FiMessageCircle, FiUser } from 'react-icons/fi';
-import { auth, db } from '../firebase';
-import { collection, getDocs, query, where, onSnapshot } from 'firebase/firestore';
+import { FiHome, FiCompass, FiUser, FiPlus, FiMap } from 'react-icons/fi';
+import { colors } from '../design';
 
 function TabBar() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [badgeCount, setBadgeCount] = useState(0);
-  const [msgBadge, setMsgBadge] = useState(0);
-
-  useEffect(() => {
-    const fetchPendingRequests = async () => {
-      const currentUser = auth.currentUser;
-      if (!currentUser) return;
-
-      const requestsSnapshot = await getDocs(
-        query(collection(db, 'connectionRequests'), where('toUserId', '==', currentUser.uid))
-      );
-      let count = 0;
-      requestsSnapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        if (data.status === 'pending') {
-          count++;
-        }
-      });
-      setBadgeCount(count);
-    };
-
-    fetchPendingRequests();
-  }, []);
-
-  // Real-time unread message count
-  useEffect(() => {
-    const currentUser = auth.currentUser;
-    if (!currentUser) return;
-
-    const convRef = collection(db, 'conversations');
-    const q = query(convRef, where('participants', 'array-contains', currentUser.uid));
-
-    const unsub = onSnapshot(q, (snapshot) => {
-      let total = 0;
-      snapshot.forEach(docSnap => {
-        const data = docSnap.data();
-        total += data[`unread_${currentUser.uid}`] || 0;
-      });
-      setMsgBadge(total);
-    });
-
-    return unsub;
-  }, []);
 
   const tabs = [
+    { path: '/home', icon: FiHome, label: 'Home' },
     { path: '/destinations', icon: FiCompass, label: 'Explore' },
-    { path: '/saved', icon: FiHeart, label: 'Saved' },
-    { path: '/messages', icon: FiMessageCircle, label: 'Messages', badge: msgBadge },
-    { path: '/profile', icon: FiUser, label: 'Profile', badge: badgeCount }
+    { path: '/add-trip', icon: FiPlus, label: '', isCenter: true },
+    { path: '/trips', icon: FiMap, label: 'Journeys' },
+    { path: '/profile', icon: FiUser, label: 'Profile' },
   ];
 
   const isActive = (path) => location.pathname === path;
@@ -65,28 +22,37 @@ function TabBar() {
       {tabs.map((tab) => {
         const Icon = tab.icon;
         const active = isActive(tab.path);
+
+        if (tab.isCenter) {
+          return (
+            <button
+              key={tab.path}
+              style={styles.centerTab}
+              onClick={() => navigate(tab.path)}
+            >
+              <div style={styles.centerButton}>
+                <Icon size={24} strokeWidth={2.5} color="#f8f6f2" />
+              </div>
+            </button>
+          );
+        }
+
         return (
           <button
             key={tab.path}
-            style={{
-              ...styles.tab,
-              ...(active ? styles.tabActive : {})
-            }}
+            style={styles.tab}
             onClick={() => navigate(tab.path)}
           >
             <div style={styles.iconContainer}>
               <Icon
-                size={22}
+                size={21}
                 strokeWidth={active ? 2.2 : 1.5}
-                color={active ? '#047857' : '#a3a3a3'}
+                color={active ? colors.text : colors.textMuted}
               />
-              {tab.badge > 0 && (
-                <div style={styles.badge}>{tab.badge}</div>
-              )}
             </div>
             <div style={{
               ...styles.label,
-              color: active ? '#047857' : '#a3a3a3',
+              color: active ? colors.text : colors.textMuted,
               fontWeight: active ? '600' : '400',
             }}>{tab.label}</div>
           </button>
@@ -100,8 +66,8 @@ const styles = {
   container: {
     display: 'flex',
     justifyContent: 'space-around',
-    background: '#ffffff',
-    borderTop: '1px solid #e8e5e0',
+    background: colors.surface,
+    borderTop: `1px solid ${colors.border}`,
     position: 'fixed',
     bottom: 0,
     left: 0,
@@ -116,31 +82,37 @@ const styles = {
     alignItems: 'center',
     background: 'none',
     border: 'none',
-    padding: '4px',
+    padding: '6px 4px 4px',
     cursor: 'pointer',
-    transition: 'all 0.2s',
   },
-  tabActive: {},
   iconContainer: {
     position: 'relative',
     marginBottom: '2px',
   },
-  badge: {
-    position: 'absolute',
-    top: '-4px',
-    right: '-10px',
-    background: '#ef4444',
-    color: '#fff',
-    fontSize: '10px',
-    fontWeight: '700',
-    padding: '2px 5px',
-    borderRadius: '10px',
-    minWidth: '16px',
-    textAlign: 'center',
-  },
   label: {
-    fontSize: '11px',
+    fontSize: '10px',
     letterSpacing: '0.3px',
+  },
+  centerTab: {
+    flex: 1,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: 'none',
+    border: 'none',
+    padding: '0',
+    cursor: 'pointer',
+    marginTop: '-18px',
+  },
+  centerButton: {
+    width: '50px',
+    height: '50px',
+    borderRadius: '50%',
+    background: colors.dark,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: '0 4px 12px rgba(26, 26, 26, 0.25)',
   },
 };
 

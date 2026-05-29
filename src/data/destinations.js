@@ -7,9 +7,10 @@ const CURATED_DESTINATIONS = [
     name: 'Mecca, Saudi Arabia',
     city: 'Mecca',
     country: 'Saudi Arabia',
+    featured: true,
     tags: ['pilgrimage', 'spiritual'],
-    description: 'The holiest city in Islam. Millions perform Umrah year-round and Hajj annually.',
-    image: 'https://images.pexels.com/photos/2291789/pexels-photo-2291789.jpeg?auto=compress&w=600',
+    description: 'The axis of the ummah. Millions circle the Kaaba year-round, and every prayer in the world points here. There is no place like it — and no preparation fully readies you for the first sight of it.',
+    image: 'https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?auto=format&fit=crop&w=800&q=80',
     experiences: [
       { id: 1, name: 'Guided Umrah Support Tour', price: 60, duration: '5 hours', rating: 5.0, reviews: 1023, category: 'spiritual', bookingUrl: 'https://www.getyourguide.com/mecca-l4561/umrah-support-tour-t20001/' },
       { id: 2, name: 'Historical Mecca Walking Tour', price: 45, duration: '3 hours', rating: 4.9, reviews: 578, category: 'cultural', bookingUrl: 'https://www.getyourguide.com/mecca-l4561/historical-mecca-tour-t20002/' },
@@ -24,8 +25,8 @@ const CURATED_DESTINATIONS = [
     city: 'Medina',
     country: 'Saudi Arabia',
     tags: ['pilgrimage', 'spiritual'],
-    description: 'Home of the Prophet\'s Mosque. Every pilgrim visits. A city of peace and reflection.',
-    image: 'https://images.pexels.com/photos/2895185/pexels-photo-2895185.jpeg?auto=compress&w=600',
+    description: 'The city of the Prophet, peace be upon him. The green dome draws you forward. The rawdah holds you still. Medina is where urgency gives way to peace — and every pilgrim understands why they came.',
+    image: 'https://images.unsplash.com/photo-1590076215667-875d4ef2d7de?auto=format&fit=crop&w=800&q=80',
     experiences: [
       { id: 6, name: 'Masjid al-Nabawi Guided Visit', price: 40, duration: '3 hours', rating: 5.0, reviews: 876, category: 'spiritual', bookingUrl: 'https://www.getyourguide.com/medina-l4562/masjid-nabawi-visit-t20004/' },
       { id: 7, name: 'Historical Sites of Medina Tour', price: 55, duration: '4 hours', rating: 4.9, reviews: 445, category: 'cultural', bookingUrl: 'https://www.getyourguide.com/medina-l4562/historical-medina-tour-t20005/' },
@@ -39,9 +40,10 @@ const CURATED_DESTINATIONS = [
     name: 'Istanbul, Turkey',
     city: 'Istanbul',
     country: 'Turkey',
+    featured: true,
     tags: ['cultural', 'food', 'history'],
-    description: 'Where East meets West. Ottoman heritage, world-class food, and deep Islamic history.',
-    image: 'https://images.pexels.com/photos/1559825/pexels-photo-1559825.jpeg?auto=compress&w=600',
+    description: 'Where two continents meet and every neighborhood has its own call to prayer. Start at Sultanahmet at dawn, lose yourself in the Grand Bazaar by midday, and find your way back over cay at sunset on the Bosphorus.',
+    image: 'https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?auto=format&fit=crop&w=800&q=80',
     experiences: [
       { id: 11, name: 'Ottoman Mosques Walking Tour', price: 45, duration: '3 hours', rating: 4.9, reviews: 324, category: 'cultural', bookingUrl: 'https://www.getyourguide.com/istanbul-l56/ottoman-mosques-walking-tour-t12345/' },
       { id: 12, name: 'Halal Food Tour', price: 65, duration: '4 hours', rating: 5.0, reviews: 189, category: 'food', bookingUrl: 'https://www.getyourguide.com/istanbul-l56/halal-food-tour-t23456/' },
@@ -56,8 +58,8 @@ const CURATED_DESTINATIONS = [
     city: 'Cairo',
     country: 'Egypt',
     tags: ['cultural', 'history', 'spiritual'],
-    description: 'Al-Azhar, the Pyramids, and the Nile. Centuries of Islamic scholarship and civilization.',
-    image: 'https://images.pexels.com/photos/3252273/pexels-photo-3252273.jpeg?auto=compress&w=600',
+    description: 'Al-Azhar, the Pyramids, and the Nile — layered like the civilization itself. Centuries of Islamic scholarship live in the streets of Fatimid Cairo. The pyramids are the backdrop; the city is the story.',
+    image: 'https://images.unsplash.com/photo-1572252009286-268acec5ca0a?auto=format&fit=crop&w=800&q=80',
     experiences: [
       { id: 16, name: 'Pyramids & Sphinx Tour', price: 75, duration: '5 hours', rating: 4.9, reviews: 678, category: 'cultural', bookingUrl: 'https://www.getyourguide.com/cairo-l169/pyramids-sphinx-tour-t90123/' },
       { id: 17, name: 'Islamic Cairo Walking Tour', price: 50, duration: '4 hours', rating: 4.8, reviews: 345, category: 'cultural', bookingUrl: 'https://www.getyourguide.com/cairo-l169/islamic-cairo-walking-tour-t01234/' },
@@ -72,8 +74,8 @@ const CURATED_DESTINATIONS = [
     city: 'Marrakech',
     country: 'Morocco',
     tags: ['cultural', 'food', 'adventure'],
-    description: 'Medina magic. Souks, riads, Atlas Mountains, and the best food in North Africa.',
-    image: 'https://images.pexels.com/photos/2549018/pexels-photo-2549018.jpeg?auto=compress&w=600',
+    description: 'Medina shadows, rooftop calls to prayer, and the scent of ras el hanout at dusk. Marrakech doesn\'t ease you in — it pulls you under. The souks, the riads, the Atlas on the horizon. You\'ll leave different.',
+    image: 'https://images.unsplash.com/photo-1597212618440-806262de4f6b?auto=format&fit=crop&w=800&q=80',
     experiences: [
       { id: 21, name: 'Medina Walking Tour', price: 40, duration: '3 hours', rating: 4.8, reviews: 512, category: 'cultural', bookingUrl: 'https://www.getyourguide.com/marrakech-l208/medina-walking-tour-t13456/' },
       { id: 22, name: 'Moroccan Cooking Class', price: 55, duration: '4 hours', rating: 4.9, reviews: 278, category: 'food', bookingUrl: 'https://www.getyourguide.com/marrakech-l208/moroccan-cooking-class-t14567/' },
@@ -87,9 +89,10 @@ const CURATED_DESTINATIONS = [
     name: 'Dubai, UAE',
     city: 'Dubai',
     country: 'UAE',
+    featured: true,
     tags: ['modern', 'food', 'adventure'],
-    description: 'Transit hub and destination. Halal everything, luxury, and desert adventure.',
-    image: 'https://images.pexels.com/photos/1470405/pexels-photo-1470405.jpeg?auto=compress&w=600',
+    description: 'Halal everything, everywhere. Dubai is the layover that became the destination — desert dunes at golden hour, the creek at dawn, and a skyline that keeps rewriting itself. Effortless for Muslim travelers.',
+    image: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=800&q=80',
     experiences: [
       { id: 26, name: 'Desert Safari', price: 90, duration: '6 hours', rating: 4.9, reviews: 892, category: 'adventure', bookingUrl: 'https://www.getyourguide.com/dubai-l173/desert-safari-t67890/' },
       { id: 27, name: 'Burj Khalifa Tour', price: 120, duration: '2 hours', rating: 4.8, reviews: 1245, category: 'cultural', bookingUrl: 'https://www.getyourguide.com/dubai-l173/burj-khalifa-tour-t78901/' },
@@ -104,8 +107,8 @@ const CURATED_DESTINATIONS = [
     city: 'Kuala Lumpur',
     country: 'Malaysia',
     tags: ['food', 'cultural', 'modern'],
-    description: 'Southeast Asia\'s halal capital. Incredible food, Islamic arts, and multicultural energy.',
-    image: 'https://images.pexels.com/photos/3881104/pexels-photo-3881104.jpeg?auto=compress&w=600',
+    description: 'Southeast Asia\'s halal capital. The Petronas Towers frame a city where the adhan echoes between street food stalls and Islamic art galleries. KL feeds you first and asks questions later.',
+    image: 'https://images.unsplash.com/photo-1596422846543-75c6fc197f07?auto=format&fit=crop&w=800&q=80',
     experiences: [
       { id: 31, name: 'Islamic Arts Museum Tour', price: 30, duration: '2 hours', rating: 4.8, reviews: 198, category: 'cultural', bookingUrl: 'https://www.getyourguide.com/kuala-lumpur-l246/islamic-arts-museum-t16789/' },
       { id: 32, name: 'Halal Street Food Tour', price: 50, duration: '3.5 hours', rating: 4.9, reviews: 345, category: 'food', bookingUrl: 'https://www.getyourguide.com/kuala-lumpur-l246/halal-street-food-tour-t17890/' },
@@ -120,8 +123,8 @@ const CURATED_DESTINATIONS = [
     city: 'Sarajevo',
     country: 'Bosnia',
     tags: ['history', 'cultural', 'spiritual'],
-    description: 'The Jerusalem of Europe. Ottoman heritage, resilience, and a deep pull for the ummah.',
-    image: 'https://images.pexels.com/photos/5765766/pexels-photo-5765766.jpeg?auto=compress&w=600',
+    description: 'The Jerusalem of Europe. Ottoman bridges, bullet-scarred walls, and a resilience that hums in every cobblestone. The ummah feels Sarajevo differently — because Sarajevo remembers what was lost and what survived.',
+    image: 'https://images.unsplash.com/photo-1590074072786-a66914d668f1?auto=format&fit=crop&w=800&q=80',
     experiences: [
       { id: 36, name: 'Old Town & Ottoman Heritage Walk', price: 35, duration: '3 hours', rating: 4.9, reviews: 278, category: 'cultural', bookingUrl: 'https://www.getyourguide.com/sarajevo-l917/ottoman-heritage-walk-t20010/' },
       { id: 37, name: 'Bosnian War & Tunnel Tour', price: 45, duration: '4 hours', rating: 4.8, reviews: 423, category: 'cultural', bookingUrl: 'https://www.getyourguide.com/sarajevo-l917/war-tunnel-tour-t20011/' },
@@ -136,8 +139,8 @@ const CURATED_DESTINATIONS = [
     city: 'Fez',
     country: 'Morocco',
     tags: ['spiritual', 'cultural', 'food'],
-    description: 'Home of the world\'s oldest university. Qarawiyyin, ancient medina, and spiritual depth.',
-    image: 'https://images.pexels.com/photos/3889704/pexels-photo-3889704.jpeg?auto=compress&w=600',
+    description: 'Home of the world\'s oldest university. The medina swallows you whole — nine thousand alleyways, tanneries stained in saffron, and the Qarawiyyin standing quiet at the center of it all. Fez is Islam\'s intellectual inheritance, still breathing.',
+    image: 'https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=800&q=80',
     experiences: [
       { id: 41, name: 'Fez Medina Guided Walking Tour', price: 30, duration: '4 hours', rating: 4.9, reviews: 567, category: 'cultural', bookingUrl: 'https://www.getyourguide.com/fez-l571/medina-walking-tour-t20016/' },
       { id: 42, name: 'Traditional Tanneries Visit', price: 20, duration: '1.5 hours', rating: 4.7, reviews: 345, category: 'cultural', bookingUrl: 'https://www.getyourguide.com/fez-l571/tanneries-visit-t20017/' },
@@ -152,8 +155,8 @@ const CURATED_DESTINATIONS = [
     city: 'Doha',
     country: 'Qatar',
     tags: ['modern', 'cultural', 'adventure'],
-    description: 'World Cup legacy infrastructure. Museum of Islamic Art, desert, and growing tourism.',
-    image: 'https://images.pexels.com/photos/3551203/pexels-photo-3551203.jpeg?auto=compress&w=600',
+    description: 'Built on ambition and anchored by the Museum of Islamic Art. Doha is where the Gulf\'s future takes shape — World Cup legacy stadiums, the corniche at sunset, and a desert that starts where the skyline ends.',
+    image: 'https://images.unsplash.com/photo-1518684079-3c830dcef090?auto=format&fit=crop&w=800&q=80',
     experiences: [
       { id: 46, name: 'Museum of Islamic Art Tour', price: 25, duration: '2 hours', rating: 4.9, reviews: 456, category: 'cultural', bookingUrl: 'https://www.getyourguide.com/doha-l1234/islamic-art-museum-t20019/' },
       { id: 47, name: 'Souq Waqif & Katara Tour', price: 40, duration: '3 hours', rating: 4.8, reviews: 312, category: 'cultural', bookingUrl: 'https://www.getyourguide.com/doha-l1234/souq-waqif-katara-t20020/' },
@@ -193,7 +196,7 @@ export const CURATED_DESTINATION_NAMES = CURATED_DESTINATIONS.map(d => d.name);
 // Helper: image lookup by city name
 export const getDestinationImage = (name) => {
   const dest = getDestinationByName(name);
-  return dest?.image || 'https://images.pexels.com/photos/346885/pexels-photo-346885.jpeg?auto=compress&w=400';
+  return dest?.image || 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80';
 };
 
 export default CURATED_DESTINATIONS;

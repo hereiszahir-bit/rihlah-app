@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { doc, updateDoc, arrayUnion, getDoc } from 'firebase/firestore';
 import { db, auth } from '../firebase';
 import { useUser } from '../context/UserContext';
-import { FiArrowLeft, FiMapPin, FiCheck } from 'react-icons/fi';
+import { FiArrowLeft, FiCheck } from 'react-icons/fi';
 import DateRangePicker from '../components/DateRangePicker';
 import CURATED_DESTINATIONS from '../data/destinations';
+import { colors, fonts, radius, components } from '../design';
 
 function AddTrip() {
   const navigate = useNavigate();
@@ -16,10 +17,14 @@ function AddTrip() {
   const [dates, setDates] = useState(null);
   const [saving, setSaving] = useState(false);
   const [overlapError, setOverlapError] = useState('');
+  const [inviteData, setInviteData] = useState(null);
 
   const existingTrips = currentUserData?.upcomingTrips || [];
 
   useEffect(() => {
+    if (location.state?.inviteData) {
+      setInviteData(location.state.inviteData);
+    }
     if (location.state?.preselectedDestination) {
       setDestination(location.state.preselectedDestination);
       setStep(2);
@@ -56,10 +61,49 @@ function AddTrip() {
         const dest = trip.destination.split(',')[0];
         const tripStartStr = tripStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         const tripEndStr = tripEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        return `Overlaps with your trip to ${dest} (${tripStartStr} - ${tripEndStr})`;
+        return `Overlaps with your trip to ${dest} (${tripStartStr} — ${tripEndStr})`;
       }
     }
     return null;
+  };
+
+  const connectWithInviter = async (userId, inviterId) => {
+    try {
+      const userRef = doc(db, 'users', userId);
+      const inviterRef = doc(db, 'users', inviterId);
+      const inviterDoc = await getDoc(inviterRef);
+      if (!inviterDoc.exists()) return;
+
+      const inviterData = inviterDoc.data();
+      const myData = currentUserData;
+
+      // Check if already connected
+      const alreadyConnected = (myData?.connections || []).some(c => c.userId === inviterId);
+      if (alreadyConnected) return;
+
+      // Add mutual connection
+      const myConnection = {
+        userId: inviterId,
+        name: inviterData.name || '',
+        photoURL: inviterData.photoURL || '',
+        connectedAt: new Date().toISOString(),
+      };
+      const theirConnection = {
+        userId: userId,
+        name: myData?.name || '',
+        photoURL: myData?.photoURL || '',
+        connectedAt: new Date().toISOString(),
+      };
+
+      await updateDoc(userRef, {
+        connections: arrayUnion(myConnection),
+      });
+      await updateDoc(inviterRef, {
+        connections: arrayUnion(theirConnection),
+      });
+    } catch (error) {
+      console.error('Error connecting with inviter:', error);
+    }
   };
 
   const handleSave = async () => {
@@ -85,15 +129,22 @@ function AddTrip() {
           endDate: newEnd
         })
       });
+
+      // Auto-connect with inviter if this came from an invite
+      if (inviteData?.inviterId && inviteData.inviterId !== user.uid) {
+        await connectWithInviter(user.uid, inviteData.inviterId);
+      }
+
       await refreshAll();
-      navigate('/destinations');
+      // Navigate to the new trip (it's the last one in the array)
+      const updatedTrips = [...(currentUserData?.upcomingTrips || []), { destination, startDate: newStart, endDate: newEnd }];
+      navigate(`/trip/${updatedTrips.length - 1}`);
     } catch (error) {
       console.error('Error saving trip:', error);
       setSaving(false);
     }
   };
 
-  // Check which destinations the user already has trips to
   const existingDestinations = new Set(existingTrips.map(t => t.destination));
 
   return (
@@ -103,7 +154,7 @@ function AddTrip() {
           <FiArrowLeft size={16} style={{ marginRight: '6px', verticalAlign: '-2px' }} /> Back
         </button>
         <h1 style={styles.title}>
-          {step === 1 ? 'Where to?' : 'When are you going?'}
+          {step === 1 ? 'New Journey' : inviteData ? 'Join the Journey' : 'When are you going?'}
         </h1>
         {step === 1 && (
           <p style={styles.subtitle}>Pick a destination</p>
@@ -113,34 +164,48 @@ function AddTrip() {
       <div style={styles.content}>
         {step === 1 && (
           <div style={styles.step}>
-            <div style={styles.grid}>
-              {CURATED_DESTINATIONS.map((dest) => {
-                const hasTrip = existingDestinations.has(dest.name);
-                return (
-                  <button
-                    key={dest.id}
-                    style={styles.destCard}
-                    onClick={() => handleDestinationSelect(dest)}
-                  >
-                    <div
-                      style={{
-                        ...styles.destImage,
-                        backgroundImage: `linear-gradient(rgba(0,0,0,0.05), rgba(0,0,0,0.55)), url(${dest.image})`,
-                      }}
+            <div style={styles.destList}>
+              {(() => {
+                const featured = CURATED_DESTINATIONS.filter(d => d.featured);
+                const rest = CURATED_DESTINATIONS.filter(d => !d.featured);
+                const renderItem = (dest) => {
+                  const hasTrip = existingDestinations.has(dest.name);
+                  return (
+                    <button
+                      key={dest.id}
+                      style={styles.destItem}
+                      onClick={() => handleDestinationSelect(dest)}
                     >
-                      {hasTrip && (
-                        <div style={styles.hasTrip}>
-                          <FiCheck size={12} /> Trip added
+                      <div
+                        style={{
+                          ...styles.destThumb,
+                          backgroundImage: `url(${dest.image})`,
+                        }}
+                      />
+                      <div style={styles.destInfo}>
+                        <div style={styles.destCity}>{dest.city}, {dest.country}</div>
+                        <div style={styles.destDesc}>
+                          {dest.description.length > 60 ? dest.description.slice(0, 60) + '...' : dest.description}
                         </div>
-                      )}
-                      <div style={styles.destOverlay}>
-                        <div style={styles.destCity}>{dest.city}</div>
-                        <div style={styles.destCountry}>{dest.country}</div>
                       </div>
-                    </div>
-                  </button>
+                      {hasTrip ? (
+                        <div style={styles.destCheck}><FiCheck size={14} /></div>
+                      ) : (
+                        <div style={styles.destChevron}>›</div>
+                      )}
+                    </button>
+                  );
+                };
+                return (
+                  <>
+                    {featured.map(renderItem)}
+                    {rest.length > 0 && (
+                      <div style={styles.destSeparator}>More destinations</div>
+                    )}
+                    {rest.map(renderItem)}
+                  </>
                 );
-              })}
+              })()}
             </div>
           </div>
         )}
@@ -148,21 +213,32 @@ function AddTrip() {
         {step === 2 && (
           <div style={styles.step}>
             <div style={styles.selectedDest}>
-              <span style={styles.selectedIcon}><FiMapPin size={20} color="#047857" /></span>
               <span style={styles.selectedText}>{destination}</span>
-              <button
-                style={styles.changeBtn}
-                onClick={() => setStep(1)}
-              >
-                Change
-              </button>
+              {!inviteData && (
+                <button
+                  style={styles.changeBtn}
+                  onClick={() => setStep(1)}
+                >
+                  Change
+                </button>
+              )}
             </div>
+
+            {inviteData && (
+              <div style={styles.inviteBanner}>
+                <div style={styles.inviteBannerText}>
+                  {inviteData.inviterName?.split(' ')[0]} is going {inviteData.startDate && inviteData.endDate
+                    ? `${new Date(inviteData.startDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${new Date(inviteData.endDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+                    : ''}
+                </div>
+                <div style={styles.inviteBannerSub}>Pick your dates to join them.</div>
+              </div>
+            )}
 
             <DateRangePicker onSelect={handleDateSelect} />
 
             {overlapError && (
               <div style={styles.overlapError}>
-                <span style={styles.overlapIcon}>!</span>
                 {overlapError}
               </div>
             )}
@@ -176,7 +252,7 @@ function AddTrip() {
                 onClick={handleSave}
                 disabled={saving}
               >
-                {saving ? 'Adding Trip...' : 'Add Trip'}
+                {saving ? 'Adding...' : 'Add Journey'}
               </button>
             )}
           </div>
@@ -189,19 +265,19 @@ function AddTrip() {
 const styles = {
   page: {
     minHeight: '100vh',
-    background: '#faf9f7',
+    background: colors.bg,
   },
   header: {
-    background: '#fff',
-    padding: '8px 20px 12px',
-    borderBottom: '1px solid #e8e5e0',
+    background: colors.surface,
+    padding: '8px 24px 14px',
+    borderBottom: `1px solid ${colors.border}`,
   },
   backBtn: {
     background: 'none',
     border: 'none',
-    color: '#059669',
-    fontSize: '16px',
-    fontWeight: '600',
+    color: colors.text,
+    fontSize: '15px',
+    fontWeight: '500',
     cursor: 'pointer',
     padding: '8px 0',
     marginBottom: '8px',
@@ -209,135 +285,146 @@ const styles = {
     alignItems: 'center',
   },
   title: {
-    fontSize: '28px',
-    fontWeight: '800',
-    color: '#1f2937',
+    fontFamily: fonts.serif,
+    fontSize: '26px',
+    fontWeight: '500',
+    color: colors.text,
     margin: 0,
+    letterSpacing: '-0.3px',
   },
   subtitle: {
-    fontSize: '15px',
-    color: '#6b7280',
+    fontSize: '14px',
+    color: colors.textSecondary,
     margin: '4px 0 0 0',
   },
   content: {
-    padding: '20px',
+    padding: '20px 24px',
   },
   step: {
     maxWidth: '600px',
     margin: '0 auto',
   },
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(2, 1fr)',
-    gap: '12px',
+  destList: {
+    background: colors.surface,
+    borderRadius: radius.lg,
+    overflow: 'hidden',
+    border: `1px solid ${colors.border}`,
   },
-  destCard: {
+  destItem: {
+    display: 'flex',
+    gap: '14px',
+    padding: '16px 20px',
+    borderBottom: `1px solid ${colors.lightGray}`,
+    alignItems: 'center',
     background: 'none',
     border: 'none',
-    borderRadius: '16px',
-    overflow: 'hidden',
-    cursor: 'pointer',
-    padding: 0,
-    boxShadow: '0 4px 6px rgba(0,0,0,0.04), 0 10px 24px rgba(0,0,0,0.08)',
-  },
-  destImage: {
     width: '100%',
-    height: '140px',
+    cursor: 'pointer',
+    textAlign: 'left',
+    fontFamily: 'inherit',
+  },
+  destThumb: {
+    width: '64px',
+    height: '64px',
+    borderRadius: radius.md,
     backgroundSize: 'cover',
     backgroundPosition: 'center',
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'flex-end',
-    position: 'relative',
+    flexShrink: 0,
   },
-  destOverlay: {
-    padding: '12px',
+  destInfo: {
+    flex: 1,
+    minWidth: 0,
   },
   destCity: {
-    fontSize: '17px',
-    fontWeight: '800',
-    color: '#fff',
-    textShadow: '0 2px 8px rgba(0,0,0,0.5)',
+    fontFamily: fonts.serif,
+    fontSize: '16px',
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: '2px',
   },
-  destCountry: {
+  destDesc: {
     fontSize: '12px',
-    color: 'rgba(255,255,255,0.85)',
-    textShadow: '0 1px 4px rgba(0,0,0,0.4)',
+    color: colors.textSecondary,
+    lineHeight: 1.4,
   },
-  hasTrip: {
-    position: 'absolute',
-    top: '8px',
-    right: '8px',
-    background: 'rgba(4,120,87,0.9)',
-    color: '#fff',
+  destChevron: {
+    color: colors.textTertiary,
+    fontSize: '18px',
+    flexShrink: 0,
+  },
+  destCheck: {
+    color: colors.gold,
+    flexShrink: 0,
+  },
+  destSeparator: {
+    padding: '12px 20px',
     fontSize: '11px',
     fontWeight: '700',
-    padding: '4px 8px',
-    borderRadius: '8px',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '4px',
+    textTransform: 'uppercase',
+    letterSpacing: '1.2px',
+    color: colors.textTertiary,
+    borderBottom: `1px solid ${colors.lightGray}`,
   },
   selectedDest: {
     display: 'flex',
     alignItems: 'center',
     gap: '12px',
     padding: '16px',
-    background: '#f0fdf4',
-    border: 'none',
-    borderRadius: '12px',
+    background: colors.surface,
+    border: `1px solid ${colors.border}`,
+    borderRadius: radius.md,
     marginBottom: '24px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06)',
-  },
-  selectedIcon: {
-    fontSize: '24px',
   },
   selectedText: {
     flex: 1,
-    fontSize: '16px',
-    fontWeight: '700',
-    color: '#1f2937',
+    fontFamily: fonts.serif,
+    fontSize: '17px',
+    fontWeight: '500',
+    color: colors.text,
   },
   changeBtn: {
-    padding: '10px 16px',
-    background: '#f0f9f4',
+    padding: '8px 16px',
+    background: colors.lightGray,
     border: 'none',
-    borderRadius: '12px',
+    borderRadius: radius.sm,
     fontSize: '13px',
     fontWeight: '600',
-    color: '#047857',
+    color: colors.text,
     cursor: 'pointer',
+  },
+  inviteBanner: {
+    padding: '16px 20px',
+    background: colors.surface,
+    border: `1px solid ${colors.gold}`,
+    borderRadius: radius.md,
+    marginBottom: '20px',
+  },
+  inviteBannerText: {
+    fontSize: '15px',
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: '4px',
+  },
+  inviteBannerSub: {
+    fontSize: '13px',
+    color: colors.textSecondary,
   },
   overlapError: {
     padding: '14px 16px',
-    background: '#fef2f2',
-    border: '2px solid #fecaca',
-    borderRadius: '12px',
+    background: colors.errorBg,
+    border: `1.5px solid #fecaca`,
+    borderRadius: radius.md,
     fontSize: '14px',
-    fontWeight: '600',
-    color: '#dc2626',
+    fontWeight: '500',
+    color: colors.error,
     marginTop: '16px',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
     lineHeight: 1.4,
   },
-  overlapIcon: {
-    fontSize: '18px',
-    flexShrink: 0,
-  },
   saveBtn: {
-    width: '100%',
-    padding: '16px',
-    background: 'linear-gradient(135deg, #047857, #059669)',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '12px',
-    fontSize: '17px',
-    fontWeight: '700',
-    cursor: 'pointer',
+    ...components.btnPrimary,
     marginTop: '24px',
-    boxShadow: '0 2px 8px rgba(4,120,87,0.3)',
+    fontSize: '16px',
+    padding: '16px',
   },
 };
 

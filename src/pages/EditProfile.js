@@ -5,6 +5,7 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { auth, db, storage } from '../firebase';
 import { useUser } from '../context/UserContext';
 import { FiArrowLeft, FiBriefcase, FiCamera, FiMessageCircle } from 'react-icons/fi';
+import { colors, fonts, radius, components } from '../design';
 
 function EditProfile() {
   const navigate = useNavigate();
@@ -32,10 +33,7 @@ function EditProfile() {
   const cityDebounceRef = useRef(null);
 
   const searchCities = useCallback(async (query) => {
-    if (query.length < 2) {
-      setCitySuggestions([]);
-      return;
-    }
+    if (query.length < 2) { setCitySuggestions([]); return; }
     try {
       const res = await fetch(
         `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=8`,
@@ -55,9 +53,7 @@ function EditProfile() {
         .filter((v, i, arr) => arr.indexOf(v) === i)
         .slice(0, 6);
       setCitySuggestions(cities);
-    } catch {
-      setCitySuggestions([]);
-    }
+    } catch { setCitySuggestions([]); }
   }, []);
 
   const handleCityChange = (value) => {
@@ -74,18 +70,9 @@ function EditProfile() {
   };
 
   const interestGroups = [
-    {
-      label: 'Travel',
-      options: ['Hiking', 'Food & Culinary', 'History & Culture', 'Photography', 'Beach', 'Adventure', 'Shopping', 'Nature'],
-    },
-    {
-      label: 'Lifestyle',
-      options: ['Fitness', 'Tech', 'Business', 'Art', 'Reading', 'Sports', 'Volunteering', 'Language Learning'],
-    },
-    {
-      label: 'Faith',
-      options: ['Mosque Tours', 'Halal Dining', 'Quran Study', 'Islamic History', 'Dawah', 'Community Service'],
-    },
+    { label: 'Travel', options: ['Hiking', 'Food & Culinary', 'History & Culture', 'Photography', 'Beach', 'Adventure', 'Shopping', 'Nature'] },
+    { label: 'Lifestyle', options: ['Fitness', 'Tech', 'Business', 'Art', 'Reading', 'Sports', 'Volunteering', 'Language Learning'] },
+    { label: 'Faith', options: ['Mosque Tours', 'Halal Dining', 'Quran Study', 'Islamic History', 'Dawah', 'Community Service'] },
   ];
 
   const identityOptions = [
@@ -123,10 +110,7 @@ function EditProfile() {
   const handlePhotoSelect = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        alert('Photo must be less than 5MB');
-        return;
-      }
+      if (file.size > 5 * 1024 * 1024) return;
       setNewPhotoFile(file);
       const reader = new FileReader();
       reader.onloadend = () => setNewPhotoPreview(reader.result);
@@ -135,20 +119,15 @@ function EditProfile() {
   };
 
   const handleSave = async () => {
-    // Validate age
     if (age) {
       const ageNum = parseInt(age);
-      if (isNaN(ageNum) || ageNum < 13 || ageNum > 120) {
-        alert('Please enter a valid age between 13 and 120');
-        return;
-      }
+      if (isNaN(ageNum) || ageNum < 13 || ageNum > 120) return;
     }
 
     setSaving(true);
     const user = auth.currentUser;
 
     try {
-      // Upload photo if changed
       let updatedPhotoURL = photoURL;
       if (newPhotoFile) {
         setUploadingPhoto(true);
@@ -158,7 +137,6 @@ function EditProfile() {
         setUploadingPhoto(false);
       }
 
-      // Clean up social media handles
       const cleanInstagram = instagram.trim().replace('@', '');
       const cleanLinkedin = linkedin.trim().replace('@', '').replace('linkedin.com/in/', '');
       const cleanWhatsapp = whatsapp.trim().replace(/\s/g, '');
@@ -180,10 +158,9 @@ function EditProfile() {
 
       refreshCurrentUser();
       navigate('/profile');
-      
+
     } catch (error) {
       console.error('Error updating profile:', error);
-      alert('Error saving profile. Please try again.');
       setSaving(false);
     }
   };
@@ -204,7 +181,6 @@ function EditProfile() {
 
   return (
     <div style={styles.page}>
-      {/* Header */}
       <div style={styles.header}>
         <button style={styles.backBtn} onClick={() => navigate('/profile')}>
           <FiArrowLeft size={16} style={{ marginRight: '6px', verticalAlign: '-2px' }} /> Back
@@ -214,157 +190,80 @@ function EditProfile() {
 
       <div style={styles.content}>
         <form onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
-          {/* Profile Photo */}
           <div style={styles.photoSection}>
-            <div
-              style={styles.photoWrapper}
-              onClick={() => document.getElementById('photoInput').click()}
-            >
+            <div style={styles.photoWrapper} onClick={() => document.getElementById('photoInput').click()}>
               {(newPhotoPreview || photoURL) ? (
                 <img src={newPhotoPreview || photoURL} alt="Profile" style={styles.photoPreview} />
               ) : (
                 <div style={styles.photoPlaceholder}>
-                  <div style={{ marginBottom: '4px', color: '#9ca3af' }}><FiCamera size={36} /></div>
-                  <div style={{ fontSize: '13px', color: '#6b7280' }}>Add Photo</div>
+                  <div style={{ marginBottom: '4px', color: colors.textTertiary }}><FiCamera size={36} /></div>
+                  <div style={{ fontSize: '13px', color: colors.textSecondary }}>Add Photo</div>
                 </div>
               )}
               <div style={styles.photoBadge}><FiCamera size={14} color="#fff" /></div>
             </div>
-            <input
-              id="photoInput"
-              type="file"
-              accept="image/*"
-              style={{ display: 'none' }}
-              onChange={handlePhotoSelect}
-            />
-            <button
-              type="button"
-              style={styles.changePhotoLink}
-              onClick={() => document.getElementById('photoInput').click()}
-            >
-              Change Photo
-            </button>
+            <input id="photoInput" type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhotoSelect} />
+            <button type="button" style={styles.changePhotoLink} onClick={() => document.getElementById('photoInput').click()}>Change Photo</button>
           </div>
 
-          {/* Name */}
           <div style={styles.fieldGroup}>
             <label style={styles.label}>Name</label>
-            <input
-              type="text"
-              style={styles.input}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Your name"
-              required
-              maxLength={100}
-            />
+            <input type="text" style={styles.input} value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" required maxLength={100} />
           </div>
 
-          {/* Age */}
           <div style={styles.fieldGroup}>
             <label style={styles.label}>Age</label>
-            <input
-              type="number"
-              style={styles.input}
-              value={age}
-              onChange={(e) => setAge(e.target.value)}
-              placeholder="25"
-              min="13"
-              max="120"
-            />
+            <input type="number" style={styles.input} value={age} onChange={(e) => setAge(e.target.value)} placeholder="25" min="13" max="120" />
           </div>
 
-          {/* City */}
           <div style={styles.fieldGroup}>
             <label style={styles.label}>Location</label>
             <div style={styles.cityInputWrapper}>
               <input
-                type="text"
-                style={styles.input}
-                value={city}
+                type="text" style={styles.input} value={city}
                 onChange={(e) => handleCityChange(e.target.value)}
                 onFocus={() => citySuggestions.length > 0 && setShowCitySuggestions(true)}
                 onBlur={() => setTimeout(() => setShowCitySuggestions(false), 200)}
-                placeholder="Start typing a city..."
-                autoComplete="off"
-                maxLength={100}
+                placeholder="Start typing a city..." autoComplete="off" maxLength={100}
               />
               {showCitySuggestions && citySuggestions.length > 0 && (
                 <div style={styles.suggestionsDropdown}>
                   {citySuggestions.map((s, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      style={styles.suggestionItem}
-                      onMouseDown={() => selectCity(s)}
-                    >
-                      {s}
-                    </button>
+                    <button key={i} type="button" style={styles.suggestionItem} onMouseDown={() => selectCity(s)}>{s}</button>
                   ))}
                 </div>
               )}
             </div>
           </div>
 
-          {/* Bio */}
           <div style={styles.fieldGroup}>
             <label style={styles.label}>Bio</label>
-            <textarea
-              style={styles.textarea}
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              placeholder="Tell people about yourself..."
-              maxLength={500}
-              rows={4}
-            />
+            <textarea style={styles.textarea} value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Tell people about yourself..." maxLength={500} rows={4} />
             <div style={styles.charCount}>{bio.length}/500 characters</div>
           </div>
 
-          {/* Identity */}
           <div style={styles.sectionHeader}>Identity</div>
           <div style={styles.fieldGroup}>
             <label style={styles.label}>I am a...</label>
             <div style={styles.chipGrid}>
               {identityOptions.map(option => (
-                <button
-                  key={option}
-                  type="button"
-                  style={{
-                    ...styles.chipBtn,
-                    ...(identity.includes(option) ? styles.chipBtnActive : {}),
-                  }}
-                  onClick={() => toggleIdentity(option)}
-                >
-                  {option}
-                </button>
+                <button key={option} type="button" style={{ ...styles.chipBtn, ...(identity.includes(option) ? styles.chipBtnActive : {}) }} onClick={() => toggleIdentity(option)}>{option}</button>
               ))}
             </div>
           </div>
 
-          {/* Interests */}
           <div style={styles.sectionHeader}>Interests</div>
           {interestGroups.map(group => (
             <div key={group.label} style={styles.fieldGroup}>
               <label style={styles.groupLabel}>{group.label}</label>
               <div style={styles.chipGrid}>
                 {group.options.map(interest => (
-                  <button
-                    key={interest}
-                    type="button"
-                    style={{
-                      ...styles.chipBtn,
-                      ...(interests.includes(interest) ? styles.chipBtnActive : {}),
-                    }}
-                    onClick={() => toggleInterest(interest)}
-                  >
-                    {interest}
-                  </button>
+                  <button key={interest} type="button" style={{ ...styles.chipBtn, ...(interests.includes(interest) ? styles.chipBtnActive : {}) }} onClick={() => toggleInterest(interest)}>{interest}</button>
                 ))}
               </div>
             </div>
           ))}
 
-          {/* Profile Visibility */}
           <div style={styles.sectionHeader}>Privacy</div>
           <div style={styles.fieldGroup}>
             <label style={styles.label}>I'd like to connect with</label>
@@ -373,17 +272,7 @@ function EditProfile() {
                 { key: gender || 'Male', label: gender === 'Female' ? 'Sisters' : 'Brothers' },
                 { key: 'both', label: 'Everyone' },
               ].map(opt => (
-                <button
-                  key={opt.key}
-                  type="button"
-                  style={{
-                    ...styles.visibilityBtn,
-                    ...(profileVisibility === opt.key ? styles.visibilityBtnActive : {}),
-                  }}
-                  onClick={() => setProfileVisibility(opt.key)}
-                >
-                  {opt.label}
-                </button>
+                <button key={opt.key} type="button" style={{ ...styles.visibilityBtn, ...(profileVisibility === opt.key ? styles.visibilityBtnActive : {}) }} onClick={() => setProfileVisibility(opt.key)}>{opt.label}</button>
               ))}
             </div>
             <p style={styles.visibilityHint}>
@@ -395,77 +284,37 @@ function EditProfile() {
             </p>
           </div>
 
-          {/* Social Media Section */}
           <div style={styles.sectionHeader}>Social Media</div>
 
-          {/* Instagram */}
           <div style={styles.fieldGroup}>
             <label style={styles.label}>Instagram</label>
             <div style={styles.inputWithIcon}>
               <span style={styles.inputIcon}><FiCamera size={16} /></span>
-              <input
-                type="text"
-                style={styles.inputWithPrefix}
-                value={instagram}
-                onChange={(e) => setInstagram(e.target.value)}
-                placeholder="username"
-                maxLength={50}
-              />
+              <input type="text" style={styles.inputWithPrefix} value={instagram} onChange={(e) => setInstagram(e.target.value)} placeholder="username" maxLength={50} />
             </div>
           </div>
 
-          {/* LinkedIn */}
           <div style={styles.fieldGroup}>
             <label style={styles.label}>LinkedIn</label>
             <div style={styles.inputWithIcon}>
               <span style={styles.inputIcon}><FiBriefcase size={16} /></span>
-              <input
-                type="text"
-                style={styles.inputWithPrefix}
-                value={linkedin}
-                onChange={(e) => setLinkedin(e.target.value)}
-                placeholder="username"
-                maxLength={50}
-              />
+              <input type="text" style={styles.inputWithPrefix} value={linkedin} onChange={(e) => setLinkedin(e.target.value)} placeholder="username" maxLength={50} />
             </div>
           </div>
 
-          {/* WhatsApp */}
           <div style={styles.fieldGroup}>
             <label style={styles.label}>WhatsApp</label>
             <div style={styles.inputWithIcon}>
               <span style={styles.inputIcon}><FiMessageCircle size={16} /></span>
-              <input
-                type="tel"
-                style={styles.inputWithPrefix}
-                value={whatsapp}
-                onChange={(e) => setWhatsapp(e.target.value)}
-                placeholder="+1234567890"
-                maxLength={50}
-              />
+              <input type="tel" style={styles.inputWithPrefix} value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="+1234567890" maxLength={50} />
             </div>
           </div>
 
-          {/* Save Button */}
-          <button
-            type="submit"
-            style={{
-              ...styles.saveBtn,
-              opacity: saving ? 0.7 : 1
-            }}
-            disabled={saving}
-          >
+          <button type="submit" style={{ ...styles.saveBtn, opacity: saving ? 0.7 : 1 }} disabled={saving}>
             {uploadingPhoto ? 'Uploading photo...' : saving ? 'Saving...' : 'Save Changes'}
           </button>
 
-          {/* Cancel Button */}
-          <button
-            type="button"
-            style={styles.cancelBtn}
-            onClick={() => navigate('/profile')}
-          >
-            Cancel
-          </button>
+          <button type="button" style={styles.cancelBtn} onClick={() => navigate('/profile')}>Cancel</button>
         </form>
       </div>
     </div>
@@ -475,13 +324,13 @@ function EditProfile() {
 const styles = {
   page: {
     minHeight: '100vh',
-    background: '#faf9f7',
+    background: colors.bg,
     paddingBottom: '40px',
   },
   header: {
-    padding: '20px',
-    background: '#ffffff',
-    borderBottom: '1px solid #e8e5e0',
+    padding: '8px 24px 14px',
+    background: colors.surface,
+    borderBottom: `1px solid ${colors.border}`,
     position: 'sticky',
     top: 0,
     zIndex: 100,
@@ -489,9 +338,9 @@ const styles = {
   backBtn: {
     background: 'none',
     border: 'none',
-    color: '#047857',
-    fontSize: '16px',
-    fontWeight: '600',
+    color: colors.text,
+    fontSize: '15px',
+    fontWeight: '500',
     cursor: 'pointer',
     padding: '8px 0',
     marginBottom: '8px',
@@ -499,13 +348,15 @@ const styles = {
     alignItems: 'center',
   },
   title: {
-    fontSize: '28px',
-    fontWeight: '800',
-    color: '#1a1a1a',
+    fontFamily: fonts.serif,
+    fontSize: '26px',
+    fontWeight: '500',
+    color: colors.text,
     margin: 0,
+    letterSpacing: '-0.3px',
   },
   content: {
-    padding: '20px',
+    padding: '20px 24px',
     maxWidth: '600px',
     margin: '0 auto',
   },
@@ -522,7 +373,7 @@ const styles = {
     borderRadius: '50%',
     overflow: 'hidden',
     cursor: 'pointer',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
+    border: `2px solid ${colors.border}`,
   },
   photoPreview: {
     width: '100%',
@@ -532,7 +383,7 @@ const styles = {
   photoPlaceholder: {
     width: '100%',
     height: '100%',
-    background: '#f5f3f0',
+    background: colors.lightGray,
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
@@ -544,18 +395,17 @@ const styles = {
     right: '4px',
     width: '32px',
     height: '32px',
-    background: '#047857',
+    background: colors.dark,
     borderRadius: '50%',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontSize: '14px',
-    border: '2px solid #fff',
+    border: `2px solid ${colors.surface}`,
   },
   changePhotoLink: {
     background: 'none',
     border: 'none',
-    color: '#047857',
+    color: colors.text,
     fontSize: '14px',
     fontWeight: '600',
     cursor: 'pointer',
@@ -564,17 +414,17 @@ const styles = {
   loading: {
     padding: '60px 20px',
     textAlign: 'center',
-    color: '#6b6b6b',
+    color: colors.textSecondary,
     fontSize: '16px',
   },
   sectionHeader: {
-    fontSize: '14px',
-    fontWeight: '700',
-    color: '#374151',
+    fontSize: '12px',
+    fontWeight: '600',
+    color: colors.textTertiary,
     marginTop: '24px',
     marginBottom: '16px',
     textTransform: 'uppercase',
-    letterSpacing: '0.5px',
+    letterSpacing: '1px',
   },
   fieldGroup: {
     marginBottom: '20px',
@@ -583,19 +433,12 @@ const styles = {
     display: 'block',
     fontSize: '14px',
     fontWeight: '600',
-    color: '#374151',
+    color: colors.text,
     marginBottom: '8px',
   },
   input: {
-    width: '100%',
-    padding: '14px 16px',
-    fontSize: '16px',
-    border: '1.5px solid #e8e5e0',
-    borderRadius: '10px',
-    fontFamily: 'inherit',
-    outline: 'none',
-    boxSizing: 'border-box',
-    background: '#faf9f7',
+    ...components.input,
+    background: colors.bg,
   },
   cityInputWrapper: {
     position: 'relative',
@@ -605,54 +448,42 @@ const styles = {
     top: '100%',
     left: 0,
     right: 0,
-    background: '#fff',
-    border: '1.5px solid #e8e5e0',
+    background: colors.surface,
+    border: `1.5px solid ${colors.border}`,
     borderTop: 'none',
-    borderRadius: '0 0 12px 12px',
+    borderRadius: `0 0 ${radius.sm} ${radius.sm}`,
     zIndex: 50,
     maxHeight: '200px',
     overflowY: 'auto',
-    boxShadow: '0 4px 6px rgba(0,0,0,0.04), 0 10px 24px rgba(0,0,0,0.08)',
   },
   suggestionItem: {
     width: '100%',
     padding: '12px 16px',
     background: 'none',
     border: 'none',
-    borderBottom: '1px solid #f5f3f0',
+    borderBottom: `1px solid ${colors.lightGray}`,
     fontSize: '15px',
-    color: '#1a1a1a',
+    color: colors.text,
     textAlign: 'left',
     cursor: 'pointer',
     fontFamily: 'inherit',
   },
-  select: {
-    width: '100%',
-    padding: '14px 16px',
-    fontSize: '16px',
-    border: '1.5px solid #e8e5e0',
-    borderRadius: '10px',
-    fontFamily: 'inherit',
-    outline: 'none',
-    background: '#fff',
-    cursor: 'pointer',
-    boxSizing: 'border-box',
-  },
   textarea: {
     width: '100%',
     padding: '14px 16px',
-    fontSize: '16px',
-    border: '1.5px solid #e8e5e0',
-    borderRadius: '10px',
+    fontSize: '15px',
+    border: `1.5px solid ${colors.warmGray}`,
+    borderRadius: radius.md,
     resize: 'vertical',
-    fontFamily: 'inherit',
+    fontFamily: fonts.sans,
     outline: 'none',
     boxSizing: 'border-box',
-    background: '#faf9f7',
+    background: colors.bg,
+    color: colors.text,
   },
   charCount: {
     fontSize: '13px',
-    color: '#a3a3a3',
+    color: colors.textMuted,
     textAlign: 'right',
     marginTop: '6px',
   },
@@ -666,24 +497,26 @@ const styles = {
     left: '16px',
     fontSize: '18px',
     pointerEvents: 'none',
+    color: colors.textTertiary,
   },
   inputWithPrefix: {
     width: '100%',
     padding: '14px 16px 14px 48px',
-    fontSize: '16px',
-    border: '1.5px solid #e8e5e0',
-    borderRadius: '10px',
-    fontFamily: 'inherit',
+    fontSize: '15px',
+    border: `1.5px solid ${colors.warmGray}`,
+    borderRadius: radius.md,
+    fontFamily: fonts.sans,
     outline: 'none',
     boxSizing: 'border-box',
-    background: '#faf9f7',
+    background: colors.bg,
+    color: colors.text,
   },
   groupLabel: {
     fontSize: '12px',
-    fontWeight: '700',
-    color: '#047857',
+    fontWeight: '600',
+    color: colors.textTertiary,
     textTransform: 'uppercase',
-    letterSpacing: '0.5px',
+    letterSpacing: '1px',
     marginBottom: '8px',
   },
   chipGrid: {
@@ -693,20 +526,20 @@ const styles = {
   },
   chipBtn: {
     padding: '10px 16px',
-    background: '#faf9f7',
-    border: '1.5px solid #e8e5e0',
-    borderRadius: '20px',
+    background: colors.bg,
+    border: `1.5px solid ${colors.border}`,
+    borderRadius: radius.full,
     fontSize: '14px',
     fontWeight: '600',
-    color: '#6b6b6b',
+    color: colors.textSecondary,
     cursor: 'pointer',
     transition: 'all 0.2s',
     fontFamily: 'inherit',
   },
   chipBtnActive: {
-    background: '#f0f9f4',
-    borderColor: '#047857',
-    color: '#047857',
+    background: colors.surface,
+    borderColor: colors.dark,
+    color: colors.text,
   },
   visibilityOptions: {
     display: 'flex',
@@ -715,10 +548,10 @@ const styles = {
   visibilityBtn: {
     flex: 1,
     padding: '12px 8px',
-    background: '#f5f3f0',
-    color: '#6b6b6b',
-    border: '1.5px solid #e8e5e0',
-    borderRadius: '9999px',
+    background: colors.lightGray,
+    color: colors.textSecondary,
+    border: `1.5px solid ${colors.border}`,
+    borderRadius: radius.full,
     fontSize: '14px',
     fontWeight: '600',
     cursor: 'pointer',
@@ -726,36 +559,29 @@ const styles = {
     fontFamily: 'inherit',
   },
   visibilityBtnActive: {
-    background: '#f0f9f4',
-    color: '#047857',
-    borderColor: '#047857',
+    background: colors.surface,
+    color: colors.text,
+    borderColor: colors.dark,
   },
   visibilityHint: {
     fontSize: '13px',
-    color: '#a3a3a3',
+    color: colors.textMuted,
     margin: '8px 0 0 0',
   },
   saveBtn: {
-    width: '100%',
-    padding: '16px',
-    background: 'linear-gradient(135deg, #047857, #059669)',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '12px',
-    fontSize: '17px',
-    fontWeight: '700',
-    cursor: 'pointer',
+    ...components.btnPrimary,
     marginTop: '24px',
     marginBottom: '12px',
-    boxShadow: '0 2px 8px rgba(4,120,87,0.3)',
+    fontSize: '16px',
+    padding: '16px',
   },
   cancelBtn: {
     width: '100%',
     padding: '14px 24px',
-    background: '#f0f9f4',
-    color: '#047857',
+    background: colors.lightGray,
+    color: colors.text,
     border: 'none',
-    borderRadius: '12px',
+    borderRadius: radius.md,
     fontSize: '15px',
     fontWeight: '600',
     cursor: 'pointer',

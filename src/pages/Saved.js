@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { db } from '../firebase';
 import { doc, updateDoc, addDoc, collection } from 'firebase/firestore';
 import { useUser } from '../context/UserContext';
-import { FiX, FiEdit2, FiTrash2, FiChevronDown, FiMapPin, FiNavigation, FiMessageCircle, FiCamera, FiCrosshair, FiSend, FiMap } from 'react-icons/fi';
+import { FiX, FiEdit2, FiTrash2, FiChevronDown, FiMapPin, FiNavigation, FiMessageCircle, FiCamera, FiSend, FiMap } from 'react-icons/fi';
+import { colors, fonts, radius, components, type } from '../design';
+import { getDestinationImage } from '../data/destinations';
 
 
 function Saved() {
@@ -26,7 +28,6 @@ function Saved() {
     return new Date(y, m - 1, d);
   };
 
-  // Derive overlapping people from context data
   const overlappingPeople = useMemo(() => {
     if (!currentUserData || !currentUser) return {};
 
@@ -49,7 +50,6 @@ function Saved() {
         if (u.id === currentUser.uid) return;
         if (!Array.isArray(u.upcomingTrips) || u.upcomingTrips.length === 0) return;
 
-        // Skip gender visibility filter for existing connections
         if (!myConnections.includes(u.id)) {
           const theirVis = u.profileVisibility || 'both';
           if (theirVis !== 'both' && theirVis !== myGender) return;
@@ -63,7 +63,6 @@ function Saved() {
           if (uStart <= myEnd && uEnd >= myStart) {
             const isThere = today >= uStart && today <= uEnd;
             const isConn = myConnections.includes(u.id);
-            // Merge contact info from connection record for connected users
             const connRecord = isConn ? myConnections_enriched.find(c => c.userId === u.id) : null;
             people.push({
               id: u.id,
@@ -132,7 +131,6 @@ function Saved() {
       refreshCurrentUser();
     } catch (error) {
       console.error('Error removing trip:', error);
-      alert('Failed to remove trip');
     }
   };
 
@@ -145,7 +143,6 @@ function Saved() {
       refreshCurrentUser();
     } catch (error) {
       console.error('Error removing experience:', error);
-      alert('Failed to remove experience');
     }
   };
 
@@ -156,14 +153,8 @@ function Saved() {
   };
 
   const handleSaveDates = async (tripIndex) => {
-    if (!editStart || !editEnd) {
-      alert('Please select both dates');
-      return;
-    }
-    if (new Date(editEnd) < new Date(editStart)) {
-      alert('End date must be after start date');
-      return;
-    }
+    if (!editStart || !editEnd) return;
+    if (new Date(editEnd) < new Date(editStart)) return;
     try {
       if (!currentUser) return;
       const updatedTrips = [...trips];
@@ -177,13 +168,9 @@ function Saved() {
       setEditingTrip(null);
     } catch (error) {
       console.error('Error updating trip dates:', error);
-      alert('Failed to update dates');
     }
   };
 
-  // Split trips into upcoming and past
-  // upcomingTrips array now only contains current/future trips (past ones are archived to pastTrips field)
-  // But handle gracefully if cleanup hasn't run yet
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -201,13 +188,11 @@ function Saved() {
     }
   });
 
-  // Also include archived past trips
   const archivedPastTrips = currentUserData?.pastTrips || [];
   archivedPastTrips.forEach((trip, i) => {
     pastTrips.push({ ...trip, originalIndex: `past-${i}`, isArchived: true });
   });
 
-  // Group trips by year and sort by month
   const groupByYear = (tripList) => {
     const groups = {};
     tripList.forEach(trip => {
@@ -215,13 +200,9 @@ function Saved() {
       if (!groups[year]) groups[year] = [];
       groups[year].push(trip);
     });
-
-    // Sort trips within each year by start date
     Object.keys(groups).forEach(year => {
       groups[year].sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
     });
-
-    // Return sorted year keys (upcoming: nearest first, past: most recent first)
     const sortedYears = Object.keys(groups).sort((a, b) => Number(b) - Number(a));
     return { groups, sortedYears };
   };
@@ -229,7 +210,6 @@ function Saved() {
   const upcomingGrouped = groupByYear(upcomingTrips);
   const pastGrouped = groupByYear(pastTrips);
 
-  // Auto-expand the current/nearest year and first trip on first render
   const loading = !currentUserData;
   useEffect(() => {
     if (!loading && Object.keys(expandedYears).length === 0) {
@@ -243,7 +223,6 @@ function Saved() {
       }
       setExpandedYears(initial);
 
-      // Auto-expand the first upcoming trip
       if (upcomingTrips.length > 0) {
         setExpandedTrips({ [upcomingTrips[0].originalIndex]: true });
       }
@@ -263,134 +242,54 @@ function Saved() {
   };
 
   const renderUpcomingTrip = (trip) => {
-    const isExpanded = expandedTrips[trip.originalIndex];
     const people = overlappingPeople[trip.originalIndex] || [];
     const startDate = parseDate(trip.startDate);
     const endDate = parseDate(trip.endDate);
     const isThere = today >= startDate && today <= endDate;
+    const daysAway = Math.ceil((startDate - today) / (1000 * 60 * 60 * 24));
     const expCount = trip.experiences?.length || 0;
 
     return (
-      <div key={trip.originalIndex} style={styles.tripCard}>
-        {/* Collapsed header — always visible */}
+      <div key={trip.originalIndex} style={styles.tripCard} onClick={() => navigate(`/trip/${trip.originalIndex}`)}>
         <div
           style={{
             ...styles.tripHeader,
-            ...(isThere ? styles.tripHeaderThere : {}),
+            backgroundImage: `linear-gradient(rgba(26,26,26,0.3), rgba(26,26,26,0.8)), url(${getDestinationImage(trip.destination)})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
           }}
-          onClick={() => toggleTrip(trip.originalIndex)}
         >
-          <div style={styles.tripHeaderLeft}>
-            <div style={styles.tripDestination}>
-              {trip.destination.split(',')[0]}
-            </div>
-            <div style={styles.tripHeaderMeta}>
-              <span style={styles.tripDatesInline}>
-                {formatDate(trip.startDate)} - {formatDate(trip.endDate)}
-              </span>
-              {isThere && <span style={styles.thereBadge}><FiMapPin size={11} style={{ marginRight: '4px', verticalAlign: '-1px' }} /> There now</span>}
-            </div>
-            {!isExpanded && (expCount > 0 || people.length > 0) && (
-              <div style={styles.tripHeaderSummary}>
-                {expCount > 0 && <span>{expCount} experience{expCount !== 1 ? 's' : ''}</span>}
-                {expCount > 0 && people.length > 0 && <span> · </span>}
-                {people.length > 0 && <span>{people.length} {people.length === 1 ? 'person' : 'people'}</span>}
-              </div>
-            )}
+          <div style={styles.tripDestination}>{trip.destination.split(',')[0]}</div>
+          <div style={styles.tripDates}>
+            {formatDate(trip.startDate)} — {formatDate(trip.endDate)}
           </div>
-          <span style={{
-            ...styles.tripChevron,
-            transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
-          }}><FiChevronDown size={18} /></span>
-        </div>
-
-        {/* Expanded body */}
-        {isExpanded && (
-          <div style={styles.tripBody}>
-            {/* Editable dates */}
-            {editingTrip === trip.originalIndex ? (
-              <div style={styles.editDatesSection}>
-                <div style={styles.editDatesRow}>
-                  <input type="date" value={editStart} onChange={(e) => setEditStart(e.target.value)} style={styles.dateInput} />
-                  <span style={{ color: '#6b7280' }}>—</span>
-                  <input type="date" value={editEnd} onChange={(e) => setEditEnd(e.target.value)} style={styles.dateInput} />
-                  <button style={styles.dateSaveBtn} onClick={() => handleSaveDates(trip.originalIndex)}>Save</button>
-                  <button style={styles.dateCancelBtn} onClick={() => setEditingTrip(null)}><FiX size={14} /></button>
-                </div>
-              </div>
-            ) : (
-              <div
-                style={styles.editDatesTrigger}
-                onClick={() => handleStartEditDates(trip.originalIndex, trip.startDate, trip.endDate)}
-              >
-                <FiEdit2 size={13} style={{ marginRight: '6px', verticalAlign: '-2px' }} /> Edit dates
-              </div>
-            )}
-
-            {/* Experiences */}
-            {expCount > 0 && (
-              <div style={styles.expSection}>
-                <div style={styles.expSectionLabel}>Experiences ({expCount})</div>
-                {trip.experiences.map((exp, expIndex) => (
-                  <div key={expIndex} style={styles.expCard}>
-                    <div style={styles.expIcon}>{exp.icon ? exp.icon : <FiCrosshair size={20} color="#047857" />}</div>
-                    <div style={styles.expDetails}>
-                      <div style={styles.expName}>{exp.name}</div>
-                      <div style={styles.expPrice}>${exp.price}</div>
-                    </div>
-                    <div style={styles.expActions}>
-                      {exp.bookingUrl && (
-                        <button style={styles.bookNowBtn} onClick={() => window.open(exp.bookingUrl, '_blank')}>Book</button>
-                      )}
-                      <button style={styles.removeExpBtn} onClick={() => handleRemoveExperience(trip.originalIndex, expIndex)}><FiX size={12} /></button>
-                    </div>
+          <div style={styles.tripMeta}>
+            <div style={styles.tripMetaLeft}>
+              {isThere ? (
+                <span style={styles.thereBadge}>There now</span>
+              ) : (
+                <span style={styles.daysAway}>{daysAway} days away</span>
+              )}
+            </div>
+            {people.length > 0 && (
+              <div style={styles.tripAvatars}>
+                {people.slice(0, 3).map((p, i) => (
+                  <div key={p.id} style={styles.tripAvatar}>
+                    {p.photoURL ? (
+                      <img src={p.photoURL} alt="" style={styles.tripAvatarImg} />
+                    ) : (
+                      p.name?.charAt(0)
+                    )}
                   </div>
                 ))}
               </div>
             )}
-
-            {/* Overlapping people */}
-            {people.length > 0 && (
-              <div style={styles.connectionsSection}>
-                <div style={styles.connectionsSectionLabel}>
-                  {people.length} {people.length === 1 ? 'person' : 'people'} during your dates
-                </div>
-                <div style={styles.peopleList}>
-                  {people.map((person) => (
-                    <div key={person.id} style={styles.personRow} onClick={() => setPreviewUser(person)}>
-                      <div style={{
-                        ...styles.personAvatar,
-                        border: person.isConnected ? '2px solid #059669' : '2px solid #d1d5db',
-                      }}>
-                        {person.photoURL ? (
-                          <img src={person.photoURL} alt={person.name} style={styles.personAvatarImg} />
-                        ) : (
-                          <div style={styles.personAvatarPlaceholder}>{person.name?.charAt(0)}</div>
-                        )}
-                      </div>
-                      <div style={styles.personInfo}>
-                        <div style={styles.personName}>{person.name?.split(' ')[0]}{person.age ? `, ${person.age}` : ''}</div>
-                        <div style={styles.personDates}>
-                          {formatDate(person.tripStart)} – {formatDate(person.tripEnd)}
-                        </div>
-                      </div>
-                      <div style={styles.personStatus}>
-                        {person.isThere ? <FiMapPin size={16} color="#047857" /> : <FiNavigation size={16} color="#6b7280" />}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div style={styles.tripActions}>
-              <button style={styles.addExpBtn} onClick={() => navigate(`/destination/${encodeURIComponent(trip.destination)}`)}>
-                + Add Experiences
-              </button>
-              <button style={styles.removeTripBtn} onClick={() => handleRemoveTrip(trip.originalIndex)}>
-                <FiTrash2 size={16} />
-              </button>
-            </div>
+          </div>
+        </div>
+        {(expCount > 0 || people.length > 0) && (
+          <div style={styles.tripPills}>
+            {expCount > 0 && <span style={styles.pill}>{expCount} experience{expCount !== 1 ? 's' : ''}</span>}
+            {people.length > 0 && <span style={styles.pill}>{people.length} traveler{people.length !== 1 ? 's' : ''}</span>}
           </div>
         )}
       </div>
@@ -411,39 +310,24 @@ function Saved() {
             <div style={styles.pastTripDestination}>{trip.destination.split(',')[0]}</div>
             <div style={styles.tripHeaderMeta}>
               <span style={styles.pastTripDatesInline}>
-                {formatDate(trip.startDate)} - {formatDate(trip.endDate)}
+                {formatDate(trip.startDate)} — {formatDate(trip.endDate)}
               </span>
-              <span style={styles.completedBadge}>Completed</span>
             </div>
-            {!isExpanded && expCount > 0 && (
-              <div style={styles.tripHeaderSummary}>
-                <span>{expCount} experience{expCount !== 1 ? 's' : ''}</span>
-              </div>
-            )}
           </div>
           <span style={{
             ...styles.tripChevron,
             transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
-            color: '#9ca3af',
+            color: colors.textTertiary,
           }}><FiChevronDown size={18} /></span>
         </div>
-        {isExpanded && (
+        {isExpanded && expCount > 0 && (
           <div style={styles.pastTripBody}>
-            {expCount > 0 && (
-              <div style={styles.pastExpList}>
-                {trip.experiences.map((exp, i) => (
-                  <div key={i} style={styles.pastExpItem}>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>{exp.icon ? exp.icon : <FiCrosshair size={14} color="#047857" />} {exp.name}</span>
-                    <span style={styles.pastExpPrice}>${exp.price}</span>
-                    {exp.bookingUrl && (
-                      <button style={styles.rebookBtn} onClick={() => window.open(exp.bookingUrl, '_blank')}>
-                        Rebook
-                      </button>
-                    )}
-                  </div>
-                ))}
+            {trip.experiences.map((exp, i) => (
+              <div key={i} style={styles.pastExpItem}>
+                <span>{exp.name}</span>
+                <span style={styles.pastExpPrice}>${exp.price}</span>
               </div>
-            )}
+            ))}
           </div>
         )}
       </div>
@@ -454,16 +338,15 @@ function Saved() {
     if (grouped.sortedYears.length === 0) {
       return (
         <div style={styles.emptyState}>
-          <div style={styles.emptyIcon}>{prefix === 'upcoming' ? <FiSend size={48} color="#047857" /> : <FiMap size={48} color="#9ca3af" />}</div>
           <div style={styles.emptyTitle}>
-            {prefix === 'upcoming' ? 'No upcoming trips' : 'No past trips'}
+            {prefix === 'upcoming' ? 'No upcoming journeys' : 'No past journeys yet'}
           </div>
           <div style={styles.emptyText}>
-            {prefix === 'upcoming' ? 'Plan your next adventure' : 'Your travel history will appear here'}
+            {prefix === 'upcoming' ? 'Plan your next journey to get started.' : 'Your travel history will appear here.'}
           </div>
           {prefix === 'upcoming' && (
-            <button style={styles.emptyButton} onClick={() => navigate('/destinations')}>
-              Explore Destinations
+            <button style={styles.emptyButton} onClick={() => navigate('/add-trip')}>
+              Plan a Journey
             </button>
           )}
         </div>
@@ -477,7 +360,7 @@ function Saved() {
           const isExpanded = expandedYears[key];
           const tripCount = grouped.groups[year].length;
           return (
-            <div key={year} style={styles.yearGroup}>
+            <div key={year}>
               <button
                 style={styles.yearHeader}
                 onClick={() => toggleYear(key)}
@@ -485,13 +368,13 @@ function Saved() {
                 <div style={styles.yearLeft}>
                   <span style={styles.yearLabel}>{year}</span>
                   <span style={styles.yearCount}>
-                    {tripCount} trip{tripCount !== 1 ? 's' : ''}
+                    {tripCount} journey{tripCount !== 1 ? 's' : ''}
                   </span>
                 </div>
                 <span style={{
                   ...styles.yearChevron,
                   transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
-                }}><FiChevronDown size={18} /></span>
+                }}><FiChevronDown size={16} /></span>
               </button>
               {isExpanded && (
                 <div style={styles.yearTrips}>
@@ -508,13 +391,18 @@ function Saved() {
   if (!currentUserData) {
     return (
       <div style={styles.container}>
-        <div style={styles.loading}>Loading...</div>
-        </div>
+        <div style={styles.loadingState}>Loading...</div>
+      </div>
     );
   }
 
   return (
     <div style={styles.container}>
+      {/* Page title */}
+      <div style={styles.pageHeader}>
+        <h1 style={styles.pageTitle}>Journeys</h1>
+      </div>
+
       {/* Sub-tabs */}
       <div style={styles.subTabsWrapper}>
         <div style={styles.subTabs}>
@@ -522,13 +410,13 @@ function Saved() {
             style={{...styles.subTab, ...(activeSubTab === 'upcoming' ? styles.subTabActive : {})}}
             onClick={() => setActiveSubTab('upcoming')}
           >
-            Upcoming ({upcomingTrips.length})
+            Upcoming
           </button>
           <button
             style={{...styles.subTab, ...(activeSubTab === 'past' ? styles.subTabActive : {})}}
             onClick={() => setActiveSubTab('past')}
           >
-            Past Trips ({pastTrips.length})
+            Past
           </button>
         </div>
       </div>
@@ -538,7 +426,7 @@ function Saved() {
         {activeSubTab === 'past' && renderYearGroups(pastGrouped, 'past', renderPastTrip)}
       </div>
 
-      {/* Profile Preview Modal — Backdrop Photo */}
+      {/* Profile Preview Modal */}
       {previewUser && (() => {
         const isConnected = (currentUserData?.connections || []).some(c => c.userId === previewUser.id);
         const isPending = allSentRequests.includes(previewUser.id);
@@ -546,30 +434,21 @@ function Saved() {
         return (
           <div style={styles.modalOverlay} onClick={() => setPreviewUser(null)}>
             <div style={styles.modalCard} onClick={e => e.stopPropagation()}>
-              {/* Backdrop photo */}
-              <div style={styles.modalBackdrop}>
-                {previewUser.photoURL ? (
-                  <img src={previewUser.photoURL} alt={previewUser.name} style={styles.modalBackdropImg} />
-                ) : (
-                  <div style={styles.modalBackdropPlaceholder}>
-                    {previewUser.name?.charAt(0).toUpperCase()}
-                  </div>
-                )}
-                <div style={styles.modalBackdropGradient} />
-                <button style={styles.modalCloseBtn} onClick={() => setPreviewUser(null)}><FiX size={18} /></button>
-                <div style={styles.modalBackdropInfo}>
-                  <div style={styles.modalNameOverlay}>{previewUser.name}{previewUser.age ? `, ${previewUser.age}` : ''}</div>
-                  {previewUser.isThere !== undefined && (
-                    <span style={styles.modalStatusBadge}>{previewUser.isThere ? <><FiMapPin size={11} style={{ marginRight: '4px', verticalAlign: '-1px' }} /> There now</> : <><FiNavigation size={11} style={{ marginRight: '4px', verticalAlign: '-1px' }} /> Going soon</>}</span>
+              <button style={styles.modalCloseBtn} onClick={() => setPreviewUser(null)}><FiX size={18} /></button>
+
+              <div style={styles.modalContent}>
+                <div style={styles.modalAvatarWrap}>
+                  {previewUser.photoURL ? (
+                    <img src={previewUser.photoURL} alt={previewUser.name} style={styles.modalAvatar} />
+                  ) : (
+                    <div style={styles.modalAvatarPlaceholder}>
+                      {previewUser.name?.charAt(0).toUpperCase()}
+                    </div>
                   )}
                 </div>
-              </div>
+                <div style={styles.modalName}>{previewUser.name}{previewUser.age ? `, ${previewUser.age}` : ''}</div>
 
-              {/* Content below backdrop */}
-              <div style={styles.modalBody}>
-                {previewUser.bio && (
-                  <p style={styles.modalBio}>{previewUser.bio}</p>
-                )}
+                {previewUser.bio && <p style={styles.modalBio}>{previewUser.bio}</p>}
 
                 {previewUser.interests && previewUser.interests.length > 0 && (
                   <div style={styles.modalInterests}>
@@ -583,12 +462,12 @@ function Saved() {
                   <div style={styles.modalSocials}>
                     {previewUser.whatsapp && (
                       <a href={`https://wa.me/${previewUser.whatsapp.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" style={styles.modalSocialBtn}>
-                        <FiMessageCircle size={14} style={{ marginRight: '4px', verticalAlign: '-2px' }} /> WhatsApp
+                        <FiMessageCircle size={14} style={{ marginRight: '4px' }} /> WhatsApp
                       </a>
                     )}
                     {previewUser.instagram && (
                       <a href={`https://www.instagram.com/${previewUser.instagram}`} target="_blank" rel="noopener noreferrer" style={styles.modalSocialBtn}>
-                        <FiCamera size={14} style={{ marginRight: '4px', verticalAlign: '-2px' }} /> @{previewUser.instagram}
+                        <FiCamera size={14} style={{ marginRight: '4px' }} /> Instagram
                       </a>
                     )}
                   </div>
@@ -596,21 +475,20 @@ function Saved() {
 
                 {allTrips.length > 0 && (
                   <div style={styles.modalTripsSection}>
-                    <div style={styles.modalTripsTitle}>Trips</div>
+                    <div style={styles.modalTripsTitle}>Journeys</div>
                     {allTrips.map((trip, i) => {
                       const start = parseDate(trip.startDate);
                       const end = parseDate(trip.endDate);
                       const now = new Date();
                       now.setHours(0, 0, 0, 0);
                       const isThere = now >= start && now <= end;
-                      const isUpcoming = now < start;
                       return (
                         <div key={i} style={styles.modalTripItem}>
-                          <span style={styles.modalTripIcon}>{isThere ? <FiMapPin size={14} color="#047857" /> : isUpcoming ? <FiNavigation size={14} color="#6b7280" /> : '✓'}</span>
-                          <div style={styles.modalTripInfo}>
-                            <div style={styles.modalTripDest}>{trip.destination.split(',')[0]}</div>
-                            <div style={styles.modalTripDates}>
-                              {start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – {end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          <span style={{ flexShrink: 0 }}>{isThere ? <FiMapPin size={14} color={colors.text} /> : <FiNavigation size={14} color={colors.textTertiary} />}</span>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: '14px', fontWeight: '600', color: colors.text }}>{trip.destination.split(',')[0]}</div>
+                            <div style={{ fontSize: '12px', color: colors.textTertiary, marginTop: '2px' }}>
+                              {start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} — {end.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                             </div>
                           </div>
                           {isThere && <span style={styles.modalTripBadge}>There now</span>}
@@ -621,9 +499,9 @@ function Saved() {
                 )}
 
                 {isConnected ? (
-                  <div style={styles.modalConnectedBadge}>Connected</div>
+                  <div style={styles.modalStatusBadge}>Connected</div>
                 ) : isPending ? (
-                  <div style={styles.modalPendingBadge}>Request Pending</div>
+                  <div style={{ ...styles.modalStatusBadge, background: colors.warningBg, color: colors.warning }}>Request Pending</div>
                 ) : (
                   <button style={styles.modalConnectBtn} onClick={() => { handleSendConnectionRequest(previewUser); setPreviewUser(null); }}>
                     Connect
@@ -634,135 +512,89 @@ function Saved() {
           </div>
         );
       })()}
-
     </div>
   );
 }
 
 const styles = {
-  container: { minHeight: '100vh', background: '#faf9f7', paddingBottom: '70px' },
-  loading: { display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', color: '#6b7280', fontSize: '18px' },
+  container: { minHeight: '100vh', background: colors.bg, paddingBottom: '90px' },
+  loadingState: { display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', color: colors.textTertiary, fontSize: '16px' },
 
-  // Header
-  header: { background: '#fff', padding: '8px 20px', borderBottom: '1px solid #e8e5e0' },
-  title: { fontSize: '28px', fontWeight: '800', color: '#1a1a1a', margin: '0 0 4px 0' },
-  subtitle: { fontSize: '14px', color: '#6b6b6b', margin: 0 },
+  // Page header
+  pageHeader: { padding: '20px 24px 0' },
+  pageTitle: { fontFamily: fonts.serif, fontSize: '28px', fontWeight: '500', color: colors.text, margin: 0, letterSpacing: '-0.3px' },
 
   // Sub-tabs
-  subTabsWrapper: { background: '#fff', padding: '12px 20px', borderBottom: '1px solid #e8e5e0' },
-  subTabs: { display: 'flex', gap: '8px' },
-  subTab: { flex: 1, padding: '12px 16px', background: '#f5f3f0', border: '2px solid transparent', borderRadius: '12px', fontSize: '15px', fontWeight: '700', color: '#6b6b6b', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s' },
-  subTabActive: { borderColor: '#047857', color: '#047857', background: '#f0f9f4' },
+  subTabsWrapper: { padding: '16px 24px 0' },
+  subTabs: { display: 'flex', gap: '0', background: colors.lightGray, borderRadius: radius.sm, padding: '3px' },
+  subTab: { flex: 1, padding: '10px 16px', background: 'transparent', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: '600', color: colors.textTertiary, cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s' },
+  subTabActive: { background: colors.surface, color: colors.text, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' },
 
   // Content
-  content: { padding: '20px' },
+  content: { padding: '20px 24px' },
 
   // Year groups
-  yearList: { display: 'flex', flexDirection: 'column', gap: '16px' },
-  yearGroup: { background: '#fff', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 6px rgba(0,0,0,0.04), 0 10px 24px rgba(0,0,0,0.08)' },
-  yearHeader: { width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '16px' },
+  yearList: { display: 'flex', flexDirection: 'column', gap: '8px' },
+  yearHeader: { width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', background: 'transparent', border: 'none', cursor: 'pointer' },
   yearLeft: { display: 'flex', alignItems: 'center', gap: '10px' },
-  yearLabel: { fontSize: '20px', fontWeight: '800', color: '#1a1a1a' },
-  yearCount: { fontSize: '13px', fontWeight: '600', color: '#6b7280', background: '#f5f3f0', padding: '2px 10px', borderRadius: '12px' },
-  yearChevron: { fontSize: '18px', color: '#6b7280', transition: 'transform 0.2s', display: 'inline-block' },
-  yearTrips: { padding: '0 16px 16px 16px', display: 'flex', flexDirection: 'column', gap: '12px' },
+  yearLabel: { fontFamily: fonts.serif, fontSize: '18px', fontWeight: '500', color: colors.text },
+  yearCount: { fontSize: '12px', fontWeight: '500', color: colors.textTertiary },
+  yearChevron: { color: colors.textTertiary, transition: 'transform 0.2s', display: 'inline-block' },
+  yearTrips: { display: 'flex', flexDirection: 'column', gap: '12px', paddingBottom: '8px' },
 
   // Empty
   emptyState: { display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '60px 20px', textAlign: 'center' },
-  emptyIcon: { marginBottom: '16px', display: 'flex', justifyContent: 'center' },
-  emptyTitle: { fontSize: '20px', fontWeight: '700', color: '#1f2937', marginBottom: '8px' },
-  emptyText: { fontSize: '15px', color: '#6b7280', marginBottom: '24px' },
-  emptyButton: { background: 'linear-gradient(135deg, #047857, #059669)', color: '#fff', border: 'none', padding: '14px 28px', borderRadius: '12px', fontSize: '15px', fontWeight: '600', cursor: 'pointer', boxShadow: '0 2px 8px rgba(4,120,87,0.3)' },
+  emptyTitle: { fontFamily: fonts.serif, fontSize: '20px', fontWeight: '500', color: colors.text, marginBottom: '8px' },
+  emptyText: { fontSize: '14px', color: colors.textSecondary, marginBottom: '24px' },
+  emptyButton: { ...components.btnPrimary, width: 'auto', padding: '12px 28px' },
 
   // Upcoming Trip Card
-  tripCard: { background: '#fff', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 6px rgba(0,0,0,0.04), 0 10px 24px rgba(0,0,0,0.08)' },
-  tripHeader: { display: 'flex', alignItems: 'center', padding: '16px 20px', background: 'linear-gradient(135deg, #047857 0%, #059669 100%)', cursor: 'pointer' },
-  tripHeaderThere: { background: 'linear-gradient(135deg, #065f46 0%, #047857 100%)' },
+  tripCard: { background: colors.surface, borderRadius: radius.lg, overflow: 'hidden', border: `1px solid ${colors.border}`, cursor: 'pointer' },
+  tripHeader: { padding: '24px 20px', position: 'relative' },
+  tripDestination: { fontFamily: fonts.serif, color: colors.cream, fontSize: '22px', fontWeight: '600', marginBottom: '4px' },
+  tripDates: { color: 'rgba(248,246,242,0.65)', fontSize: '13px', marginBottom: '14px' },
+  tripMeta: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+  tripMetaLeft: {},
+  thereBadge: { fontSize: '12px', fontWeight: '600', color: colors.gold, background: 'rgba(255,255,255,0.1)', padding: '4px 12px', borderRadius: radius.full },
+  daysAway: { fontSize: '13px', fontWeight: '600', color: colors.gold },
+  tripAvatars: { display: 'flex' },
+  tripAvatar: { width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(248,246,242,0.2)', color: colors.cream, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: '600', fontFamily: fonts.serif, marginLeft: '-6px', border: '2px solid rgba(26,26,26,0.5)', overflow: 'hidden' },
+  tripAvatarImg: { width: '100%', height: '100%', objectFit: 'cover' },
+  tripPills: { padding: '12px 20px', display: 'flex', gap: '8px', flexWrap: 'wrap' },
+  pill: { fontSize: '12px', fontWeight: '600', color: colors.text, background: colors.lightGray, padding: '6px 12px', borderRadius: radius.full },
+
+  // Past Trip (shared helper styles for past cards)
   tripHeaderLeft: { flex: 1 },
-  tripDestination: { color: '#fff', fontSize: '18px', fontWeight: '800', marginBottom: '4px' },
-  tripHeaderMeta: { display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' },
-  tripDatesInline: { color: 'rgba(255,255,255,0.85)', fontSize: '13px', fontWeight: '500' },
-  thereBadge: { fontSize: '11px', fontWeight: '700', color: '#fff', background: 'rgba(255,255,255,0.2)', padding: '2px 8px', borderRadius: '8px' },
-  tripHeaderSummary: { marginTop: '6px', fontSize: '12px', color: 'rgba(255,255,255,0.7)', fontWeight: '500' },
-  tripChevron: { fontSize: '20px', color: 'rgba(255,255,255,0.8)', transition: 'transform 0.2s', display: 'inline-block', flexShrink: 0 },
-  editDatesSection: { padding: '12px 0', borderBottom: '1px solid #f3f4f6', marginBottom: '12px' },
-  editDatesRow: { display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' },
-  dateInput: { padding: '8px 10px', borderRadius: '8px', border: '2px solid #e5e7eb', background: '#fff', color: '#1f2937', fontSize: '13px', fontFamily: 'inherit' },
-  dateSaveBtn: { padding: '8px 14px', background: '#047857', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '700', cursor: 'pointer' },
-  dateCancelBtn: { padding: '8px 10px', background: '#f3f4f6', color: '#6b7280', border: 'none', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' },
-  editDatesTrigger: { padding: '8px 0', fontSize: '13px', color: '#047857', fontWeight: '600', cursor: 'pointer', marginBottom: '8px' },
-  tripBody: { padding: '20px' },
+  tripHeaderMeta: { display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' },
+  tripChevron: { color: 'rgba(248,246,242,0.5)', transition: 'transform 0.2s', display: 'inline-block', flexShrink: 0 },
+  pastTripCard: { background: colors.surface, borderRadius: radius.md, overflow: 'hidden', border: `1px solid ${colors.border}`, opacity: 0.8 },
+  pastTripHeader: { display: 'flex', alignItems: 'center', padding: '16px 20px', cursor: 'pointer' },
+  pastTripDestination: { fontFamily: fonts.serif, color: colors.textSecondary, fontSize: '16px', fontWeight: '500', marginBottom: '2px' },
+  pastTripDatesInline: { color: colors.textTertiary, fontSize: '13px' },
+  pastTripBody: { padding: '0 20px 16px', display: 'flex', flexDirection: 'column', gap: '6px' },
+  pastExpItem: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '14px', color: colors.textSecondary, padding: '8px 0', borderBottom: `1px solid ${colors.lightGray}` },
+  pastExpPrice: { color: colors.textTertiary, fontWeight: '500' },
 
-  // Experiences in trip
-  expSection: { marginBottom: '16px' },
-  expSectionLabel: { fontSize: '12px', fontWeight: '700', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '10px' },
-  expCard: { display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px', background: '#fff', borderRadius: '12px', marginBottom: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.04), 0 10px 24px rgba(0,0,0,0.08)' },
-  expIcon: { fontSize: '24px', flexShrink: 0 },
-  expDetails: { flex: 1 },
-  expName: { fontSize: '14px', fontWeight: '600', color: '#1f2937', marginBottom: '2px' },
-  expPrice: { fontSize: '16px', fontWeight: '700', color: '#047857' },
-  expActions: { display: 'flex', gap: '6px', alignItems: 'center' },
-  bookNowBtn: { padding: '8px 14px', background: 'linear-gradient(135deg, #047857, #059669)', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '13px', fontWeight: '600', cursor: 'pointer', boxShadow: '0 2px 8px rgba(4,120,87,0.3)' },
-  removeExpBtn: { width: '28px', height: '28px', background: '#fef2f2', color: '#dc2626', border: 'none', borderRadius: '12px', fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-
-  // People list in trip
-  connectionsSection: { marginBottom: '16px' },
-  connectionsSectionLabel: { fontSize: '12px', fontWeight: '700', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '10px' },
-  peopleList: { display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '4px' },
-  personRow: { display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 14px', background: '#fff', borderRadius: '12px', cursor: 'pointer', flexShrink: 0, minWidth: '200px', boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06)' },
-  personAvatar: { width: '40px', height: '40px', borderRadius: '50%', flexShrink: 0, overflow: 'hidden' },
-  personAvatarImg: { width: '100%', height: '100%', objectFit: 'cover' },
-  personAvatarPlaceholder: { width: '100%', height: '100%', background: '#e5e7eb', color: '#6b7280', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', fontWeight: '700' },
-  personInfo: { flex: 1, minWidth: 0 },
-  personName: { fontSize: '14px', fontWeight: '700', color: '#1f2937', whiteSpace: 'nowrap' },
-  personDates: { fontSize: '12px', color: '#6b7280', marginTop: '1px', whiteSpace: 'nowrap' },
-  personStatus: { fontSize: '16px', flexShrink: 0 },
-
-  // Trip actions
-  tripActions: { display: 'flex', gap: '8px' },
-  addExpBtn: { flex: 1, padding: '14px 24px', background: '#f0f9f4', color: '#047857', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' },
-  removeTripBtn: { padding: '14px 16px', background: '#fef2f2', color: '#dc2626', border: 'none', borderRadius: '12px', fontSize: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-
-  // Past Trip Card
-  pastTripCard: { background: '#fff', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 6px rgba(0,0,0,0.04), 0 10px 24px rgba(0,0,0,0.08)', opacity: 0.85 },
-  pastTripHeader: { display: 'flex', alignItems: 'center', background: 'linear-gradient(135deg, #6b7280 0%, #9ca3af 100%)', padding: '16px 20px', cursor: 'pointer' },
-  pastTripDestination: { color: '#fff', fontSize: '18px', fontWeight: '800', marginBottom: '4px' },
-  pastTripDatesInline: { color: 'rgba(255,255,255,0.85)', fontSize: '13px', fontWeight: '500' },
-  completedBadge: { fontSize: '11px', fontWeight: '700', color: '#fff', background: 'rgba(255,255,255,0.2)', padding: '2px 8px', borderRadius: '8px' },
-  pastTripBody: { padding: '14px 20px' },
-  pastExpList: { display: 'flex', flexDirection: 'column', gap: '8px' },
-  pastExpItem: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#4b5563' },
-  pastExpPrice: { color: '#6b7280', fontWeight: '600', marginLeft: 'auto' },
-  rebookBtn: { padding: '8px 14px', background: '#f0f9f4', color: '#047857', border: 'none', borderRadius: '12px', fontSize: '12px', fontWeight: '600', cursor: 'pointer', flexShrink: 0 },
-
-  // Profile Preview Modal — Backdrop style
-  modalOverlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' },
-  modalCard: { background: '#fff', borderRadius: '20px', maxWidth: '380px', width: '100%', maxHeight: '85vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', position: 'relative', boxShadow: '0 8px 16px rgba(0,0,0,0.06), 0 20px 40px rgba(0,0,0,0.1)' },
-  modalBackdrop: { position: 'relative', width: '100%', height: '240px', flexShrink: 0 },
-  modalBackdropImg: { width: '100%', height: '100%', objectFit: 'cover' },
-  modalBackdropPlaceholder: { width: '100%', height: '100%', background: 'linear-gradient(135deg, #047857 0%, #059669 50%, #10b981 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '72px', fontWeight: '800', color: 'rgba(255,255,255,0.35)' },
-  modalBackdropGradient: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '60%', background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 50%, transparent 100%)' },
-  modalCloseBtn: { position: 'absolute', top: '12px', right: '12px', width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(0,0,0,0.4)', border: 'none', fontSize: '18px', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2, backdropFilter: 'blur(4px)' },
-  modalBackdropInfo: { position: 'absolute', bottom: '16px', left: '16px', right: '16px', zIndex: 2 },
-  modalNameOverlay: { fontSize: '22px', fontWeight: '800', color: '#fff', marginBottom: '4px' },
-  modalStatusBadge: { fontSize: '12px', fontWeight: '700', color: '#fff', background: 'rgba(255,255,255,0.2)', padding: '4px 10px', borderRadius: '8px', backdropFilter: 'blur(4px)' },
-  modalBody: { padding: '20px', overflowY: 'auto', flex: 1 },
-  modalBio: { fontSize: '15px', color: '#374151', lineHeight: 1.6, margin: '0 0 16px 0' },
-  modalInterests: { display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' },
-  modalInterestChip: { padding: '6px 14px', background: '#f0f9f4', borderRadius: '20px', fontSize: '13px', fontWeight: '600', color: '#047857' },
-  modalSocials: { display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' },
-  modalSocialBtn: { padding: '8px 16px', background: '#f5f3f0', borderRadius: '10px', fontSize: '13px', fontWeight: '600', color: '#374151', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' },
-  modalTripsSection: { marginBottom: '16px' },
-  modalTripsTitle: { fontSize: '13px', fontWeight: '700', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' },
-  modalTripItem: { display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: '#faf9f7', borderRadius: '10px', marginBottom: '6px' },
-  modalTripIcon: { fontSize: '16px', flexShrink: 0 },
-  modalTripInfo: { flex: 1, minWidth: 0 },
-  modalTripDest: { fontSize: '14px', fontWeight: '700', color: '#1f2937' },
-  modalTripDates: { fontSize: '12px', color: '#6b7280', marginTop: '2px' },
-  modalTripBadge: { fontSize: '11px', fontWeight: '700', color: '#047857', background: '#f0f9f4', padding: '4px 8px', borderRadius: '6px', flexShrink: 0 },
-  modalConnectedBadge: { width: '100%', padding: '14px', background: '#f0f9f4', color: '#047857', border: '2px solid #bbf7d0', borderRadius: '14px', fontSize: '16px', fontWeight: '700', textAlign: 'center' },
-  modalPendingBadge: { width: '100%', padding: '14px', background: '#fffbeb', color: '#d97706', border: '2px solid #fde68a', borderRadius: '14px', fontSize: '16px', fontWeight: '700', textAlign: 'center' },
-  modalConnectBtn: { width: '100%', padding: '14px', background: 'linear-gradient(135deg, #047857, #059669)', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '16px', fontWeight: '700', cursor: 'pointer', boxShadow: '0 2px 8px rgba(4,120,87,0.3)' },
+  // Modal
+  modalOverlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' },
+  modalCard: { background: colors.surface, borderRadius: radius.lg, maxWidth: '380px', width: '100%', maxHeight: '85vh', overflowY: 'auto', position: 'relative' },
+  modalCloseBtn: { position: 'absolute', top: '14px', right: '14px', width: '32px', height: '32px', borderRadius: '50%', background: colors.lightGray, border: 'none', color: colors.textSecondary, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2 },
+  modalContent: { padding: '32px 24px 24px', textAlign: 'center' },
+  modalAvatarWrap: { marginBottom: '14px' },
+  modalAvatar: { width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover', border: `3px solid ${colors.warmGray}` },
+  modalAvatarPlaceholder: { width: '80px', height: '80px', borderRadius: '50%', background: colors.dark, color: colors.gold, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', fontWeight: '600', fontFamily: fonts.serif },
+  modalName: { fontFamily: fonts.serif, fontSize: '20px', fontWeight: '500', color: colors.text, marginBottom: '4px' },
+  modalBio: { fontSize: '14px', color: colors.textSecondary, lineHeight: 1.6, margin: '8px 0 16px' },
+  modalInterests: { display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center', marginBottom: '16px' },
+  modalInterestChip: { ...components.pill },
+  modalSocials: { display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: '16px' },
+  modalSocialBtn: { padding: '8px 16px', background: colors.lightGray, borderRadius: radius.sm, fontSize: '13px', fontWeight: '600', color: colors.text, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' },
+  modalTripsSection: { textAlign: 'left', marginBottom: '16px' },
+  modalTripsTitle: { ...type.label, marginBottom: '10px' },
+  modalTripItem: { display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: colors.bg, borderRadius: radius.sm, marginBottom: '6px' },
+  modalTripBadge: { fontSize: '11px', fontWeight: '600', color: colors.success, background: colors.successBg, padding: '4px 8px', borderRadius: '6px', flexShrink: 0 },
+  modalStatusBadge: { width: '100%', padding: '14px', background: colors.lightGray, color: colors.text, borderRadius: radius.md, fontSize: '15px', fontWeight: '600', textAlign: 'center' },
+  modalConnectBtn: { ...components.btnPrimary },
 };
 
 export default Saved;

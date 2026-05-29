@@ -4,6 +4,7 @@ import { auth, db, storage } from '../firebase';
 import { doc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { FiCamera } from 'react-icons/fi';
+import { colors, fonts, radius, components } from '../design';
 
 function Onboarding() {
   const navigate = useNavigate();
@@ -11,8 +12,8 @@ function Onboarding() {
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
-  
-const [formData, setFormData] = useState({
+
+  const [formData, setFormData] = useState({
     name: auth.currentUser?.displayName || '',
     age: '',
     gender: '',
@@ -69,15 +70,13 @@ const [formData, setFormData] = useState({
     setShowCitySuggestions(false);
     setCitySuggestions([]);
   };
-  
-  // Set photo preview from Google profile picture
+
   useEffect(() => {
     if (auth.currentUser?.photoURL) {
       setPhotoPreview(auth.currentUser.photoURL);
     }
   }, []);
 
-  // Pre-fill from waitlist data if user's email exists
   useEffect(() => {
     const prefillFromWaitlist = async () => {
       const email = auth.currentUser?.email;
@@ -109,97 +108,76 @@ const [formData, setFormData] = useState({
 
   const handleChange = (e) => {
     const updates = { [e.target.name]: e.target.value };
-    // Auto-default visibility to same gender when gender is selected
     if (e.target.name === 'gender' && !formData.profileVisibility) {
-      updates.profileVisibility = e.target.value; // 'Male' or 'Female'
+      updates.profileVisibility = e.target.value;
     }
     setFormData({ ...formData, ...updates });
   };
 
   const toggleInterest = (interest) => {
     if (formData.interests.includes(interest)) {
-      setFormData({
-        ...formData,
-        interests: formData.interests.filter(i => i !== interest)
-      });
+      setFormData({ ...formData, interests: formData.interests.filter(i => i !== interest) });
     } else {
-      setFormData({
-        ...formData,
-        interests: [...formData.interests, interest]
-      });
+      setFormData({ ...formData, interests: [...formData.interests, interest] });
     }
   };
 
   const toggleIdentity = (value) => {
     if (formData.identity.includes(value)) {
-      setFormData({
-        ...formData,
-        identity: formData.identity.filter(i => i !== value)
-      });
+      setFormData({ ...formData, identity: formData.identity.filter(i => i !== value) });
     } else {
-      setFormData({
-        ...formData,
-        identity: [...formData.identity, value]
-      });
+      setFormData({ ...formData, identity: [...formData.identity, value] });
     }
   };
 
+  const [validationError, setValidationError] = useState('');
+
   const nextStep = () => {
+    setValidationError('');
     if (step === 1 && (!formData.name.trim() || !formData.age || !formData.gender)) {
-      alert('Please fill in all required fields');
+      setValidationError('Please fill in all required fields');
       return;
     }
     if (step === 1 && formData.age) {
       const ageNum = parseInt(formData.age);
       if (isNaN(ageNum) || ageNum < 13 || ageNum > 120) {
-        alert('Please enter a valid age between 13 and 120');
+        setValidationError('Please enter a valid age between 13 and 120');
         return;
       }
     }
-    
-    if (step < 5) {
-      setStep(step + 1);
-    }
+    if (step < 6) setStep(step + 1);
   };
 
   const prevStep = () => {
-    if (step > 1) {
-      setStep(step - 1);
-    }
+    setValidationError('');
+    if (step > 1) setStep(step - 1);
   };
 
   const handlePhotoSelect = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        alert('Photo must be less than 5MB');
-        return;
-      }
-      
+      if (file.size > 5 * 1024 * 1024) return;
       setPhotoFile(file);
-      
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setPhotoPreview(reader.result);
-      };
+      reader.onloadend = () => setPhotoPreview(reader.result);
       reader.readAsDataURL(file);
     }
   };
 
+  const [submitError, setSubmitError] = useState('');
+
   const handleSubmit = async () => {
     try {
       const user = auth.currentUser;
-
       if (!user) {
-        alert('You are not logged in. Please log in again.');
         navigate('/login');
         return;
       }
 
       setUploadingPhoto(true);
+      setSubmitError('');
       let photoURL = '';
 
-      // Upload photo if provided
       if (photoFile) {
         try {
           const photoRef = ref(storage, `profilePhotos/${user.uid}`);
@@ -207,7 +185,6 @@ const [formData, setFormData] = useState({
           photoURL = await getDownloadURL(photoRef);
         } catch (photoError) {
           console.error('Photo upload error:', photoError.message);
-          alert(`Photo upload failed: ${photoError.message}\n\nContinuing without photo...`);
         }
       }
 
@@ -230,14 +207,11 @@ const [formData, setFormData] = useState({
       };
 
       await setDoc(doc(db, 'users', user.uid), userData);
-
-      // Force navigation with window.location
       window.location.href = '/destinations';
 
     } catch (error) {
       console.error('Profile creation error:', error.message);
-      
-      alert(`Failed to save profile:\n\n${error.message}\n\nCheck console for details.`);
+      setSubmitError('Failed to save profile. Please try again.');
     } finally {
       setUploadingPhoto(false);
     }
@@ -269,9 +243,8 @@ const [formData, setFormData] = useState({
 
   return (
     <div style={styles.container}>
-      {/* Progress Bar */}
       <div style={styles.progressBar}>
-        {[1, 2, 3, 4, 5].map((s) => (
+        {[1, 2, 3, 4, 5, 6].map((s) => (
           <div
             key={s}
             style={{
@@ -283,47 +256,26 @@ const [formData, setFormData] = useState({
         ))}
       </div>
 
-      {/* Step 1: Basic Info */}
       {step === 1 && (
         <div style={styles.stepContainer}>
           <h2 style={styles.stepTitle}>Welcome to Rihlah</h2>
           <p style={styles.stepSubtitle}>Let's set up your profile</p>
 
+          {validationError && <div style={styles.errorMsg}>{validationError}</div>}
+
           <div style={styles.inputGroup}>
             <label style={styles.label}>Name *</label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              style={styles.input}
-              placeholder="Your name"
-              maxLength={100}
-            />
+            <input type="text" name="name" value={formData.name} onChange={handleChange} style={styles.input} placeholder="Your name" maxLength={100} />
           </div>
 
           <div style={styles.inputGroup}>
             <label style={styles.label}>Age *</label>
-            <input
-              type="number"
-              name="age"
-              value={formData.age}
-              onChange={handleChange}
-              style={styles.input}
-              placeholder="Your age"
-              min={13}
-              max={120}
-            />
+            <input type="number" name="age" value={formData.age} onChange={handleChange} style={styles.input} placeholder="Your age" min={13} max={120} />
           </div>
 
           <div style={styles.inputGroup}>
             <label style={styles.label}>Gender *</label>
-            <select
-              name="gender"
-              value={formData.gender}
-              onChange={handleChange}
-              style={styles.input}
-            >
+            <select name="gender" value={formData.gender} onChange={handleChange} style={styles.input}>
               <option value="">Select gender</option>
               <option value="Male">Male</option>
               <option value="Female">Female</option>
@@ -361,6 +313,15 @@ const [formData, setFormData] = useState({
             </div>
           )}
 
+          <button style={styles.nextButton} onClick={nextStep}>Continue</button>
+        </div>
+      )}
+
+      {step === 2 && (
+        <div style={styles.stepContainer}>
+          <h2 style={styles.stepTitle}>Where are you based?</h2>
+          <p style={styles.stepSubtitle}>Help us connect you with nearby travelers</p>
+
           <div style={styles.inputGroup}>
             <label style={styles.label}>City</label>
             <div style={styles.cityInputWrapper}>
@@ -377,14 +338,7 @@ const [formData, setFormData] = useState({
               {showCitySuggestions && citySuggestions.length > 0 && (
                 <div style={styles.suggestionsDropdown}>
                   {citySuggestions.map((s, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      style={styles.suggestionItem}
-                      onMouseDown={() => selectCity(s)}
-                    >
-                      {s}
-                    </button>
+                    <button key={i} type="button" style={styles.suggestionItem} onMouseDown={() => selectCity(s)}>{s}</button>
                   ))}
                 </div>
               )}
@@ -393,103 +347,60 @@ const [formData, setFormData] = useState({
 
           <div style={styles.inputGroup}>
             <label style={styles.label}>Bio (Optional)</label>
-            <textarea
-              name="bio"
-              value={formData.bio}
-              onChange={handleChange}
-              style={styles.textarea}
-              placeholder="Tell us about yourself..."
-              rows="4"
-              maxLength={500}
-            />
+            <textarea name="bio" value={formData.bio} onChange={handleChange} style={styles.textarea} placeholder="Tell us about yourself..." rows="4" maxLength={500} />
           </div>
 
-          <button style={styles.nextButton} onClick={nextStep}>
-            Continue →
-          </button>
+          <button style={styles.nextButton} onClick={nextStep}>Continue</button>
+          <button style={styles.backButton} onClick={prevStep}>Back</button>
         </div>
       )}
 
-      {/* Step 2: Photo Upload */}
-      {step === 2 && (
+      {step === 3 && (
         <div style={styles.stepContainer}>
           <h2 style={styles.stepTitle}>Add Your Photo</h2>
-          <p style={styles.stepSubtitle}>
-            Help other travelers recognize you (optional)
-          </p>
+          <p style={styles.stepSubtitle}>Help other travelers recognize you (optional)</p>
 
           <div style={styles.photoUploadSection}>
             {photoPreview ? (
               <div style={styles.photoPreviewContainer}>
-                <img 
-                  src={photoPreview} 
-                  alt="Preview" 
-                  style={styles.photoPreview}
-                />
-                <button
-                  style={styles.changePhotoBtn}
-                  onClick={() => document.getElementById('photoInput').click()}
-                >
-                  Change Photo
-                </button>
+                <img src={photoPreview} alt="Preview" style={styles.photoPreview} />
+                <button style={styles.changePhotoBtn} onClick={() => document.getElementById('photoInput').click()}>Change Photo</button>
               </div>
             ) : (
-              <div 
-                style={styles.photoUploadPlaceholder}
-                onClick={() => document.getElementById('photoInput').click()}
-              >
-                <div style={styles.uploadIcon}><FiCamera size={28} color="#047857" /></div>
+              <div style={styles.photoUploadPlaceholder} onClick={() => document.getElementById('photoInput').click()}>
+                <div style={styles.uploadIcon}><FiCamera size={28} color={colors.gold} /></div>
                 <div style={styles.uploadText}>Tap to Upload Photo</div>
                 <div style={styles.uploadSubtext}>JPG, PNG (Max 5MB)</div>
               </div>
             )}
-            
-            <input
-              id="photoInput"
-              type="file"
-              accept="image/*"
-              style={styles.hiddenInput}
-              onChange={handlePhotoSelect}
-            />
+            <input id="photoInput" type="file" accept="image/*" style={styles.hiddenInput} onChange={handlePhotoSelect} />
           </div>
 
-          <button style={styles.nextButton} onClick={nextStep}>
-            Continue →
-          </button>
-          <button style={styles.backButton} onClick={prevStep}>
-            ← Back
-          </button>
+          <button style={styles.nextButton} onClick={nextStep}>Continue</button>
+          <button style={styles.backButton} onClick={prevStep}>Back</button>
         </div>
       )}
 
-      {/* Step 3: Identity + Interests */}
-      {step === 3 && (
+      {step === 4 && (
         <div style={styles.stepContainer}>
           <h2 style={styles.stepTitle}>Tell us about yourself</h2>
           <p style={styles.stepSubtitle}>Select what describes you</p>
 
-          {/* Identity */}
           <div style={{ marginBottom: '28px' }}>
             <div style={styles.groupLabel}>I am a...</div>
             <div style={styles.interestsGrid}>
               {identityOptions.map((option) => (
                 <button
                   key={option}
-                  style={{
-                    ...styles.interestChip,
-                    ...(formData.identity.includes(option) ? styles.interestChipActive : {})
-                  }}
+                  style={{ ...styles.interestChip, ...(formData.identity.includes(option) ? styles.interestChipActive : {}) }}
                   onClick={() => toggleIdentity(option)}
-                >
-                  {option}
-                </button>
+                >{option}</button>
               ))}
             </div>
           </div>
 
-          {/* Grouped Interests */}
           <div style={{ marginBottom: '24px' }}>
-            <div style={{ fontSize: '16px', fontWeight: '700', color: '#1a1a1a', marginBottom: '16px' }}>Interests</div>
+            <div style={{ fontFamily: fonts.serif, fontSize: '17px', fontWeight: '500', color: colors.text, marginBottom: '16px' }}>Interests</div>
             {interestGroups.map((group) => (
               <div key={group.label} style={{ marginBottom: '16px' }}>
                 <div style={styles.groupLabel}>{group.label}</div>
@@ -497,144 +408,74 @@ const [formData, setFormData] = useState({
                   {group.options.map((interest) => (
                     <button
                       key={interest}
-                      style={{
-                        ...styles.interestChip,
-                        ...(formData.interests.includes(interest) ? styles.interestChipActive : {})
-                      }}
+                      style={{ ...styles.interestChip, ...(formData.interests.includes(interest) ? styles.interestChipActive : {}) }}
                       onClick={() => toggleInterest(interest)}
-                    >
-                      {interest}
-                    </button>
+                    >{interest}</button>
                   ))}
                 </div>
               </div>
             ))}
           </div>
 
-          <button style={styles.nextButton} onClick={nextStep}>
-            Continue →
-          </button>
-          <button style={styles.backButton} onClick={prevStep}>
-            ← Back
-          </button>
+          <button style={styles.nextButton} onClick={nextStep}>Continue</button>
+          <button style={styles.backButton} onClick={prevStep}>Back</button>
         </div>
       )}
 
-      {/* Step 4: Social Links */}
-      {step === 4 && (
+      {step === 5 && (
         <div style={styles.stepContainer}>
           <h2 style={styles.stepTitle}>Stay Connected</h2>
           <p style={styles.stepSubtitle}>Add your contact info (optional)</p>
 
           <div style={styles.inputGroup}>
             <label style={styles.label}>WhatsApp Number</label>
-            <input
-              type="tel"
-              name="whatsapp"
-              value={formData.whatsapp}
-              onChange={handleChange}
-              style={styles.input}
-              placeholder="+1234567890"
-              maxLength={50}
-            />
+            <input type="tel" name="whatsapp" value={formData.whatsapp} onChange={handleChange} style={styles.input} placeholder="+1234567890" maxLength={50} />
           </div>
 
           <div style={styles.inputGroup}>
             <label style={styles.label}>Instagram Handle</label>
-            <input
-              type="text"
-              name="instagram"
-              value={formData.instagram}
-              onChange={handleChange}
-              style={styles.input}
-              placeholder="@username"
-              maxLength={50}
-            />
+            <input type="text" name="instagram" value={formData.instagram} onChange={handleChange} style={styles.input} placeholder="@username" maxLength={50} />
           </div>
 
-          <button style={styles.nextButton} onClick={nextStep}>
-            Continue →
-          </button>
-          <button style={styles.backButton} onClick={prevStep}>
-            ← Back
-          </button>
+          <button style={styles.nextButton} onClick={nextStep}>Continue</button>
+          <button style={styles.backButton} onClick={prevStep}>Back</button>
         </div>
       )}
 
-      {/* Step 5: Review */}
-      {step === 5 && (
+      {step === 6 && (
         <div style={styles.stepContainer}>
           <h2 style={styles.stepTitle}>Looking Good</h2>
           <p style={styles.stepSubtitle}>Review your profile</p>
 
+          {submitError && <div style={styles.errorMsg}>{submitError}</div>}
+
           <div style={styles.reviewSection}>
             {photoPreview && (
               <div style={styles.reviewPhotoContainer}>
-                <img 
-                  src={photoPreview} 
-                  alt="Profile" 
-                  style={styles.reviewPhoto}
-                />
+                <img src={photoPreview} alt="Profile" style={styles.reviewPhoto} />
               </div>
             )}
 
-            <div style={styles.reviewItem}>
-              <strong>Name:</strong> {formData.name}
-            </div>
-            <div style={styles.reviewItem}>
-              <strong>Age:</strong> {formData.age}
-            </div>
-            <div style={styles.reviewItem}>
-              <strong>Gender:</strong> {formData.gender}
-            </div>
-            <div style={styles.reviewItem}>
-              <strong>Connect with:</strong> {formData.profileVisibility === 'both' ? 'Everyone' : formData.profileVisibility === 'Male' ? 'Brothers' : 'Sisters'}
-            </div>
-            {formData.city && (
-              <div style={styles.reviewItem}>
-                <strong>City:</strong> {formData.city}
-              </div>
-            )}
-            {formData.bio && (
-              <div style={styles.reviewItem}>
-                <strong>Bio:</strong> {formData.bio}
-              </div>
-            )}
-            {formData.identity.length > 0 && (
-              <div style={styles.reviewItem}>
-                <strong>Identity:</strong> {formData.identity.join(', ')}
-              </div>
-            )}
-            {formData.interests.length > 0 && (
-              <div style={styles.reviewItem}>
-                <strong>Interests:</strong> {formData.interests.join(', ')}
-              </div>
-            )}
-            {formData.whatsapp && (
-              <div style={styles.reviewItem}>
-                <strong>WhatsApp:</strong> {formData.whatsapp}
-              </div>
-            )}
-            {formData.instagram && (
-              <div style={styles.reviewItem}>
-                <strong>Instagram:</strong> {formData.instagram}
-              </div>
-            )}
+            <div style={styles.reviewItem}><strong>Name:</strong> {formData.name}</div>
+            <div style={styles.reviewItem}><strong>Age:</strong> {formData.age}</div>
+            <div style={styles.reviewItem}><strong>Gender:</strong> {formData.gender}</div>
+            <div style={styles.reviewItem}><strong>Connect with:</strong> {formData.profileVisibility === 'both' ? 'Everyone' : formData.profileVisibility === 'Male' ? 'Brothers' : 'Sisters'}</div>
+            {formData.city && <div style={styles.reviewItem}><strong>City:</strong> {formData.city}</div>}
+            {formData.bio && <div style={styles.reviewItem}><strong>Bio:</strong> {formData.bio}</div>}
+            {formData.identity.length > 0 && <div style={styles.reviewItem}><strong>Identity:</strong> {formData.identity.join(', ')}</div>}
+            {formData.interests.length > 0 && <div style={styles.reviewItem}><strong>Interests:</strong> {formData.interests.join(', ')}</div>}
+            {formData.whatsapp && <div style={styles.reviewItem}><strong>WhatsApp:</strong> {formData.whatsapp}</div>}
+            {formData.instagram && <div style={styles.reviewItem}><strong>Instagram:</strong> {formData.instagram}</div>}
           </div>
 
-          <button 
-            style={{
-              ...styles.submitButton,
-              ...(uploadingPhoto ? styles.submitButtonDisabled : {})
-            }} 
+          <button
+            style={{ ...styles.submitButton, opacity: uploadingPhoto ? 0.6 : 1 }}
             onClick={handleSubmit}
             disabled={uploadingPhoto}
           >
             {uploadingPhoto ? 'Creating Profile...' : "Let's Go"}
           </button>
-          <button style={styles.backButton} onClick={prevStep}>
-            ← Back
-          </button>
+          <button style={styles.backButton} onClick={prevStep}>Back</button>
         </div>
       )}
     </div>
@@ -644,7 +485,7 @@ const [formData, setFormData] = useState({
 const styles = {
   container: {
     minHeight: '100vh',
-    background: 'linear-gradient(180deg, #faf9f7 0%, #f5f3f0 100%)',
+    background: colors.bg,
     padding: '40px 20px',
   },
   progressBar: {
@@ -657,36 +498,48 @@ const styles = {
     width: '12px',
     height: '12px',
     borderRadius: '50%',
-    background: '#d1d5db',
+    background: colors.warmGray,
     transition: 'all 0.3s',
   },
   progressDotActive: {
-    background: '#047857',
+    background: colors.dark,
     transform: 'scale(1.3)',
   },
   progressDotComplete: {
-    background: '#059669',
+    background: colors.gold,
   },
   stepContainer: {
     maxWidth: '500px',
     margin: '0 auto',
-    background: '#fff',
+    background: colors.surface,
     padding: '40px',
-    borderRadius: '20px',
-    boxShadow: '0 1px 2px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.06)',
+    borderRadius: radius.lg,
+    border: `1px solid ${colors.border}`,
   },
   stepTitle: {
-    fontSize: '28px',
-    fontWeight: '800',
-    color: '#1a1a1a',
+    fontFamily: fonts.serif,
+    fontSize: '26px',
+    fontWeight: '500',
+    color: colors.text,
     marginBottom: '8px',
     textAlign: 'center',
+    letterSpacing: '-0.3px',
   },
   stepSubtitle: {
-    fontSize: '16px',
-    color: '#6b6b6b',
+    fontSize: '15px',
+    color: colors.textSecondary,
     marginBottom: '32px',
     textAlign: 'center',
+  },
+  errorMsg: {
+    background: colors.errorBg,
+    color: colors.error,
+    padding: '12px 16px',
+    borderRadius: radius.sm,
+    marginBottom: '20px',
+    fontSize: '14px',
+    fontWeight: '500',
+    border: '1px solid #fecaca',
   },
   inputGroup: {
     marginBottom: '24px',
@@ -695,31 +548,25 @@ const styles = {
     display: 'block',
     fontSize: '14px',
     fontWeight: '600',
-    color: '#374151',
+    color: colors.text,
     marginBottom: '8px',
   },
   input: {
-    width: '100%',
-    padding: '12px 16px',
-    fontSize: '16px',
-    border: '1.5px solid #e8e5e0',
-    borderRadius: '10px',
-    outline: 'none',
-    transition: 'border-color 0.2s',
-    boxSizing: 'border-box',
-    background: '#faf9f7',
+    ...components.input,
+    background: colors.bg,
   },
   textarea: {
     width: '100%',
     padding: '12px 16px',
-    fontSize: '16px',
-    border: '1.5px solid #e8e5e0',
-    borderRadius: '10px',
+    fontSize: '15px',
+    border: `1.5px solid ${colors.warmGray}`,
+    borderRadius: radius.md,
     outline: 'none',
     resize: 'vertical',
-    fontFamily: 'inherit',
+    fontFamily: fonts.sans,
     boxSizing: 'border-box',
-    background: '#faf9f7',
+    background: colors.bg,
+    color: colors.text,
   },
   cityInputWrapper: {
     position: 'relative',
@@ -729,23 +576,22 @@ const styles = {
     top: '100%',
     left: 0,
     right: 0,
-    background: '#fff',
-    border: '1.5px solid #e8e5e0',
+    background: colors.surface,
+    border: `1.5px solid ${colors.border}`,
     borderTop: 'none',
-    borderRadius: '0 0 10px 10px',
+    borderRadius: `0 0 ${radius.sm} ${radius.sm}`,
     zIndex: 50,
     maxHeight: '200px',
     overflowY: 'auto',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
   },
   suggestionItem: {
     width: '100%',
     padding: '12px 16px',
     background: 'none',
     border: 'none',
-    borderBottom: '1px solid #f5f3f0',
+    borderBottom: `1px solid ${colors.lightGray}`,
     fontSize: '15px',
-    color: '#1a1a1a',
+    color: colors.text,
     textAlign: 'left',
     cursor: 'pointer',
     fontFamily: 'inherit',
@@ -762,14 +608,14 @@ const styles = {
     borderRadius: '50%',
     objectFit: 'cover',
     marginBottom: '20px',
-    border: '4px solid #047857',
+    border: `3px solid ${colors.dark}`,
   },
   changePhotoBtn: {
     padding: '10px 20px',
-    background: '#f5f3f0',
-    color: '#047857',
-    border: '1.5px solid #047857',
-    borderRadius: '8px',
+    background: colors.lightGray,
+    color: colors.text,
+    border: 'none',
+    borderRadius: radius.sm,
     fontSize: '14px',
     fontWeight: '600',
     cursor: 'pointer',
@@ -779,61 +625,59 @@ const styles = {
     height: '200px',
     margin: '0 auto 20px',
     borderRadius: '50%',
-    background: '#faf9f7',
-    border: '3px dashed #e8e5e0',
+    background: colors.bg,
+    border: `3px dashed ${colors.warmGray}`,
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
     cursor: 'pointer',
-    transition: 'all 0.2s',
   },
   uploadIcon: {
-    fontSize: '48px',
     marginBottom: '12px',
   },
   uploadText: {
-    fontSize: '16px',
+    fontSize: '15px',
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: colors.text,
     marginBottom: '4px',
   },
   uploadSubtext: {
     fontSize: '12px',
-    color: '#a3a3a3',
+    color: colors.textMuted,
   },
   hiddenInput: {
     display: 'none',
   },
   groupLabel: {
     fontSize: '12px',
-    fontWeight: '700',
-    color: '#047857',
+    fontWeight: '600',
+    color: colors.textTertiary,
     textTransform: 'uppercase',
-    letterSpacing: '0.5px',
+    letterSpacing: '1px',
     marginBottom: '10px',
   },
   interestsGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(2, 1fr)',
-    gap: '12px',
+    gap: '10px',
     marginBottom: '12px',
   },
   interestChip: {
     padding: '14px',
-    background: '#faf9f7',
-    border: '1.5px solid #e8e5e0',
-    borderRadius: '12px',
-    fontSize: '15px',
+    background: colors.bg,
+    border: `1.5px solid ${colors.border}`,
+    borderRadius: radius.md,
+    fontSize: '14px',
     fontWeight: '600',
-    color: '#6b6b6b',
+    color: colors.textSecondary,
     cursor: 'pointer',
     transition: 'all 0.2s',
   },
   interestChipActive: {
-    background: '#f0f9f4',
-    borderColor: '#047857',
-    color: '#047857',
+    background: colors.surface,
+    borderColor: colors.dark,
+    color: colors.text,
   },
   reviewSection: {
     marginBottom: '32px',
@@ -847,53 +691,35 @@ const styles = {
     height: '150px',
     borderRadius: '50%',
     objectFit: 'cover',
-    border: '3px solid #047857',
+    border: `3px solid ${colors.dark}`,
   },
   reviewItem: {
     padding: '12px',
-    background: '#faf9f7',
-    borderRadius: '8px',
+    background: colors.bg,
+    borderRadius: radius.sm,
     marginBottom: '8px',
     fontSize: '14px',
-    color: '#1a1a1a',
+    color: colors.text,
   },
   nextButton: {
-    width: '100%',
-    padding: '16px',
-    background: '#047857',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '10px',
-    fontSize: '16px',
-    fontWeight: '700',
-    cursor: 'pointer',
+    ...components.btnPrimary,
     marginBottom: '12px',
-    boxShadow: '0 2px 8px rgba(4, 120, 87, 0.25)',
+    fontSize: '16px',
+    padding: '16px',
   },
   submitButton: {
-    width: '100%',
-    padding: '16px',
-    background: '#047857',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '10px',
-    fontSize: '18px',
-    fontWeight: '700',
-    cursor: 'pointer',
+    ...components.btnPrimary,
     marginBottom: '12px',
-    boxShadow: '0 2px 8px rgba(4, 120, 87, 0.25)',
-  },
-  submitButtonDisabled: {
-    opacity: 0.6,
-    cursor: 'not-allowed',
+    fontSize: '17px',
+    padding: '16px',
   },
   backButton: {
     width: '100%',
     padding: '12px',
     background: 'transparent',
-    color: '#6b6b6b',
+    color: colors.textSecondary,
     border: 'none',
-    borderRadius: '8px',
+    borderRadius: radius.sm,
     fontSize: '14px',
     fontWeight: '600',
     cursor: 'pointer',
@@ -905,24 +731,24 @@ const styles = {
   visibilityBtn: {
     flex: 1,
     padding: '14px 8px',
-    background: '#fff',
-    color: '#6b6b6b',
-    border: '1.5px solid #e8e5e0',
-    borderRadius: '12px',
+    background: colors.surface,
+    color: colors.textSecondary,
+    border: `1.5px solid ${colors.border}`,
+    borderRadius: radius.md,
     fontSize: '15px',
-    fontWeight: '700',
+    fontWeight: '600',
     cursor: 'pointer',
     transition: 'all 0.2s',
     fontFamily: 'inherit',
   },
   visibilityBtnActive: {
-    background: '#f0f9f4',
-    color: '#047857',
-    borderColor: '#047857',
+    background: colors.surface,
+    color: colors.text,
+    borderColor: colors.dark,
   },
   visibilityHint: {
     fontSize: '13px',
-    color: '#a3a3a3',
+    color: colors.textMuted,
     margin: '8px 0 0 0',
     lineHeight: 1.4,
   },

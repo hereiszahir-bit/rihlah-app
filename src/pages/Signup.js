@@ -4,6 +4,7 @@ import { createUserWithEmailAndPassword, signInWithPopup, signInWithCredential, 
 import { Capacitor } from '@capacitor/core';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase';
+import { colors, fonts, radius, components } from '../design';
 
 const nativeGoogleSignIn = () => {
   return new Promise((resolve, reject) => {
@@ -21,6 +22,16 @@ function Signup() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const redirectAfterAuth = (fallback) => {
+    const pendingInvite = localStorage.getItem('rihlah_pending_invite');
+    if (pendingInvite) {
+      localStorage.removeItem('rihlah_pending_invite');
+      navigate(`/join/${pendingInvite}`);
+    } else {
+      navigate(fallback);
+    }
+  };
+
   const handleEmailSignup = async (e) => {
     e.preventDefault();
     setError('');
@@ -28,7 +39,6 @@ function Signup() {
 
     try {
       const result = await createUserWithEmailAndPassword(auth, email, password);
-      // Create user document with onboardingComplete: false
       await setDoc(doc(db, 'users', result.user.uid), {
         email: result.user.email,
         createdAt: new Date().toISOString(),
@@ -38,7 +48,7 @@ function Signup() {
         profileVisibility: 'both',
       });
 
-      navigate('/onboarding');
+      redirectAfterAuth('/onboarding');
     } catch (error) {
       console.error('Signup error:', error);
       setError(error.message);
@@ -76,13 +86,13 @@ function Signup() {
           upcomingTrips: [],
           profileVisibility: 'both',
         });
-        navigate('/onboarding');
+        redirectAfterAuth('/onboarding');
       } else {
         const userData = userDoc.data();
         if (!userData.onboardingComplete) {
-          navigate('/onboarding');
+          redirectAfterAuth('/onboarding');
         } else {
-          navigate('/destinations');
+          redirectAfterAuth('/destinations');
         }
       }
     } catch (error) {
@@ -100,8 +110,8 @@ function Signup() {
           <img src="/logo192.png" alt="Rihlah" style={styles.logoImg} />
         </div>
 
-        <h2 style={styles.title}>Create Your Account</h2>
-        <p style={styles.subtitle}>Travel with purpose. Explore. Learn. Grow.</p>
+        <h2 style={styles.title}>Begin Your Journey</h2>
+        <p style={styles.subtitle}>Travel with intention</p>
 
         {error && (
           <div style={styles.error}>
@@ -109,7 +119,6 @@ function Signup() {
           </div>
         )}
 
-        {/* Google Sign-In Button */}
         <button
           onClick={handleGoogleSignup}
           style={styles.googleBtn}
@@ -130,7 +139,6 @@ function Signup() {
           <span style={styles.dividerLine}></span>
         </div>
 
-        {/* Email/Password Form */}
         <form onSubmit={handleEmailSignup} style={styles.form}>
           <div style={styles.inputGroup}>
             <label style={styles.label}>Email</label>
@@ -156,9 +164,9 @@ function Signup() {
             />
           </div>
 
-          <button 
-            type="submit" 
-            style={styles.submitBtn}
+          <button
+            type="submit"
+            style={{...styles.submitBtn, opacity: loading ? 0.7 : 1}}
             disabled={loading}
           >
             {loading ? 'Creating Account...' : 'Sign Up'}
@@ -182,14 +190,14 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: 'linear-gradient(180deg, #faf9f7 0%, #f5f3f0 100%)',
+    background: colors.bg,
     padding: '20px',
   },
   card: {
-    background: '#ffffff',
+    background: colors.surface,
     padding: '48px',
-    borderRadius: '24px',
-    boxShadow: '0 1px 2px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.06)',
+    borderRadius: radius.lg,
+    border: `1px solid ${colors.border}`,
     width: '100%',
     maxWidth: '440px',
   },
@@ -205,30 +213,26 @@ const styles = {
     height: 'auto',
     borderRadius: '8px',
   },
-  logoText: {
-    fontSize: '28px',
-    fontWeight: '800',
-    color: '#047857',
-    margin: 0,
-  },
   title: {
-    fontSize: '28px',
-    fontWeight: '700',
-    color: '#1a1a1a',
+    fontFamily: fonts.serif,
+    fontSize: '26px',
+    fontWeight: '500',
+    color: colors.text,
     marginBottom: '8px',
     textAlign: 'center',
+    letterSpacing: '-0.3px',
   },
   subtitle: {
-    fontSize: '16px',
-    color: '#6b6b6b',
+    fontSize: '15px',
+    color: colors.textSecondary,
     marginBottom: '32px',
     textAlign: 'center',
   },
   error: {
-    background: '#fef2f2',
-    color: '#dc2626',
+    background: colors.errorBg,
+    color: colors.error,
     padding: '12px 16px',
-    borderRadius: '12px',
+    borderRadius: radius.sm,
     marginBottom: '20px',
     fontSize: '14px',
     border: '1px solid #fecaca',
@@ -236,18 +240,17 @@ const styles = {
   googleBtn: {
     width: '100%',
     padding: '14px',
-    background: '#fff',
-    border: '1.5px solid #e8e5e0',
-    borderRadius: '10px',
-    fontSize: '16px',
+    background: colors.surface,
+    border: `1.5px solid ${colors.border}`,
+    borderRadius: radius.sm,
+    fontSize: '15px',
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: colors.text,
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     gap: '12px',
-    transition: 'all 0.2s',
     marginBottom: '24px',
   },
   googleIcon: {
@@ -263,11 +266,11 @@ const styles = {
   dividerLine: {
     flex: 1,
     height: '1px',
-    background: '#e8e5e0',
+    background: colors.border,
   },
   dividerText: {
     fontSize: '14px',
-    color: '#a3a3a3',
+    color: colors.textMuted,
     fontWeight: '500',
   },
   form: {
@@ -283,38 +286,25 @@ const styles = {
   label: {
     fontSize: '14px',
     fontWeight: '600',
-    color: '#374151',
+    color: colors.text,
   },
   input: {
-    padding: '14px 16px',
-    fontSize: '16px',
-    border: '1.5px solid #e8e5e0',
-    borderRadius: '10px',
-    outline: 'none',
-    transition: 'border-color 0.2s, box-shadow 0.2s',
-    background: '#faf9f7',
+    ...components.input,
   },
   submitBtn: {
-    width: '100%',
-    padding: '16px',
-    background: '#047857',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '10px',
-    fontSize: '16px',
-    fontWeight: '700',
-    cursor: 'pointer',
+    ...components.btnPrimary,
     marginTop: '8px',
-    boxShadow: '0 2px 8px rgba(4, 120, 87, 0.25)',
+    fontSize: '16px',
+    padding: '16px',
   },
   footer: {
     textAlign: 'center',
     marginTop: '24px',
     fontSize: '15px',
-    color: '#6b6b6b',
+    color: colors.textSecondary,
   },
   link: {
-    color: '#047857',
+    color: colors.text,
     textDecoration: 'none',
     fontWeight: '600',
   },
