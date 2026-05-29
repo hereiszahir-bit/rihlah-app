@@ -24,10 +24,12 @@ function Login() {
 
   const redirectAfterAuth = (fallback) => {
     const pendingInvite = localStorage.getItem('rihlah_pending_invite');
-    if (pendingInvite) {
+    if (pendingInvite && fallback !== '/onboarding') {
       localStorage.removeItem('rihlah_pending_invite');
       navigate(`/join/${pendingInvite}`);
     } else {
+      // If heading to onboarding, keep the invite in localStorage.
+      // Onboarding picks it up after profile creation.
       navigate(fallback);
     }
   };

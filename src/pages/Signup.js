@@ -23,13 +23,9 @@ function Signup() {
   const [loading, setLoading] = useState(false);
 
   const redirectAfterAuth = (fallback) => {
-    const pendingInvite = localStorage.getItem('rihlah_pending_invite');
-    if (pendingInvite) {
-      localStorage.removeItem('rihlah_pending_invite');
-      navigate(`/join/${pendingInvite}`);
-    } else {
-      navigate(fallback);
-    }
+    // Don't consume the pending invite here — let onboarding complete first.
+    // The invite stays in localStorage and is picked up after onboarding.
+    navigate(fallback);
   };
 
   const handleEmailSignup = async (e) => {

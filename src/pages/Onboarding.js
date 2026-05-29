@@ -207,7 +207,14 @@ function Onboarding() {
       };
 
       await setDoc(doc(db, 'users', user.uid), userData);
-      window.location.href = '/destinations';
+
+      const pendingInvite = localStorage.getItem('rihlah_pending_invite');
+      if (pendingInvite) {
+        localStorage.removeItem('rihlah_pending_invite');
+        window.location.href = `/join/${pendingInvite}`;
+      } else {
+        window.location.href = '/destinations';
+      }
 
     } catch (error) {
       console.error('Profile creation error:', error.message);
