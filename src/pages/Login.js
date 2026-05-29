@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { signInWithEmailAndPassword, signInWithPopup, signInWithCredential, GoogleAuthProvider } from 'firebase/auth';
 import { Capacitor } from '@capacitor/core';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 import { colors, fonts, radius, components } from '../design';
 
@@ -76,29 +76,20 @@ function Login() {
         result = await signInWithPopup(auth, provider);
       }
 
-      const userDoc = await getDoc(doc(db, 'users', result.user.uid));
-
-      if (!userDoc.exists()) {
-        await setDoc(doc(db, 'users', result.user.uid), {
-          email: result.user.email,
-          name: result.user.displayName || '',
-          photoURL: result.user.photoURL || '',
-          createdAt: new Date().toISOString(),
-          onboardingComplete: false
-        });
-        redirectAfterAuth('/onboarding');
+      // Redirect immediately — don't race with onAuthStateChanged
+      // unmounting this component via the route guard. UserContext and
+      // App.js route guards handle onboarding detection on reload.
+      const pendingInvite = localStorage.getItem('rihlah_pending_invite');
+      if (pendingInvite) {
+        localStorage.removeItem('rihlah_pending_invite');
+        window.location.href = `/join/${pendingInvite}`;
       } else {
-        const userData = userDoc.data();
-        if (!userData.onboardingComplete) {
-          redirectAfterAuth('/onboarding');
-        } else {
-          redirectAfterAuth('/destinations');
-        }
+        window.location.href = '/home';
       }
+      return;
     } catch (error) {
       console.error('Google login error:', error);
       setError(error.message);
-    } finally {
       setLoading(false);
     }
   };

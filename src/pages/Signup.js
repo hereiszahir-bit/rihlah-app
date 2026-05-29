@@ -68,8 +68,8 @@ function Signup() {
         result = await signInWithPopup(auth, provider);
       }
 
+      // Create user doc if first-time Google signup
       const userDoc = await getDoc(doc(db, 'users', result.user.uid));
-
       if (!userDoc.exists()) {
         await setDoc(doc(db, 'users', result.user.uid), {
           email: result.user.email,
@@ -81,19 +81,15 @@ function Signup() {
           upcomingTrips: [],
           profileVisibility: 'both',
         });
-        redirectAfterAuth('/onboarding');
-      } else {
-        const userData = userDoc.data();
-        if (!userData.onboardingComplete) {
-          redirectAfterAuth('/onboarding');
-        } else {
-          redirectAfterAuth('/destinations');
-        }
       }
+
+      // Redirect immediately — don't race with onAuthStateChanged
+      // unmounting this component. Route guards handle onboarding.
+      window.location.href = '/home';
+      return;
     } catch (error) {
       console.error('Google signup error:', error);
       setError(error.message);
-    } finally {
       setLoading(false);
     }
   };
