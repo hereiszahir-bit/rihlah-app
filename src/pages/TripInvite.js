@@ -14,6 +14,7 @@ function TripInvite() {
   const [copied, setCopied] = useState(false);
   const [inviteUrl, setInviteUrl] = useState('');
   const [creating, setCreating] = useState(false);
+  const [inviteError, setInviteError] = useState('');
 
   const idx = parseInt(tripIndex);
   const trips = currentUserData?.upcomingTrips || [];
@@ -63,15 +64,21 @@ function TripInvite() {
 
     const createInvite = async () => {
       setCreating(true);
+      setInviteError('');
       try {
+        const experiences = (trip.experiences || []).map(e => {
+          const exp = { name: e.name || '' };
+          if (e.price != null) exp.price = e.price;
+          return exp;
+        });
         const inviteDoc = await addDoc(collection(db, 'invites'), {
           inviterId: currentUser.uid,
-          inviterName: currentUserData.name,
+          inviterName: currentUserData.name || '',
           inviterPhotoURL: currentUserData.photoURL || '',
           destination: trip.destination,
           startDate: trip.startDate,
           endDate: trip.endDate,
-          experiences: (trip.experiences || []).map(e => ({ name: e.name, price: e.price })),
+          experiences,
           travelers: travelers.slice(0, 5),
           createdAt: new Date().toISOString(),
         });
@@ -79,6 +86,8 @@ function TripInvite() {
         setInviteUrl(`${baseUrl}/join/${inviteDoc.id}`);
       } catch (err) {
         console.error('Error creating invite:', err);
+        setInviteError(err.message || 'Failed to create invite link');
+        setCreating(false);
       }
     };
     createInvite();
@@ -193,8 +202,11 @@ function TripInvite() {
         <div style={styles.shareSection}>
           <div style={styles.shareLabel}>Share via</div>
 
-          {!inviteUrl && (
+          {!inviteUrl && !inviteError && (
             <div style={styles.generatingLink}>Generating invite link...</div>
+          )}
+          {inviteError && (
+            <div style={styles.inviteError}>{inviteError}</div>
           )}
 
           <button style={{...styles.shareOption, opacity: inviteUrl ? 1 : 0.4, pointerEvents: inviteUrl ? 'auto' : 'none'}} onClick={handleWhatsApp}>
@@ -270,6 +282,7 @@ const styles = {
   shareOptionLabel: { fontSize: '15px', fontWeight: '600', color: colors.text },
 
   generatingLink: { fontSize: '13px', color: colors.textTertiary, fontWeight: '500', textAlign: 'center', padding: '8px 0', marginBottom: '4px' },
+  inviteError: { fontSize: '13px', color: '#dc2626', fontWeight: '500', textAlign: 'center', padding: '8px 0', marginBottom: '4px' },
   messagePreview: { background: colors.surface, borderRadius: radius.md, padding: '16px', border: `1px solid ${colors.border}` },
   messageLabel: { fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1.5px', color: colors.textTertiary, marginBottom: '8px' },
   messageText: { fontSize: '14px', color: colors.textSecondary, lineHeight: 1.6 },
