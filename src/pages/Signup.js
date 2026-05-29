@@ -81,11 +81,17 @@ function Signup() {
           upcomingTrips: [],
           profileVisibility: 'both',
         });
+        // New user — send to onboarding. Onboarding checks localStorage
+        // for pending invite and redirects to /join/:id after completion.
+        window.location.href = '/onboarding';
+      } else {
+        const userData = userDoc.data();
+        if (!userData.onboardingComplete) {
+          window.location.href = '/onboarding';
+        } else {
+          window.location.href = '/home';
+        }
       }
-
-      // Redirect immediately — don't race with onAuthStateChanged
-      // unmounting this component. Route guards handle onboarding.
-      window.location.href = '/home';
       return;
     } catch (error) {
       console.error('Google signup error:', error);
