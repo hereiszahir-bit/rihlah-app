@@ -92,6 +92,19 @@ service cloud.firestore {
                         || resource.data.toUserId == request.auth.uid);
     }
 
+    // ── Invites ──────────────────────────────────────────
+    match /invites/{inviteId} {
+      // Anyone can read an invite (recipients may not be logged in yet)
+      allow read: if true;
+
+      // Authenticated users can create invites they own
+      allow create: if request.auth != null
+                    && request.resource.data.inviterId == request.auth.uid;
+
+      // No updates or deletes
+      allow update, delete: if false;
+    }
+
     // ── Conversations ─────────────────────────────────────
     match /conversations/{convId} {
       // Only participants can read conversations
