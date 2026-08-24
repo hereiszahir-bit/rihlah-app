@@ -211,9 +211,9 @@ function Onboarding() {
       const pendingInvite = localStorage.getItem('rihlah_pending_invite');
       if (pendingInvite) {
         localStorage.removeItem('rihlah_pending_invite');
-        window.location.href = `/join/${pendingInvite}`;
+        navigate(`/join/${pendingInvite}`);
       } else {
-        window.location.href = '/destinations';
+        navigate('/home');
       }
 
     } catch (error) {
@@ -546,7 +546,7 @@ const styles = {
     marginBottom: '20px',
     fontSize: '14px',
     fontWeight: '500',
-    border: '1px solid #fecaca',
+    border: `1px solid ${colors.error}`,
   },
   inputGroup: {
     marginBottom: '24px',

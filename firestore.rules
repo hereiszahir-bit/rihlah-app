@@ -55,6 +55,14 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // ── Email Subscribers ─────────────────────────────────
+    match /subscribers/{docId} {
+      allow read: if false;
+      allow create: if request.resource.data.keys().hasAll(['email', 'createdAt'])
+                    && request.resource.data.email is string;
+      allow update, delete: if false;
+    }
+
     // ── Connection Requests ────────────────────────────────
     match /connectionRequests/{requestId} {
       // Both sender and receiver may read

@@ -3,11 +3,14 @@ import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'r
 import { UserProvider, useUser } from './context/UserContext';
 import { Capacitor } from '@capacitor/core';
 import ModernHome from './pages/ModernHome';
+import Discover from './pages/Discover';
+import CityGuide from './pages/CityGuide';
 import Home from './pages/Home';
 import Signup from './pages/Signup';
 import Login from './pages/Login';
 import Onboarding from './pages/Onboarding';
 import Destinations from './pages/Destinations';
+import Travelers from './pages/Travelers';
 import AddTrip from './pages/AddTrip';
 import DestinationDetail from './pages/DestinationDetail';
 import Saved from './pages/Saved';
@@ -18,11 +21,15 @@ import ChatRoom from './pages/ChatRoom';
 import TripDetail from './pages/TripDetail';
 import TripInvite from './pages/TripInvite';
 import InviteReceived from './pages/InviteReceived';
+import PublicDestination from './pages/PublicDestination';
+import About from './pages/About';
+import Blog from './pages/Blog';
+import BlogPost from './pages/BlogPost';
 import Waitlist from './pages/Waitlist';
 import TabBar from './components/TabBar';
 import { colors, fonts } from './design';
 
-const TAB_PAGES = ['/home', '/destinations', '/trips', '/profile'];
+const TAB_PAGES = ['/home', '/travelers', '/messages', '/profile'];
 
 function AppShell({ children }) {
   const location = useLocation();
@@ -52,6 +59,10 @@ function AppRoutes() {
     <Routes>
       {/* Public routes */}
       <Route path="/" element={currentUser ? <Navigate to="/home" /> : (Capacitor.isNativePlatform() ? <Navigate to="/login" /> : <ModernHome />)} />
+      <Route path="/go/:slug" element={<PublicDestination />} />
+      <Route path="/about" element={<About />} />
+      <Route path="/blog" element={<Blog />} />
+      <Route path="/blog/:slug" element={<BlogPost />} />
       <Route path="/signup" element={currentUser ? <Navigate to="/home" /> : <Signup />} />
       <Route path="/login" element={currentUser ? <Navigate to="/home" /> : <Login />} />
       <Route path="/join/:inviteId" element={<InviteReceived />} />
@@ -62,7 +73,8 @@ function AppRoutes() {
         <>
           {needsOnboarding ? (
             <>
-              <Route path="/home" element={<Home />} />
+              <Route path="/home" element={<Discover />} />
+              <Route path="/city/:cityId" element={<CityGuide />} />
               <Route path="/destinations" element={<Destinations />} />
               <Route path="/destination/:destination" element={<DestinationDetail />} />
               <Route path="/onboarding" element={<Onboarding />} />
@@ -70,7 +82,9 @@ function AppRoutes() {
             </>
           ) : (
             <>
-              <Route path="/home" element={<Home />} />
+              <Route path="/home" element={<Discover />} />
+              <Route path="/city/:cityId" element={<CityGuide />} />
+              <Route path="/travelers" element={<Travelers />} />
               <Route path="/destinations" element={<Destinations />} />
               <Route path="/add-trip" element={<AddTrip />} />
               <Route path="/destination/:destination" element={<DestinationDetail />} />
@@ -117,8 +131,8 @@ const styles = {
     width: '64px',
     height: '64px',
     borderRadius: '16px',
-    background: colors.dark,
-    color: colors.gold,
+    background: colors.terracotta,
+    color: colors.bg,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',

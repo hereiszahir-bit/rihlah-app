@@ -98,7 +98,7 @@ function Login() {
     <div style={styles.container}>
       <div style={styles.card}>
         <div style={styles.logoContainer}>
-          <img src="/logo192.png" alt="Rihlah" style={styles.logoImg} />
+          <div style={styles.wordmark}>RIHLAH</div>
         </div>
 
         <h2 style={styles.title}>Welcome Back</h2>
@@ -199,10 +199,12 @@ const styles = {
     gap: '12px',
     marginBottom: '32px',
   },
-  logoImg: {
-    width: 'min(140px, 35vw)',
-    height: 'auto',
-    borderRadius: '8px',
+  wordmark: {
+    fontFamily: fonts.serif,
+    fontSize: '28px',
+    fontWeight: '700',
+    color: colors.text,
+    letterSpacing: '4px',
   },
   title: {
     fontFamily: fonts.serif,
@@ -226,7 +228,7 @@ const styles = {
     borderRadius: radius.sm,
     marginBottom: '20px',
     fontSize: '14px',
-    border: '1px solid #fecaca',
+    border: `1px solid ${colors.error}`,
   },
   googleBtn: {
     width: '100%',
@@ -295,7 +297,7 @@ const styles = {
     color: colors.textSecondary,
   },
   link: {
-    color: colors.text,
+    color: colors.terracotta,
     textDecoration: 'none',
     fontWeight: '600',
   },

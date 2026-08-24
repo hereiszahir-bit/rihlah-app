@@ -4,7 +4,7 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { auth, db, storage } from '../firebase';
 import { useUser } from '../context/UserContext';
-import { FiArrowLeft, FiBriefcase, FiCamera, FiMessageCircle } from 'react-icons/fi';
+import { FiArrowLeft, FiBriefcase, FiCamera, FiMessageCircle, FiPlus, FiX } from 'react-icons/fi';
 import { colors, fonts, radius, components } from '../design';
 
 function EditProfile() {
@@ -25,6 +25,7 @@ function EditProfile() {
   const [interests, setInterests] = useState([]);
   const [identity, setIdentity] = useState([]);
   const [photoURL, setPhotoURL] = useState('');
+  const [photos, setPhotos] = useState([]);
   const [newPhotoFile, setNewPhotoFile] = useState(null);
   const [newPhotoPreview, setNewPhotoPreview] = useState(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -103,6 +104,7 @@ function EditProfile() {
       setInterests(data.interests || []);
       setIdentity(data.identity || []);
       setPhotoURL(data.photoURL || '');
+      setPhotos(data.photos || (data.photoURL ? [data.photoURL] : []));
       setLoading(false);
     }
   }, [currentUserData]);
@@ -118,6 +120,38 @@ function EditProfile() {
     }
   };
 
+  const handleAdditionalPhoto = async (e) => {
+    const file = e.target.files[0];
+    if (!file || file.size > 5 * 1024 * 1024) return;
+    if (photos.length >= 5) return;
+
+    const user = auth.currentUser;
+    if (!user) return;
+
+    setUploadingPhoto(true);
+    try {
+      const photoRef = ref(storage, `profilePhotos/${user.uid}_${Date.now()}`);
+      await uploadBytes(photoRef, file);
+      const url = await getDownloadURL(photoRef);
+      setPhotos(prev => [...prev, url]);
+    } catch (error) {
+      console.error('Error uploading photo:', error);
+    }
+    setUploadingPhoto(false);
+  };
+
+  const removePhoto = (index) => {
+    setPhotos(prev => {
+      const updated = prev.filter((_, i) => i !== index);
+      if (index === 0 && updated.length > 0) {
+        setPhotoURL(updated[0]);
+      } else if (updated.length === 0) {
+        setPhotoURL('');
+      }
+      return updated;
+    });
+  };
+
   const handleSave = async () => {
     if (age) {
       const ageNum = parseInt(age);
@@ -129,11 +163,18 @@ function EditProfile() {
 
     try {
       let updatedPhotoURL = photoURL;
+      let updatedPhotos = [...photos];
       if (newPhotoFile) {
         setUploadingPhoto(true);
         const photoRef = ref(storage, `profilePhotos/${user.uid}`);
         await uploadBytes(photoRef, newPhotoFile);
         updatedPhotoURL = await getDownloadURL(photoRef);
+        // Replace first photo or add it
+        if (updatedPhotos.length > 0) {
+          updatedPhotos[0] = updatedPhotoURL;
+        } else {
+          updatedPhotos = [updatedPhotoURL];
+        }
         setUploadingPhoto(false);
       }
 
@@ -153,6 +194,7 @@ function EditProfile() {
         linkedin: cleanLinkedin,
         whatsapp: cleanWhatsapp,
         photoURL: updatedPhotoURL,
+        photos: updatedPhotos,
         profileVisibility: profileVisibility,
       });
 
@@ -191,19 +233,49 @@ function EditProfile() {
       <div style={styles.content}>
         <form onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
           <div style={styles.photoSection}>
-            <div style={styles.photoWrapper} onClick={() => document.getElementById('photoInput').click()}>
-              {(newPhotoPreview || photoURL) ? (
-                <img src={newPhotoPreview || photoURL} alt="Profile" style={styles.photoPreview} />
-              ) : (
-                <div style={styles.photoPlaceholder}>
-                  <div style={{ marginBottom: '4px', color: colors.textTertiary }}><FiCamera size={36} /></div>
-                  <div style={{ fontSize: '13px', color: colors.textSecondary }}>Add Photo</div>
+            <div style={styles.photoLabel}>Photos <span style={styles.photoCount}>{photos.length}/5</span></div>
+            <div style={styles.photoGrid}>
+              {/* Main photo — larger */}
+              <div
+                style={styles.mainPhotoSlot}
+                onClick={() => document.getElementById('photoInput').click()}
+              >
+                {(newPhotoPreview || (photos.length > 0 ? photos[0] : photoURL)) ? (
+                  <img src={newPhotoPreview || photos[0] || photoURL} alt="Profile" style={styles.photoPreview} />
+                ) : (
+                  <div style={styles.photoPlaceholder}>
+                    <FiCamera size={28} color={colors.textTertiary} />
+                    <div style={{ fontSize: '12px', color: colors.textSecondary, marginTop: '4px' }}>Main</div>
+                  </div>
+                )}
+                <div style={styles.photoBadge}><FiCamera size={12} color="#fff" /></div>
+              </div>
+              <input id="photoInput" type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhotoSelect} />
+
+              {/* Additional photo slots */}
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} style={styles.smallPhotoSlot}>
+                  {photos[i] ? (
+                    <>
+                      <img src={photos[i]} alt={`Photo ${i + 1}`} style={styles.photoPreview} />
+                      <button
+                        type="button"
+                        style={styles.photoRemoveBtn}
+                        onClick={() => removePhoto(i)}
+                      >
+                        <FiX size={12} />
+                      </button>
+                    </>
+                  ) : (
+                    <label style={styles.photoAddSlot}>
+                      <FiPlus size={20} color={colors.textMuted} />
+                      <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAdditionalPhoto} disabled={uploadingPhoto} />
+                    </label>
+                  )}
                 </div>
-              )}
-              <div style={styles.photoBadge}><FiCamera size={14} color="#fff" /></div>
+              ))}
             </div>
-            <input id="photoInput" type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhotoSelect} />
-            <button type="button" style={styles.changePhotoLink} onClick={() => document.getElementById('photoInput').click()}>Change Photo</button>
+            {uploadingPhoto && <div style={styles.uploadingHint}>Uploading...</div>}
           </div>
 
           <div style={styles.fieldGroup}>
@@ -361,19 +433,43 @@ const styles = {
     margin: '0 auto',
   },
   photoSection: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
     marginBottom: '28px',
   },
-  photoWrapper: {
+  photoLabel: {
+    fontSize: '14px',
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: '12px',
+  },
+  photoCount: {
+    fontWeight: '400',
+    color: colors.textTertiary,
+    fontSize: '13px',
+  },
+  photoGrid: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr 1fr',
+    gridTemplateRows: 'auto auto',
+    gap: '8px',
+  },
+  mainPhotoSlot: {
     position: 'relative',
-    width: '120px',
-    height: '120px',
-    borderRadius: '50%',
+    gridColumn: '1 / 3',
+    gridRow: '1 / 3',
+    aspectRatio: '3/4',
+    borderRadius: radius.md,
     overflow: 'hidden',
     cursor: 'pointer',
-    border: `2px solid ${colors.border}`,
+    border: `1.5px solid ${colors.border}`,
+    background: colors.lightGray,
+  },
+  smallPhotoSlot: {
+    position: 'relative',
+    aspectRatio: '1',
+    borderRadius: radius.sm,
+    overflow: 'hidden',
+    border: `1.5px solid ${colors.border}`,
+    background: colors.lightGray,
   },
   photoPreview: {
     width: '100%',
@@ -383,33 +479,51 @@ const styles = {
   photoPlaceholder: {
     width: '100%',
     height: '100%',
-    background: colors.lightGray,
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
   },
+  photoAddSlot: {
+    width: '100%',
+    height: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+  },
   photoBadge: {
     position: 'absolute',
-    bottom: '4px',
-    right: '4px',
-    width: '32px',
-    height: '32px',
-    background: colors.dark,
+    bottom: '6px',
+    right: '6px',
+    width: '28px',
+    height: '28px',
+    background: 'rgba(0,0,0,0.5)',
     borderRadius: '50%',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    border: `2px solid ${colors.surface}`,
   },
-  changePhotoLink: {
-    background: 'none',
+  photoRemoveBtn: {
+    position: 'absolute',
+    top: '4px',
+    right: '4px',
+    width: '24px',
+    height: '24px',
+    background: 'rgba(0,0,0,0.6)',
+    borderRadius: '50%',
     border: 'none',
-    color: colors.text,
-    fontSize: '14px',
-    fontWeight: '600',
+    color: '#fff',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     cursor: 'pointer',
-    marginTop: '10px',
+  },
+  uploadingHint: {
+    fontSize: '13px',
+    color: colors.textTertiary,
+    marginTop: '8px',
+    textAlign: 'center',
   },
   loading: {
     padding: '60px 20px',

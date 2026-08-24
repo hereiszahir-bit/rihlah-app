@@ -98,6 +98,7 @@ export function UserProvider({ children }) {
         gender: data.gender,
         bio: data.bio,
         photoURL: data.photoURL,
+        photos: data.photos,
         interests: data.interests,
         identity: data.identity,
         city: data.city,

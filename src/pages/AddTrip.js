@@ -412,7 +412,7 @@ const styles = {
   overlapError: {
     padding: '14px 16px',
     background: colors.errorBg,
-    border: `1.5px solid #fecaca`,
+    border: `1.5px solid ${colors.error}`,
     borderRadius: radius.md,
     fontSize: '14px',
     fontWeight: '500',

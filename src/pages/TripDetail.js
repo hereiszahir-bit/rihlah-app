@@ -502,7 +502,7 @@ const styles = {
   },
   heroDates: {
     fontSize: '15px',
-    color: 'rgba(248,246,242,0.6)',
+    color: colors.textSecondary,
     marginTop: '6px',
   },
 
@@ -725,7 +725,7 @@ const styles = {
   modalCloseBtn: { position: 'absolute', top: '12px', right: '12px', width: '32px', height: '32px', borderRadius: '50%', background: colors.lightGray, border: 'none', color: colors.textSecondary, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   modalAvatarWrap: { width: '80px', height: '80px', borderRadius: '50%', overflow: 'hidden', margin: '0 auto 12px' },
   modalAvatarImg: { width: '100%', height: '100%', objectFit: 'cover' },
-  modalAvatarPlaceholder: { width: '100%', height: '100%', background: colors.gold, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px', fontWeight: '600', color: '#fff' },
+  modalAvatarPlaceholder: { width: '100%', height: '100%', background: colors.dark, color: colors.gold, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px', fontWeight: '600', fontFamily: fonts.serif },
   modalName: { fontFamily: fonts.serif, fontSize: '20px', fontWeight: '500', color: colors.text, marginBottom: '8px' },
   modalBadge: { fontSize: '12px', fontWeight: '600', color: colors.text, background: colors.lightGray, padding: '4px 12px', borderRadius: radius.full, display: 'inline-flex', alignItems: 'center' },
   modalBody: { padding: '20px 24px', overflowY: 'auto', flex: 1 },

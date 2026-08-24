@@ -1,17 +1,16 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FiHome, FiCompass, FiUser, FiPlus, FiMap } from 'react-icons/fi';
-import { colors } from '../design';
+import { FiCompass, FiUsers, FiMessageCircle, FiUser } from 'react-icons/fi';
+import { colors, fonts } from '../design';
 
 function TabBar() {
   const navigate = useNavigate();
   const location = useLocation();
 
   const tabs = [
-    { path: '/home', icon: FiHome, label: 'Home' },
-    { path: '/destinations', icon: FiCompass, label: 'Explore' },
-    { path: '/add-trip', icon: FiPlus, label: '', isCenter: true },
-    { path: '/trips', icon: FiMap, label: 'Journeys' },
+    { path: '/home', icon: FiCompass, label: 'Discover' },
+    { path: '/travelers', icon: FiUsers, label: 'Travelers' },
+    { path: '/messages', icon: FiMessageCircle, label: 'Messages' },
     { path: '/profile', icon: FiUser, label: 'Profile' },
   ];
 
@@ -23,20 +22,6 @@ function TabBar() {
         const Icon = tab.icon;
         const active = isActive(tab.path);
 
-        if (tab.isCenter) {
-          return (
-            <button
-              key={tab.path}
-              style={styles.centerTab}
-              onClick={() => navigate(tab.path)}
-            >
-              <div style={styles.centerButton}>
-                <Icon size={24} strokeWidth={2.5} color="#f8f6f2" />
-              </div>
-            </button>
-          );
-        }
-
         return (
           <button
             key={tab.path}
@@ -47,12 +32,12 @@ function TabBar() {
               <Icon
                 size={21}
                 strokeWidth={active ? 2.2 : 1.5}
-                color={active ? colors.text : colors.textMuted}
+                color={active ? colors.terracotta : colors.textMuted}
               />
             </div>
             <div style={{
               ...styles.label,
-              color: active ? colors.text : colors.textMuted,
+              color: active ? colors.terracotta : colors.textMuted,
               fontWeight: active ? '600' : '400',
             }}>{tab.label}</div>
           </button>
@@ -72,7 +57,7 @@ const styles = {
     bottom: 0,
     left: 0,
     right: 0,
-    padding: '4px 0 env(safe-area-inset-bottom, 0px)',
+    padding: '6px 0 env(safe-area-inset-bottom, 0px)',
     zIndex: 9999,
   },
   tab: {
@@ -92,27 +77,6 @@ const styles = {
   label: {
     fontSize: '10px',
     letterSpacing: '0.3px',
-  },
-  centerTab: {
-    flex: 1,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    background: 'none',
-    border: 'none',
-    padding: '0',
-    cursor: 'pointer',
-    marginTop: '-18px',
-  },
-  centerButton: {
-    width: '50px',
-    height: '50px',
-    borderRadius: '50%',
-    background: colors.dark,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    boxShadow: '0 4px 12px rgba(26, 26, 26, 0.25)',
   },
 };
 

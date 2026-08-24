@@ -8,7 +8,13 @@
 
 ## The Thesis
 
-There's a real, coordinated demand signal among Muslim travelers that no platform serves with cultural intelligence. Rihlah makes that signal visible. The "Here Now / Going Soon" mechanic creates organic coordination without us having to build messaging or booking infrastructure.
+Rihlah is a Muslim travel brand that sells curated travel experiences to young, Western Muslims.
+Not a social app. Not a travel blog. A vertically integrated travel brand where content builds
+the audience, software creates the coordination layer, and trips generate revenue.
+
+**Read DIRECTION.md before every session.** It contains the full strategic direction, revenue model,
+brand positioning, socio-religious principles, and decision log. Do not deviate without updating
+DIRECTION.md first.
 
 ---
 
@@ -188,6 +194,40 @@ firebase deploy          # Hosting + rules + indexes
 - **Mobile-first** — designed for phones (vmin/vmax, touch-friendly)
 - **Zero marketing budget** — organic distribution through community
 - **Currently in waitlist mode** — "Coming Soon" on landing is intentional
+
+---
+
+## Content Validation Protocol
+
+**Every piece of city guide content must be fact-checked before it ships.**
+
+Rihlah's credibility IS the product. One wrong mosque address, one false halal claim, one closed
+attraction presented as open — and a Muslim traveler's trust is gone permanently.
+
+### Rules (non-negotiable)
+
+1. **Never generate city guide data from training knowledge alone.** Always verify against web sources.
+2. **Never mark a restaurant `halal: true` without confirmed certification or multiple reliable sources.** Default to `halal: false` with a note to "verify directly with staff."
+3. **Never assume a historical site's access policy is current.** Search for `[site name] access policy [current year]`. Things close permanently.
+4. **Never trust AI-generated addresses or neighborhoods.** A real place name assigned to the wrong neighborhood is worse than no data.
+5. **Prayer spaces are critical-severity content.** Wrong mosque info means someone shows up and cannot pray. Triple-verify.
+6. **When in doubt, leave it out.** Fewer verified places > more unverified ones.
+
+### Research Agent
+
+Run validation before any content ships:
+```bash
+node scripts/research-agent.js validate <cityId>     # validate one city
+node scripts/research-agent.js validate-all           # validate all cities
+```
+
+Output goes to `scripts/research-output/`. Review the report before merging content changes.
+
+### Content Update Cadence
+
+- Validate all cities quarterly (access policies, closures, new openings)
+- Re-validate any city before featuring it in marketing
+- Z verifies CDMX data personally (he's on the ground)
 
 ---
 

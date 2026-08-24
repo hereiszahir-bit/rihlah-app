@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { FiArrowLeft, FiSend, FiTrash2, FiX, FiMessageCircle, FiCamera } from 'react-icons/fi';
 import { useUser } from '../context/UserContext';
 import { db, auth } from '../firebase';
+import { colors, fonts, radius, components, type } from '../design';
 import {
   collection, query, orderBy, onSnapshot, addDoc, doc, getDoc,
   serverTimestamp, updateDoc, deleteDoc
@@ -162,7 +163,7 @@ function ChatRoom() {
       {/* Header */}
       <div style={styles.header}>
         <button style={styles.backBtn} onClick={() => navigate('/messages')}>
-          <FiArrowLeft size={22} color="#1f2937" />
+          <FiArrowLeft size={22} color={colors.text} />
         </button>
         <div style={styles.headerClickable} onClick={() => otherUser && setShowProfile(true)}>
           <div style={styles.headerAvatar}>
@@ -210,19 +211,19 @@ function ChatRoom() {
                 >
                   <p style={{
                     ...styles.bubbleText,
-                    color: isMine ? '#fff' : '#1f2937',
+                    color: isMine ? '#0a0a0a' : colors.text,
                   }}>{msg.text}</p>
                   <div style={styles.bubbleFooter}>
                     <span style={{
                       ...styles.bubbleTime,
-                      color: isMine ? 'rgba(255,255,255,0.7)' : '#9ca3af',
+                      color: isMine ? 'rgba(10,10,10,0.5)' : colors.textMuted,
                     }}>{formatTime(msg.createdAt)}</span>
                     {isMine && selectedMsg === msg.id && (
                       <button
                         style={styles.msgDeleteBtn}
                         onClick={(e) => { e.stopPropagation(); handleDeleteMessage(msg.id); }}
                       >
-                        <FiTrash2 size={12} color={isMine ? 'rgba(255,255,255,0.8)' : '#ef4444'} />
+                        <FiTrash2 size={12} color={isMine ? 'rgba(10,10,10,0.6)' : colors.error} />
                       </button>
                     )}
                   </div>
@@ -254,7 +255,7 @@ function ChatRoom() {
             onClick={handleSend}
             disabled={!newMessage.trim() || sending}
           >
-            <FiSend size={18} color="#fff" />
+            <FiSend size={18} color="#0a0a0a" />
           </button>
         </div>
       </div>
@@ -270,7 +271,7 @@ function ChatRoom() {
             transition={{ duration: 0.2 }}
           >
             <button style={styles.modalClose} onClick={() => setShowProfile(false)}>
-              <FiX size={20} />
+              <FiX size={18} />
             </button>
 
             <div style={styles.largePhotoContainer}>
@@ -287,34 +288,31 @@ function ChatRoom() {
               <div style={styles.profileName}>
                 {otherUser.name}{otherUser.age ? `, ${otherUser.age}` : ''}
               </div>
-              {otherUser.gender && (
-                <div style={styles.profileGender}>{otherUser.gender}</div>
-              )}
 
               {otherUser.bio && (
-                <div style={styles.bioSection}>"{otherUser.bio}"</div>
-              )}
-
-              {otherUser.upcomingTrips?.length > 0 && (
-                <>
-                  <div style={styles.sectionTitle}>UPCOMING TRIPS:</div>
-                  {otherUser.upcomingTrips.map((trip, i) => (
-                    <div key={i} style={styles.tripInfo}>
-                      {trip.destination}
-                    </div>
-                  ))}
-                </>
+                <div style={styles.bioSection}>{otherUser.bio}</div>
               )}
 
               {otherUser.interests?.length > 0 && (
-                <>
-                  <div style={styles.sectionTitle}>INTERESTS:</div>
-                  <div style={styles.interestsList}>
-                    {otherUser.interests.map((interest, i) => (
-                      <div key={i} style={styles.interestTag}>{interest}</div>
-                    ))}
-                  </div>
-                </>
+                <div style={styles.interestsList}>
+                  {otherUser.interests.map((interest, i) => (
+                    <span key={i} style={styles.interestTag}>{interest}</span>
+                  ))}
+                </div>
+              )}
+
+              {otherUser.upcomingTrips?.length > 0 && (
+                <div style={styles.tripsSection}>
+                  <div style={styles.sectionTitle}>Journeys</div>
+                  {otherUser.upcomingTrips.map((trip, i) => (
+                    <div key={i} style={styles.tripItem}>
+                      <div style={styles.tripDest}>{trip.destination.split(',')[0]}</div>
+                      <div style={styles.tripDates}>
+                        {new Date(trip.startDate.replace(/-/g, '/')).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} — {new Date(trip.endDate.replace(/-/g, '/')).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
 
               <div style={styles.contactButtons}>
@@ -346,7 +344,7 @@ function ChatRoom() {
 const styles = {
   page: {
     minHeight: '100vh',
-    background: '#f5f3f0',
+    background: colors.bg,
     display: 'flex',
     flexDirection: 'column',
   },
@@ -355,8 +353,8 @@ const styles = {
     alignItems: 'center',
     gap: '12px',
     padding: '12px 16px',
-    background: '#fff',
-    borderBottom: '1px solid #e8e5e0',
+    background: colors.surface,
+    borderBottom: `1px solid ${colors.border}`,
     position: 'sticky',
     top: 0,
     zIndex: 10,
@@ -381,13 +379,14 @@ const styles = {
     width: '40px',
     height: '40px',
     borderRadius: '50%',
-    background: 'linear-gradient(135deg, #059669, #10b981)',
-    color: '#fff',
+    background: colors.dark,
+    color: colors.gold,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     fontSize: '16px',
-    fontWeight: '700',
+    fontWeight: '600',
+    fontFamily: fonts.serif,
     flexShrink: 0,
     overflow: 'hidden',
   },
@@ -399,7 +398,7 @@ const styles = {
   headerName: {
     fontSize: '16px',
     fontWeight: '600',
-    color: '#1f2937',
+    color: colors.text,
     margin: 0,
   },
   messagesContainer: {
@@ -418,7 +417,7 @@ const styles = {
     minHeight: '200px',
   },
   emptyChatText: {
-    color: '#9ca3af',
+    color: colors.textMuted,
     fontSize: '14px',
   },
   dateDivider: {
@@ -426,11 +425,12 @@ const styles = {
     margin: '16px 0 8px',
   },
   dateDividerText: {
-    fontSize: '12px',
-    color: '#9ca3af',
-    background: '#eae8e4',
+    fontSize: '11px',
+    color: colors.textMuted,
+    background: colors.warmGray,
     padding: '4px 12px',
     borderRadius: '12px',
+    letterSpacing: '0.3px',
   },
   messageBubbleRow: {
     display: 'flex',
@@ -442,13 +442,13 @@ const styles = {
     borderRadius: '18px',
   },
   bubbleMine: {
-    background: '#047857',
+    background: colors.terracotta,
     borderBottomRightRadius: '4px',
   },
   bubbleTheirs: {
-    background: '#fff',
+    background: colors.surface,
     borderBottomLeftRadius: '4px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+    border: `1px solid ${colors.border}`,
   },
   bubbleText: {
     fontSize: '15px',
@@ -476,8 +476,8 @@ const styles = {
   },
   inputBar: {
     padding: '8px 12px',
-    background: '#fff',
-    borderTop: '1px solid #e8e5e0',
+    background: colors.surface,
+    borderTop: `1px solid ${colors.border}`,
     paddingBottom: 'max(8px, env(safe-area-inset-bottom))',
     position: 'sticky',
     bottom: 0,
@@ -486,9 +486,10 @@ const styles = {
     display: 'flex',
     alignItems: 'flex-end',
     gap: '8px',
-    background: '#f5f3f0',
+    background: colors.bg,
     borderRadius: '24px',
     padding: '6px 6px 6px 16px',
+    border: `1px solid ${colors.border}`,
   },
   textInput: {
     flex: 1,
@@ -496,7 +497,7 @@ const styles = {
     outline: 'none',
     background: 'transparent',
     fontSize: '15px',
-    color: '#1f2937',
+    color: colors.text,
     resize: 'none',
     maxHeight: '100px',
     lineHeight: '1.4',
@@ -507,7 +508,7 @@ const styles = {
     width: '36px',
     height: '36px',
     borderRadius: '50%',
-    background: '#047857',
+    background: colors.terracotta,
     border: 'none',
     display: 'flex',
     alignItems: 'center',
@@ -521,113 +522,117 @@ const styles = {
     left: 0,
     right: 0,
     bottom: 0,
-    background: 'rgba(0, 0, 0, 0.5)',
+    background: 'rgba(0,0,0,0.5)',
+    backdropFilter: 'blur(4px)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 1000,
+    padding: '20px',
   },
   modalContent: {
-    background: '#fff',
-    borderRadius: '20px',
-    padding: '24px',
-    maxWidth: '90%',
-    width: '400px',
+    background: colors.surface,
+    borderRadius: radius.lg,
+    padding: '32px 24px 24px',
+    maxWidth: '380px',
+    width: '100%',
     maxHeight: '85vh',
     overflow: 'auto',
     position: 'relative',
-    boxShadow: '0 8px 16px rgba(0,0,0,0.06), 0 20px 40px rgba(0,0,0,0.1)',
+    textAlign: 'center',
   },
   modalClose: {
     position: 'absolute',
-    top: '16px',
-    right: '16px',
-    background: 'none',
-    border: 'none',
-    fontSize: '24px',
-    color: '#a3a3a3',
-    cursor: 'pointer',
+    top: '14px',
+    right: '14px',
     width: '32px',
     height: '32px',
-    zIndex: 10,
+    borderRadius: '50%',
+    background: colors.warmGray,
+    border: 'none',
+    color: colors.textSecondary,
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
   },
   largePhotoContainer: {
     display: 'flex',
     justifyContent: 'center',
-    marginBottom: '20px',
+    marginBottom: '16px',
   },
   largePhoto: {
-    width: '250px',
-    height: '250px',
-    borderRadius: '16px',
+    width: '88px',
+    height: '88px',
+    borderRadius: '50%',
     objectFit: 'cover',
+    border: `3px solid ${colors.warmGray}`,
   },
   largeAvatarPlaceholder: {
-    width: '250px',
-    height: '250px',
-    borderRadius: '16px',
-    background: 'linear-gradient(135deg, #047857, #059669)',
-    color: '#fff',
+    width: '88px',
+    height: '88px',
+    borderRadius: '50%',
+    background: colors.dark,
+    color: colors.gold,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontSize: '80px',
-    fontWeight: '700',
+    fontSize: '32px',
+    fontWeight: '600',
+    fontFamily: fonts.serif,
   },
   profileInfo: {
     textAlign: 'center',
   },
   profileName: {
-    fontSize: '24px',
-    fontWeight: '800',
-    color: '#1a1a1a',
+    fontFamily: fonts.serif,
+    fontSize: '20px',
+    fontWeight: '500',
+    color: colors.text,
     marginBottom: '4px',
-  },
-  profileGender: {
-    fontSize: '14px',
-    color: '#6b6b6b',
-    marginBottom: '16px',
   },
   bioSection: {
     fontSize: '14px',
-    color: '#4b5563',
+    color: colors.textSecondary,
     fontStyle: 'italic',
     lineHeight: 1.6,
-    marginBottom: '20px',
-    padding: '12px',
-    background: '#faf9f7',
-    borderRadius: '8px',
-  },
-  sectionTitle: {
-    fontSize: '11px',
-    fontWeight: '800',
-    color: '#6b7280',
-    letterSpacing: '0.5px',
-    marginBottom: '8px',
-    marginTop: '16px',
-    textAlign: 'left',
-  },
-  tripInfo: {
-    fontSize: '14px',
-    color: '#1f2937',
-    fontWeight: '600',
-    textAlign: 'left',
-    marginBottom: '4px',
+    margin: '8px 0 16px',
+    padding: '0 8px',
   },
   interestsList: {
     display: 'flex',
     flexWrap: 'wrap',
     gap: '8px',
-    justifyContent: 'flex-start',
-    marginBottom: '20px',
+    justifyContent: 'center',
+    marginBottom: '16px',
   },
   interestTag: {
-    padding: '6px 12px',
-    background: '#f0f9f4',
-    color: '#047857',
-    borderRadius: '20px',
-    fontSize: '13px',
+    ...components.pill,
+  },
+  tripsSection: {
+    textAlign: 'left',
+    marginBottom: '16px',
+  },
+  sectionTitle: {
+    ...type.label,
+    marginBottom: '10px',
+  },
+  tripItem: {
+    padding: '10px 12px',
+    background: colors.bg,
+    borderRadius: radius.sm,
+    marginBottom: '6px',
+  },
+  tripDest: {
+    fontSize: '14px',
     fontWeight: '600',
+    color: colors.text,
+  },
+  tripDates: {
+    fontSize: '12px',
+    color: colors.textTertiary,
+    marginTop: '2px',
   },
   contactButtons: {
     display: 'flex',
@@ -636,14 +641,17 @@ const styles = {
   },
   contactButton: {
     flex: 1,
-    padding: '14px 24px',
-    background: '#f0f9f4',
-    color: '#047857',
+    padding: '12px 16px',
+    background: colors.warmGray,
+    color: colors.text,
     border: 'none',
-    borderRadius: '12px',
-    fontSize: '14px',
+    borderRadius: radius.sm,
+    fontSize: '13px',
     fontWeight: '600',
     cursor: 'pointer',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 };
 

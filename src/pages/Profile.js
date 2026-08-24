@@ -18,6 +18,7 @@ function Profile() {
   const { currentUserData: userData, connections, connectionRequests, refreshAll, refreshConnections } = useUser();
   const [showConnections, setShowConnections] = useState(false);
   const [previewUser, setPreviewUser] = useState(null);
+  const [profilePhotoIndex, setProfilePhotoIndex] = useState(0);
 
   const handleAccept = async (request) => {
     try {
@@ -171,7 +172,37 @@ function Profile() {
       {/* Header */}
       <div style={styles.header}>
         <div style={styles.photoSection}>
-          {userData.photoURL ? (
+          {userData.photos && userData.photos.length > 1 ? (
+            <div style={styles.profileCarousel}>
+              <div style={styles.profileCarouselImageWrap}>
+                <img
+                  src={userData.photos[profilePhotoIndex]}
+                  alt={`Profile ${profilePhotoIndex + 1}`}
+                  style={styles.profileCarouselImage}
+                />
+                <div
+                  style={styles.carouselTapLeft}
+                  onClick={() => setProfilePhotoIndex(i => i > 0 ? i - 1 : userData.photos.length - 1)}
+                />
+                <div
+                  style={styles.carouselTapRight}
+                  onClick={() => setProfilePhotoIndex(i => i < userData.photos.length - 1 ? i + 1 : 0)}
+                />
+              </div>
+              <div style={styles.profileCarouselDots}>
+                {userData.photos.map((_, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      ...styles.profileDot,
+                      ...(i === profilePhotoIndex ? styles.profileDotActive : {}),
+                    }}
+                    onClick={() => setProfilePhotoIndex(i)}
+                  />
+                ))}
+              </div>
+            </div>
+          ) : userData.photoURL ? (
             <img src={userData.photoURL} alt="Profile" style={styles.profilePhoto} />
           ) : (
             <div style={styles.photoPlaceholder}>
@@ -438,10 +469,41 @@ const styles = {
   loading: { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', color: colors.textTertiary },
 
   // Header
-  header: { padding: '24px 24px 28px', textAlign: 'center' },
+  header: { padding: '0 0 28px', textAlign: 'center' },
   photoSection: { marginBottom: '14px' },
-  profilePhoto: { width: '88px', height: '88px', borderRadius: '50%', objectFit: 'cover', border: `3px solid ${colors.warmGray}` },
-  photoPlaceholder: { width: '88px', height: '88px', borderRadius: '50%', background: colors.dark, color: colors.gold, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px', fontWeight: '600', fontFamily: fonts.serif },
+  profilePhoto: { width: '88px', height: '88px', borderRadius: '50%', objectFit: 'cover', border: `3px solid ${colors.warmGray}`, marginTop: '24px' },
+  photoPlaceholder: { width: '88px', height: '88px', borderRadius: '50%', background: colors.dark, color: colors.gold, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px', fontWeight: '600', fontFamily: fonts.serif, marginTop: '24px' },
+
+  // Profile carousel
+  profileCarousel: { width: '100%' },
+  profileCarouselImageWrap: {
+    position: 'relative', width: '100%', aspectRatio: '4/5',
+    overflow: 'hidden',
+  },
+  profileCarouselImage: {
+    width: '100%', height: '100%', objectFit: 'cover',
+    transition: 'opacity 0.2s ease',
+  },
+  carouselTapLeft: {
+    position: 'absolute', top: 0, left: 0, width: '40%', height: '100%',
+    cursor: 'pointer',
+  },
+  carouselTapRight: {
+    position: 'absolute', top: 0, right: 0, width: '60%', height: '100%',
+    cursor: 'pointer',
+  },
+  profileCarouselDots: {
+    display: 'flex', justifyContent: 'center', gap: '6px',
+    padding: '12px 0',
+  },
+  profileDot: {
+    width: '6px', height: '6px', borderRadius: '50%',
+    background: colors.warmGray, cursor: 'pointer',
+    transition: 'all 0.2s',
+  },
+  profileDotActive: {
+    background: colors.terracotta, width: '18px', borderRadius: '3px',
+  },
   name: { fontFamily: fonts.serif, fontSize: '22px', fontWeight: '500', margin: '0 0 2px 0', color: colors.text },
   city: { fontSize: '14px', color: colors.textSecondary, marginBottom: '8px' },
   bio: { fontSize: '14px', color: colors.textSecondary, fontStyle: 'italic', lineHeight: 1.5, maxWidth: '300px', margin: '0 auto' },

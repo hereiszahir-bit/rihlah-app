@@ -251,7 +251,7 @@ const styles = {
   edDesc: { fontSize: '13px', color: colors.textSecondary, lineHeight: 1.5, marginBottom: '12px' },
   edFooter: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   edTravelers: { fontSize: '12px', color: colors.textTertiary, fontWeight: '500' },
-  edArrow: { width: '32px', height: '32px', borderRadius: '50%', background: colors.dark, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '14px' },
+  edArrow: { width: '32px', height: '32px', borderRadius: '50%', background: colors.terracotta, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0a0a0a', fontSize: '14px' },
   seeAllBtn: { width: '100%', padding: '16px', background: 'none', border: `1px solid ${colors.border}`, borderRadius: radius.md, fontSize: '14px', fontWeight: '600', color: colors.textSecondary, cursor: 'pointer', fontFamily: 'inherit', marginTop: '4px' },
 
   // Profile Preview Modal

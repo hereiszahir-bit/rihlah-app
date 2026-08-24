@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiSearch, FiEdit, FiTrash2 } from 'react-icons/fi';
+import { colors, fonts, radius } from '../design';
 
 import { useUser } from '../context/UserContext';
 import { db, auth } from '../firebase';
@@ -138,14 +139,16 @@ function Messages() {
   return (
     <div style={styles.page}>
       <div style={styles.container}>
-        {/* Search + New Chat */}
-        <div style={styles.topRow}>
+        {/* Header */}
+        <div style={styles.header}>
+          <h1 style={styles.pageTitle}>Messages</h1>
           <button style={styles.newChatBtn} onClick={() => setShowNewChat(!showNewChat)}>
-            <FiEdit size={20} color="#047857" />
+            <FiEdit size={20} color={colors.terracotta} />
           </button>
         </div>
+
         <div style={styles.searchBox}>
-          <FiSearch size={20} color="#9ca3af" />
+          <FiSearch size={18} color={colors.textMuted} />
           <input
             type="text"
             placeholder="Search conversations..."
@@ -243,7 +246,7 @@ function Messages() {
                             style={styles.deleteBtn}
                             onClick={(e) => { e.stopPropagation(); setDeleteId(conv.id); }}
                           >
-                            <FiTrash2 size={14} color="#9ca3af" />
+                            <FiTrash2 size={14} color={colors.textMuted} />
                           </button>
                         </div>
                       </div>
@@ -251,7 +254,7 @@ function Messages() {
                         <p style={{
                           ...styles.lastMessage,
                           fontWeight: unread > 0 ? '600' : '400',
-                          color: unread > 0 ? '#1f2937' : '#6b7280',
+                          color: unread > 0 ? colors.text : colors.textSecondary,
                         }}>
                           {conv.lastSenderId === currentUser?.uid && conv.lastMessage ? 'You: ' : ''}
                           {conv.lastMessage || 'No messages yet'}
@@ -271,9 +274,6 @@ function Messages() {
         {/* Empty State */}
         {conversations.length === 0 && !showNewChat && (
           <div style={styles.empty}>
-            <div style={styles.emptyIcon}>
-              <FiEdit size={48} color="#d1d5db" />
-            </div>
             <h3 style={styles.emptyTitle}>No messages yet</h3>
             <p style={styles.emptyText}>
               Start connecting with travelers to begin messaging
@@ -295,22 +295,25 @@ function Messages() {
 const styles = {
   page: {
     minHeight: '100vh',
-    background: '#fafafa',
-    paddingBottom: '70px',
+    background: colors.bg,
+    paddingBottom: '90px',
   },
   container: {
-    padding: '8px 16px 16px',
+    padding: '0 24px 16px',
   },
-  topRow: {
+  header: {
     display: 'flex',
-    justifyContent: 'flex-end',
-    marginBottom: '12px',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '20px 0 0',
   },
-  title: {
+  pageTitle: {
+    fontFamily: fonts.serif,
     fontSize: '28px',
-    fontWeight: '700',
-    color: '#1f2937',
+    fontWeight: '500',
+    color: colors.text,
     margin: 0,
+    letterSpacing: '-0.3px',
   },
   newChatBtn: {
     background: 'none',
@@ -323,39 +326,42 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '12px',
-    background: '#fff',
+    background: colors.surface,
     padding: '12px 16px',
-    borderRadius: '12px',
+    borderRadius: radius.md,
+    marginTop: '16px',
     marginBottom: '20px',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+    border: `1px solid ${colors.border}`,
   },
   searchInput: {
     flex: 1,
     border: 'none',
     outline: 'none',
     fontSize: '15px',
-    color: '#1f2937',
+    color: colors.text,
+    background: 'transparent',
+    fontFamily: 'inherit',
   },
   newChatPanel: {
-    background: '#fff',
-    borderRadius: '12px',
+    background: colors.surface,
+    borderRadius: radius.md,
     padding: '16px',
     marginBottom: '20px',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+    border: `1px solid ${colors.border}`,
     overflow: 'hidden',
   },
   newChatTitle: {
-    fontSize: '14px',
+    fontSize: '11px',
     fontWeight: '600',
-    color: '#6b7280',
+    color: colors.textMuted,
     margin: '0 0 12px',
     textTransform: 'uppercase',
-    letterSpacing: '0.5px',
+    letterSpacing: '1px',
   },
   connectionsList: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '8px',
+    gap: '4px',
   },
   connectionItem: {
     display: 'flex',
@@ -364,50 +370,43 @@ const styles = {
     padding: '8px',
     background: 'none',
     border: 'none',
-    borderRadius: '8px',
+    borderRadius: radius.sm,
     cursor: 'pointer',
     width: '100%',
     textAlign: 'left',
-    transition: 'background 0.15s',
   },
   connectionName: {
     fontSize: '15px',
     fontWeight: '500',
-    color: '#1f2937',
+    color: colors.text,
   },
   noConnections: {
     fontSize: '14px',
-    color: '#9ca3af',
+    color: colors.textMuted,
     margin: 0,
   },
   list: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '12px',
   },
   conversationWrapper: {
-    borderRadius: '12px',
     overflow: 'hidden',
   },
   conversation: {
     display: 'flex',
-    gap: '12px',
-    background: '#fff',
-    padding: '16px',
-    borderRadius: '12px',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+    gap: '14px',
+    padding: '16px 0',
+    borderBottom: `1px solid ${colors.border}`,
     cursor: 'pointer',
   },
   deleteConfirm: {
-    background: '#fff',
-    padding: '16px',
-    borderRadius: '12px',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+    padding: '16px 0',
+    borderBottom: `1px solid ${colors.border}`,
     textAlign: 'center',
   },
   deleteText: {
     fontSize: '14px',
-    color: '#1f2937',
+    color: colors.text,
     margin: '0 0 12px',
   },
   deleteActions: {
@@ -416,20 +415,20 @@ const styles = {
     justifyContent: 'center',
   },
   deleteCancelBtn: {
-    background: '#f3f4f6',
+    background: colors.warmGray,
     border: 'none',
     padding: '8px 20px',
-    borderRadius: '8px',
+    borderRadius: radius.sm,
     fontSize: '14px',
     fontWeight: '500',
     cursor: 'pointer',
-    color: '#6b7280',
+    color: colors.textSecondary,
   },
   deleteConfirmBtn: {
-    background: '#ef4444',
+    background: colors.error,
     border: 'none',
     padding: '8px 20px',
-    borderRadius: '8px',
+    borderRadius: radius.sm,
     fontSize: '14px',
     fontWeight: '600',
     cursor: 'pointer',
@@ -439,13 +438,14 @@ const styles = {
     width: '52px',
     height: '52px',
     borderRadius: '50%',
-    background: 'linear-gradient(135deg, #059669, #10b981)',
-    color: '#fff',
+    background: colors.dark,
+    color: colors.gold,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     fontSize: '20px',
-    fontWeight: '700',
+    fontWeight: '600',
+    fontFamily: fonts.serif,
     flexShrink: 0,
     position: 'relative',
     overflow: 'hidden',
@@ -461,8 +461,8 @@ const styles = {
     right: 2,
     width: '12px',
     height: '12px',
-    background: '#10b981',
-    border: '2px solid #fff',
+    background: colors.olive,
+    border: `2.5px solid ${colors.bg}`,
     borderRadius: '50%',
   },
   convContent: {
@@ -478,7 +478,7 @@ const styles = {
   convName: {
     fontSize: '16px',
     fontWeight: '600',
-    color: '#1f2937',
+    color: colors.text,
     margin: 0,
   },
   convHeaderRight: {
@@ -488,7 +488,7 @@ const styles = {
   },
   convTime: {
     fontSize: '12px',
-    color: '#9ca3af',
+    color: colors.textMuted,
   },
   deleteBtn: {
     background: 'none',
@@ -506,7 +506,7 @@ const styles = {
   },
   lastMessage: {
     fontSize: '14px',
-    color: '#6b7280',
+    color: colors.textSecondary,
     margin: 0,
     overflow: 'hidden',
     textOverflow: 'ellipsis',
@@ -514,7 +514,7 @@ const styles = {
     flex: 1,
   },
   unreadBadge: {
-    background: '#059669',
+    background: colors.terracotta,
     color: '#fff',
     fontSize: '11px',
     fontWeight: '700',
@@ -526,31 +526,33 @@ const styles = {
   },
   empty: {
     textAlign: 'center',
-    padding: '60px 24px',
-  },
-  emptyIcon: {
-    marginBottom: '16px',
+    padding: '80px 20px 60px',
   },
   emptyTitle: {
-    fontSize: '20px',
-    fontWeight: '700',
-    color: '#1f2937',
-    marginBottom: '8px',
+    fontFamily: fonts.serif,
+    fontSize: '22px',
+    fontWeight: '500',
+    color: colors.text,
+    marginBottom: '12px',
+    letterSpacing: '-0.3px',
   },
   emptyText: {
-    fontSize: '15px',
-    color: '#6b7280',
-    marginBottom: '24px',
+    fontSize: '14px',
+    color: colors.textSecondary,
+    lineHeight: 1.7,
+    maxWidth: '260px',
+    margin: '0 auto 28px',
   },
   startBtn: {
-    background: '#047857',
-    color: '#fff',
+    background: colors.terracotta,
+    color: '#0a0a0a',
     border: 'none',
-    padding: '12px 24px',
-    borderRadius: '12px',
+    padding: '14px 28px',
+    borderRadius: radius.md,
     fontSize: '15px',
     fontWeight: '600',
     cursor: 'pointer',
+    fontFamily: 'inherit',
   },
 };
 

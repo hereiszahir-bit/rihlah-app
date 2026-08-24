@@ -1,396 +1,270 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { signOut } from 'firebase/auth';
-import { auth, db } from '../firebase';
+import { db } from '../firebase';
 import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
-import emailjs from '@emailjs/browser';
-import {
-  FiHeart,
-  FiArrowDown,
-  FiMapPin,
-  FiUsers,
-  FiMessageCircle,
-  FiShield,
-  FiGlobe,
-  FiInstagram,
-} from 'react-icons/fi';
-import { colors, fonts, radius } from '../design';
+import { colors, fonts } from '../design';
 
-const EMAILJS_SERVICE_ID = 'service_60j9t2o';
-const EMAILJS_TEMPLATE_ID = 'template_vs5ri2j';
-const EMAILJS_PUBLIC_KEY = 'ghSmKpzOnS5PvRcYj';
-
-function getUtmParams() {
-  const params = new URLSearchParams(window.location.search);
-  const utm = {};
-  ['utm_source', 'utm_medium', 'utm_campaign', 'ref'].forEach(key => {
-    const val = params.get(key);
-    if (val) utm[key] = val;
-  });
-  if (document.referrer && !document.referrer.includes(window.location.hostname)) {
-    utm.referrer = document.referrer;
-  }
-  if (!utm.utm_source) {
-    utm.utm_source = 'homepage';
-  }
-  return Object.keys(utm).length > 0 ? utm : null;
-}
-
-const IDENTITY_OPTIONS = [
-  'Student', 'Young Professional', 'Solo Traveler', 'Couple',
-  'Family', 'Retiree', 'Gap Year', 'Digital Nomad',
-];
-
-const INTEREST_GROUPS = [
-  { label: 'Travel', options: ['Hiking', 'Food & Culinary', 'History & Culture', 'Photography', 'Beach', 'Adventure', 'Shopping', 'Nature'] },
-  { label: 'Lifestyle', options: ['Fitness', 'Tech', 'Business', 'Art', 'Reading', 'Sports', 'Volunteering', 'Language Learning'] },
-  { label: 'Faith', options: ['Mosque Tours', 'Halal Dining', 'Quran Study', 'Islamic History', 'Dawah', 'Community Service'] },
-];
-
-const SEASON_OPTIONS = [
-  'Spring 2026', 'Summer 2026', 'Fall 2026', 'Winter 2026/27',
-  'Spring 2027', 'Summer 2027', 'Fall 2027', 'Winter 2027/28',
-];
-
-function ModernHome({ user }) {
+function ModernHome() {
   const [scrolled, setScrolled] = useState(false);
   const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
-  const [age, setAge] = useState('');
-  const [gender, setGender] = useState('');
-  const [profileVisibility, setProfileVisibility] = useState('');
-  const [homeCity, setHomeCity] = useState('');
-  const [identity, setIdentity] = useState([]);
-  const [interests, setInterests] = useState([]);
-  const [travelSeasons, setTravelSeasons] = useState([]);
-  const [countries, setCountries] = useState([]);
-  const [countryQuery, setCountryQuery] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [citySuggestions, setCitySuggestions] = useState([]);
-  const [showCitySuggestions, setShowCitySuggestions] = useState(false);
-  const cityDebounceRef = useRef(null);
-  const [countrySuggestions, setCountrySuggestions] = useState([]);
-  const [showCountrySuggestions, setShowCountrySuggestions] = useState(false);
-  const countryDebounceRef = useRef(null);
-  const utmRef = useRef(getUtmParams());
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener('scroll', handleScroll);
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      if (cityDebounceRef.current) clearTimeout(cityDebounceRef.current);
-      if (countryDebounceRef.current) clearTimeout(countryDebounceRef.current);
-    };
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  const handleLogout = async () => { await signOut(auth); };
-
-  const fetchCitySuggestions = useCallback(async (queryText) => {
-    if (!queryText || queryText.length < 2) { setCitySuggestions([]); setShowCitySuggestions(false); return; }
-    try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(queryText)}&format=json&addressdetails=1&limit=8`, { headers: { 'Accept-Language': 'en' } });
-      const data = await res.json();
-      const cities = data.filter(item => item.address).map(item => {
-        const addr = item.address;
-        const cityName = addr.city || addr.town || addr.village || addr.state || addr.county || item.name || '';
-        const country = addr.country || '';
-        return cityName ? `${cityName}, ${country}` : null;
-      }).filter(Boolean).filter((v, i, arr) => arr.indexOf(v) === i).slice(0, 6);
-      setCitySuggestions(cities);
-      setShowCitySuggestions(cities.length > 0);
-    } catch { setCitySuggestions([]); }
-  }, []);
-
-  const handleHomeCityChange = (value) => {
-    setHomeCity(value);
-    if (cityDebounceRef.current) clearTimeout(cityDebounceRef.current);
-    cityDebounceRef.current = setTimeout(() => fetchCitySuggestions(value), 300);
-  };
-
-  const selectCity = (city) => { setHomeCity(city); setCitySuggestions([]); setShowCitySuggestions(false); };
-
-  const fetchCountrySuggestions = useCallback(async (queryText) => {
-    if (!queryText || queryText.length < 2) { setCountrySuggestions([]); setShowCountrySuggestions(false); return; }
-    try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(queryText)}&format=json&addressdetails=1&limit=10&featuretype=country`, { headers: { 'Accept-Language': 'en' } });
-      const data = await res.json();
-      const results = data.filter(item => item.address && item.address.country).map(item => item.address.country).filter(Boolean).filter((v, i, arr) => arr.indexOf(v) === i).filter(c => !countries.includes(c)).slice(0, 6);
-      setCountrySuggestions(results);
-      setShowCountrySuggestions(results.length > 0);
-    } catch { setCountrySuggestions([]); }
-  }, [countries]);
-
-  const handleCountryQueryChange = (value) => {
-    setCountryQuery(value);
-    if (countryDebounceRef.current) clearTimeout(countryDebounceRef.current);
-    countryDebounceRef.current = setTimeout(() => fetchCountrySuggestions(value), 300);
-  };
-
-  const selectCountry = (country) => {
-    if (!countries.includes(country)) setCountries([...countries, country]);
-    setCountryQuery(''); setCountrySuggestions([]); setShowCountrySuggestions(false);
-  };
-
-  const removeCountry = (country) => { setCountries(countries.filter(c => c !== country)); };
-  const toggleChip = (list, setList, value) => { setList(prev => prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]); };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email.trim()) return;
-    setLoading(true); setError('');
+    setLoading(true);
+    setError('');
     try {
-      const q = query(collection(db, 'waitlist'), where('email', '==', email.trim().toLowerCase()));
+      const q = query(collection(db, 'subscribers'), where('email', '==', email.trim().toLowerCase()));
       const existing = await getDocs(q);
-      if (!existing.empty) { setError("You're already on the waitlist!"); setLoading(false); return; }
-      const docData = {
-        email: email.trim().toLowerCase(), name: name.trim(),
-        age: age ? parseInt(age, 10) : null, gender: gender || null,
-        profileVisibility: profileVisibility || null, homeCity: homeCity.trim() || null,
-        identity, interests, travelSeasons, countries, createdAt: serverTimestamp(),
-      };
-      if (utmRef.current) docData.source = utmRef.current;
-      await addDoc(collection(db, 'waitlist'), docData);
-      try {
-        await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-          to_email: email.trim().toLowerCase(),
-          to_name: name.trim() || 'there',
-          countries: countries.join(', ') || 'some amazing places',
-        }, EMAILJS_PUBLIC_KEY);
-      } catch (emailErr) { console.warn('Confirmation email failed:', emailErr); }
+      if (!existing.empty) {
+        setError("You're already on the list.");
+        setLoading(false);
+        return;
+      }
+      await addDoc(collection(db, 'subscribers'), {
+        email: email.trim().toLowerCase(),
+        source: 'homepage',
+        createdAt: serverTimestamp(),
+      });
       setSubmitted(true);
-    } catch (err) { setError('Something went wrong. Please try again.'); }
+    } catch {
+      setError('Something went wrong. Try again.');
+    }
     setLoading(false);
   };
 
-  const renderChips = (options, selected, onToggle) => (
-    <div style={styles.chipGrid}>
-      {options.map(opt => (
-        <button key={opt} type="button" onClick={() => onToggle(opt)}
-          style={{ ...styles.chip, ...(selected.includes(opt) ? styles.chipSelected : {}) }}
-        >{opt}</button>
-      ))}
-    </div>
-  );
-
-  const scrollToWaitlist = (e) => {
-    e.preventDefault();
-    document.getElementById('waitlist')?.scrollIntoView({ behavior: 'smooth' });
-  };
-
   return (
-    <div style={styles.container}>
-      <motion.header
-        style={{ ...styles.header, ...(scrolled ? styles.headerScrolled : {}) }}
-        initial={{ y: -100 }} animate={{ y: 0 }} transition={{ duration: 0.5 }}
-      >
-        <div style={styles.headerContent}>
-          <motion.div style={styles.logoContainer} whileHover={{ scale: 1.05 }}>
-            <img src="/logo192.png" alt="Rihlah" style={styles.logoImg} />
-          </motion.div>
+    <div style={styles.page}>
+      {/* Header */}
+      <header style={{ ...styles.header, ...(scrolled ? styles.headerScrolled : {}) }}>
+        <div style={styles.headerInner}>
+          <Link to="/" style={{ ...styles.wordmark, color: scrolled ? colors.text : '#fff' }}>RIHLAH</Link>
           <nav style={styles.nav}>
-            {user ? (
-              <div style={styles.userNav}>
-                <span style={styles.userName}>Hey, {user.displayName?.split(' ')[0]}</span>
-                <motion.button onClick={handleLogout} style={styles.logoutBtn} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>Sign Out</motion.button>
-              </div>
-            ) : (
-              <div style={styles.authNav}>
-                <Link to="/login" style={styles.loginLink}>Log in</Link>
-              </div>
-            )}
+            <Link to="/about" style={{ ...styles.navLink, color: scrolled ? colors.textSecondary : 'rgba(255,255,255,0.8)' }}>Our Story</Link>
+            <a href="#apply" style={{ ...styles.navLinkCTA, background: scrolled ? colors.terracotta : 'rgba(255,255,255,0.15)', color: '#fff' }}>Request access</a>
           </nav>
         </div>
-      </motion.header>
+      </header>
 
+      {/* Hero */}
       <section style={styles.hero}>
-        <div style={styles.heroContent}>
-          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
-            <motion.span style={styles.badge} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }}>
-              Coming Soon
-            </motion.span>
-            <h1 style={styles.heroTitle}>
-              Travel is better with<br />
-              <span style={styles.heroTitleAccent}>your people.</span>
-            </h1>
-            <p style={styles.heroSubtitle}>
-              Rihlah connects Muslims traveling to the same destination, at the same time.
-              Sign up and be the first to know when we launch.
-            </p>
-            {!user && (
-              <div style={styles.heroCTA}>
-                <motion.a href="#waitlist" onClick={scrollToWaitlist} style={styles.primaryBtn} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  Join the Waitlist <FiArrowDown style={{ marginLeft: '8px' }} />
-                </motion.a>
-              </div>
-            )}
-          </motion.div>
+        <div style={styles.heroImageWrap}>
+          <img src="/hero.jpg" alt="" style={styles.heroImage} />
+          <div style={styles.heroOverlay} />
         </div>
-      </section>
-
-      <section style={styles.featureSection}>
-        <motion.h2 style={styles.sectionTitle} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-          What is Rihlah?
-        </motion.h2>
-        <motion.p style={styles.sectionSubtitle} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 }}>
-          A Muslim travel community — here's how it works
-        </motion.p>
-        <div style={styles.featureGrid}>
-          {[
-            { icon: <FiMapPin size={28} color={colors.gold} />, title: 'Share where you\'re headed', text: 'Add your upcoming journeys and dream destinations to your profile.' },
-            { icon: <FiUsers size={28} color={colors.gold} />, title: 'Get matched with travelers', text: 'We connect you with Muslims going to the same place, at the same time.' },
-            { icon: <FiMessageCircle size={28} color={colors.gold} />, title: 'Connect, plan, and travel', text: 'Coordinate plans and experience your destination together.' },
-          ].map((feature, index) => (
-            <motion.div key={feature.title} style={styles.featureCard} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: index * 0.15 }} whileHover={{ y: -8, transition: { duration: 0.2 } }}>
-              <div style={styles.featureIconWrap}>{feature.icon}</div>
-              <h3 style={styles.featureCardTitle}>{feature.title}</h3>
-              <p style={styles.featureCardText}>{feature.text}</p>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      <section style={styles.whySection}>
-        <motion.h2 style={styles.sectionTitle} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-          Why Rihlah?
-        </motion.h2>
-        <div style={styles.whyGrid}>
-          {[
-            { icon: <FiGlobe size={22} color={colors.gold} />, title: 'Matched by interests & travel dates', text: 'Not random connections — we match you based on where you\'re going and what you love.' },
-            { icon: <FiShield size={22} color={colors.gold} />, title: 'Gender privacy options', text: 'Choose to connect with brothers only, sisters only, or everyone.' },
-            { icon: <FiHeart size={22} color={colors.gold} />, title: 'Built for the Ummah', text: 'Designed from the ground up for Muslim travelers, by Muslim travelers.' },
-            { icon: <FiMessageCircle size={22} color={colors.gold} />, title: 'Connect via WhatsApp & Instagram', text: 'Link your socials so you can coordinate plans on the platforms you already use.' },
-          ].map((item, index) => (
-            <motion.div key={item.title} style={styles.whyCard} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: index * 0.1 }}>
-              <div style={styles.whyIconWrap}>{item.icon}</div>
-              <div>
-                <h3 style={styles.whyCardTitle}>{item.title}</h3>
-                <p style={styles.whyCardText}>{item.text}</p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      <section id="waitlist" style={styles.waitlistSection}>
-        <motion.div style={styles.waitlistInner} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-          {!submitted ? (
-            <>
-              <h2 style={styles.waitlistTitle}>Join the waitlist</h2>
-              <p style={styles.waitlistSubtext}>The more we know, the better we can match you with the right travelers.</p>
-              <form onSubmit={handleSubmit} style={styles.form}>
-                <input type="text" placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)} style={styles.input} />
-                <input type="email" placeholder="Your email" value={email} onChange={(e) => setEmail(e.target.value)} required style={styles.input} />
-                <input type="number" placeholder="Your age" value={age} onChange={(e) => setAge(e.target.value)} min="13" max="120" style={styles.input} />
-
-                <div style={styles.formCard}>
-                  <div style={styles.formCardTitle}>Gender</div>
-                  <div style={styles.chipGrid}>
-                    {['Male', 'Female'].map(opt => (
-                      <button key={opt} type="button" onClick={() => setGender(opt)} style={{ ...styles.chip, ...(gender === opt ? styles.chipSelected : {}) }}>{opt}</button>
-                    ))}
-                  </div>
-                </div>
-
-                <div style={styles.formCard}>
-                  <div style={styles.formCardTitle}>I want to travel with...</div>
-                  <div style={styles.chipGrid}>
-                    {[{ label: 'Everyone', value: 'both' }, { label: 'Brothers only', value: 'Male' }, { label: 'Sisters only', value: 'Female' }].map(opt => (
-                      <button key={opt.value} type="button" onClick={() => setProfileVisibility(opt.value)} style={{ ...styles.chip, ...(profileVisibility === opt.value ? styles.chipSelected : {}) }}>{opt.label}</button>
-                    ))}
-                  </div>
-                </div>
-
-                <div style={styles.autocompleteWrapper}>
-                  <input type="text" placeholder="Home city (e.g. Chicago, London)" value={homeCity} onChange={(e) => handleHomeCityChange(e.target.value)} onBlur={() => setTimeout(() => setShowCitySuggestions(false), 200)} onFocus={() => { if (citySuggestions.length > 0) setShowCitySuggestions(true); }} style={styles.input} />
-                  {showCitySuggestions && citySuggestions.length > 0 && (
-                    <div style={styles.suggestionsDropdown}>
-                      {citySuggestions.map((city, i) => (
-                        <div key={i} style={styles.suggestionItem} onMouseDown={() => selectCity(city)}>
-                          <FiMapPin size={14} color={colors.gold} style={{ flexShrink: 0 }} />{city}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div style={styles.formCard}>
-                  <div style={styles.formCardTitle}>I am a...</div>
-                  <div style={styles.formCardSub}>Select all that apply</div>
-                  {renderChips(IDENTITY_OPTIONS, identity, (val) => toggleChip(identity, setIdentity, val))}
-                </div>
-
-                <div style={styles.formCard}>
-                  <div style={styles.formCardTitle}>Interests</div>
-                  <div style={styles.formCardSub}>What are you into?</div>
-                  {INTEREST_GROUPS.map(group => (
-                    <div key={group.label} style={{ marginBottom: '12px' }}>
-                      <div style={styles.groupLabel}>{group.label}</div>
-                      {renderChips(group.options, interests, (val) => toggleChip(interests, setInterests, val))}
-                    </div>
-                  ))}
-                </div>
-
-                <div style={styles.formCard}>
-                  <div style={styles.formCardTitle}>When do you want to travel?</div>
-                  <div style={styles.formCardSub}>Select all that apply</div>
-                  {renderChips(SEASON_OPTIONS, travelSeasons, (val) => toggleChip(travelSeasons, setTravelSeasons, val))}
-                </div>
-
-                <div style={styles.formCard}>
-                  <div style={styles.formCardTitle}>Countries you want to visit</div>
-                  <div style={styles.formCardSub}>Search and add countries</div>
-                  <div style={styles.autocompleteWrapper}>
-                    <input type="text" placeholder="Search countries (e.g. Turkey, Morocco)" value={countryQuery} onChange={(e) => handleCountryQueryChange(e.target.value)} onBlur={() => setTimeout(() => setShowCountrySuggestions(false), 200)} onFocus={() => { if (countrySuggestions.length > 0) setShowCountrySuggestions(true); }} style={styles.searchInput} />
-                    {showCountrySuggestions && countrySuggestions.length > 0 && (
-                      <div style={styles.suggestionsDropdown}>
-                        {countrySuggestions.map((country, i) => (
-                          <div key={i} style={styles.suggestionItem} onMouseDown={() => selectCountry(country)}>
-                            <FiGlobe size={14} color={colors.gold} style={{ flexShrink: 0 }} />{country}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  {countries.length > 0 && (
-                    <div style={{ ...styles.chipGrid, marginTop: '10px' }}>
-                      {countries.map(country => (
-                        <button key={country} type="button" onClick={() => removeCountry(country)} style={{ ...styles.chip, ...styles.chipSelected }}>{country} &times;</button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <button type="submit" disabled={loading} style={{ ...styles.submitBtn, opacity: loading ? 0.7 : 1 }}>
-                  {loading ? 'Joining...' : 'Join the Waitlist'}
-                </button>
-                {error && <div style={styles.error}>{error}</div>}
-              </form>
-              <p style={styles.privacy}>No spam. We'll only email you when Rihlah launches.</p>
-            </>
-          ) : (
-            <motion.div style={styles.success} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
-              <div style={styles.successIcon}>
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke={colors.gold} strokeWidth="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-              </div>
-              <h2 style={styles.successTitle}>You're on the list.</h2>
-              <p style={styles.successText}>We'll let you know as soon as Rihlah is ready. We'll match you with travelers who share your interests and destinations.</p>
-              <p style={styles.successText}>Your next journey starts soon.</p>
-            </motion.div>
-          )}
+        <motion.div
+          style={styles.heroContent}
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, delay: 0.3 }}
+        >
+          <h1 style={styles.heroTitle}>
+            Travel with<br />your people.
+          </h1>
+          <p style={styles.heroSub}>
+            A private travel community for Muslims who move with intention.
+          </p>
+          <a href="#apply" style={styles.heroBtn}>Request access</a>
         </motion.div>
       </section>
 
+      {/* What Rihlah is — single statement */}
+      <section style={styles.statementSection}>
+        <div style={styles.statementInner}>
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 1 }}
+          >
+            <p style={styles.statementText}>
+              Rihlah is where Muslim travelers discover cities,
+              find each other, and travel with people worth knowing.
+            </p>
+            <p style={styles.statementSub}>
+              Not a travel agency. Not a tour group. A community.
+            </p>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* What you get */}
+      <section style={styles.featuresSection}>
+        <div style={styles.featuresInner}>
+          <div style={styles.sectionLabel}>What you get</div>
+          <div style={styles.featuresGrid}>
+            <motion.div
+              style={styles.featureCard}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <div style={styles.featureNumber}>01</div>
+              <h3 style={styles.featureTitle}>Discover</h3>
+              <p style={styles.featureText}>
+                Curated city guides, restaurants, and experiences — built for how you travel.
+                Save what speaks to you. Plan when you're ready.
+              </p>
+            </motion.div>
+            <motion.div
+              style={styles.featureCard}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+            >
+              <div style={styles.featureNumber}>02</div>
+              <h3 style={styles.featureTitle}>Connect</h3>
+              <p style={styles.featureText}>
+                See who's going where. Browse members by destination,
+                city, or interest. No pressure — just presence.
+              </p>
+            </motion.div>
+            <motion.div
+              style={styles.featureCard}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+            >
+              <div style={styles.featureNumber}>03</div>
+              <h3 style={styles.featureTitle}>Travel intelligence</h3>
+              <p style={styles.featureText}>
+                AI-powered city concierge — prayer-aware itineraries,
+                verified dining, local knowledge that no guidebook has.
+              </p>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Who this is for */}
+      <section style={styles.forSection}>
+        <div style={styles.forInner}>
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+          >
+            <div style={styles.sectionLabelLight}>Who this is for</div>
+            <div style={styles.forGrid}>
+              <div style={styles.forCard}>
+                <p style={styles.forText}>
+                  The one who's traveled the world but always figured out
+                  the Muslim-specific parts alone.
+                </p>
+              </div>
+              <div style={styles.forCard}>
+                <p style={styles.forText}>
+                  The one who wants to explore a new city with people who
+                  get it — without having to explain anything.
+                </p>
+              </div>
+              <div style={styles.forCard}>
+                <p style={styles.forText}>
+                  The one who's tired of choosing between generic travel apps
+                  and budget group tours with matching t-shirts.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Founder voice */}
+      <section style={styles.founderSection}>
+        <div style={styles.founderInner}>
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <blockquote style={styles.founderQuote}>
+              "Muslim travelers are everywhere, but we're invisible to each other.
+              Same cities, same streets, and we never cross paths.
+              Rihlah exists to change that."
+            </blockquote>
+            <div style={styles.founderAttr}>
+              <div style={styles.founderImageWrap}>
+                <img src="/zahir.jpg" alt="Zahir" style={styles.founderImage} />
+              </div>
+              <div>
+                <div style={styles.founderName}>Zahir</div>
+                <div style={styles.founderRole}>Founder</div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Apply */}
+      <section id="apply" style={styles.applySection}>
+        <div style={styles.applyInner}>
+          {!submitted ? (
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <div style={styles.sectionLabel}>Early access</div>
+              <h2 style={styles.applyTitle}>Rihlah is opening soon.</h2>
+              <p style={styles.applySub}>
+                We're building something intentional — not for everyone, but for the right people.
+                Request early access and we'll be in touch.
+              </p>
+              <form onSubmit={handleSubmit} style={styles.applyForm}>
+                <input
+                  type="email"
+                  placeholder="Your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  style={styles.applyInput}
+                />
+                <button type="submit" disabled={loading} style={{ ...styles.applyBtn, opacity: loading ? 0.7 : 1 }}>
+                  {loading ? 'Requesting...' : 'Request access'}
+                </button>
+              </form>
+              {error && <div style={styles.applyError}>{error}</div>}
+            </motion.div>
+          ) : (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              <h2 style={styles.applyTitle}>You're on the list.</h2>
+              <p style={styles.applySub}>We'll reach out when it's your turn.</p>
+            </motion.div>
+          )}
+        </div>
+      </section>
+
+      {/* Footer */}
       <footer style={styles.footer}>
         <div style={styles.footerInner}>
-          <p style={styles.footerTagline}>Built for the Ummah, by the Ummah.</p>
-          <a href="https://instagram.com/rihlah.io" target="_blank" rel="noopener noreferrer" style={styles.footerInsta}>
-            <FiInstagram size={18} style={{ marginRight: '6px', verticalAlign: 'middle' }} />@rihlah.io
-          </a>
-          <p style={styles.footerCopy}>&copy; 2026 Rihlah</p>
+          <div style={styles.footerTop}>
+            <div>
+              <div style={styles.footerWordmark}>RIHLAH</div>
+              <p style={styles.footerTagline}>Travel with your people.</p>
+            </div>
+            <div style={styles.footerLinks}>
+              <Link to="/about" style={styles.footerLink}>Our Story</Link>
+              <a href="https://instagram.com/rihlah.io" target="_blank" rel="noopener noreferrer" style={styles.footerLink}>Instagram</a>
+              <a href="https://tiktok.com/@rihlah.io" target="_blank" rel="noopener noreferrer" style={styles.footerLink}>TikTok</a>
+            </div>
+          </div>
+          <div style={styles.footerBottom}>
+            <p style={styles.footerCopy}>&copy; 2026 Rihlah. All rights reserved.</p>
+          </div>
         </div>
       </footer>
     </div>
@@ -398,76 +272,95 @@ function ModernHome({ user }) {
 }
 
 const styles = {
-  container: { minHeight: '100vh', background: colors.bg },
+  page: { minHeight: '100vh', background: colors.bg },
+
+  // Header
   header: { position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1000, padding: '20px 0', transition: 'all 0.3s ease', background: 'transparent' },
-  headerScrolled: { background: 'rgba(248, 246, 242, 0.95)', backdropFilter: 'blur(20px)', boxShadow: '0 1px 8px rgba(0,0,0,0.05)' },
-  headerContent: { maxWidth: '1200px', margin: '0 auto', padding: '0 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  logoContainer: { display: 'flex', alignItems: 'center', cursor: 'pointer' },
-  logoImg: { width: 'min(120px, 25vw)', height: 'auto', borderRadius: '8px' },
-  nav: { display: 'flex', alignItems: 'center' },
-  userNav: { display: 'flex', gap: '16px', alignItems: 'center' },
-  userName: { fontSize: '15px', fontWeight: '500', color: colors.text },
-  logoutBtn: { background: colors.lightGray, color: colors.text, border: 'none', padding: '10px 20px', borderRadius: radius.sm, fontSize: '14px', fontWeight: '600', cursor: 'pointer' },
-  authNav: { display: 'flex', gap: '12px', alignItems: 'center' },
-  loginLink: { color: colors.text, textDecoration: 'none', fontSize: '15px', fontWeight: '500', padding: '10px 20px' },
+  headerScrolled: { background: 'rgba(245, 241, 234, 0.95)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', boxShadow: '0 1px 0 rgba(0,0,0,0.05)' },
+  headerInner: { maxWidth: '1200px', margin: '0 auto', padding: '0 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+  wordmark: { fontFamily: fonts.serif, fontSize: '20px', fontWeight: '600', letterSpacing: '3px', textDecoration: 'none', transition: 'color 0.3s' },
+  nav: { display: 'flex', gap: '24px', alignItems: 'center' },
+  navLink: { fontSize: '13px', fontWeight: '500', textDecoration: 'none', letterSpacing: '0.5px', transition: 'color 0.3s' },
+  navLinkCTA: { fontSize: '12px', fontWeight: '600', textDecoration: 'none', letterSpacing: '0.5px', padding: '10px 20px', borderRadius: '2px', transition: 'background 0.3s' },
 
-  hero: { paddingTop: '140px', paddingBottom: '80px', background: colors.bg, position: 'relative', overflow: 'hidden' },
-  heroContent: { maxWidth: '800px', margin: '0 auto', padding: '0 24px', textAlign: 'center', position: 'relative', zIndex: 2 },
-  badge: { display: 'inline-block', padding: '8px 20px', background: colors.lightGray, color: colors.text, borderRadius: radius.full, fontSize: '13px', fontWeight: '600', marginBottom: '24px', letterSpacing: '0.5px' },
-  heroTitle: { fontFamily: fonts.serif, fontSize: 'clamp(36px, 6vw, 60px)', fontWeight: '500', lineHeight: 1.1, color: colors.text, marginBottom: '24px', letterSpacing: '-0.02em' },
-  heroTitleAccent: { color: colors.gold },
-  heroSubtitle: { fontSize: '17px', color: colors.textSecondary, lineHeight: 1.7, marginBottom: '40px', maxWidth: '560px', margin: '0 auto 40px' },
-  heroCTA: { display: 'flex', justifyContent: 'center' },
-  primaryBtn: { background: colors.dark, color: colors.cream, padding: '16px 32px', borderRadius: radius.md, fontSize: '15px', fontWeight: '600', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', cursor: 'pointer', border: 'none' },
+  // Shared
+  sectionLabel: { fontSize: '11px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '3px', color: colors.terracotta, marginBottom: '20px' },
+  sectionLabelLight: { fontSize: '11px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '3px', color: colors.gold, marginBottom: '32px' },
 
-  featureSection: { padding: '80px 24px', maxWidth: '1000px', margin: '0 auto', textAlign: 'center' },
-  sectionTitle: { fontFamily: fonts.serif, fontSize: 'clamp(28px, 4vw, 38px)', fontWeight: '500', color: colors.text, marginBottom: '12px', letterSpacing: '-0.3px' },
-  sectionSubtitle: { fontSize: '16px', color: colors.textSecondary, marginBottom: '48px' },
-  featureGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '24px' },
-  featureCard: { background: colors.surface, borderRadius: radius.lg, padding: '36px 28px', textAlign: 'center', border: `1px solid ${colors.border}` },
-  featureIconWrap: { width: '56px', height: '56px', borderRadius: radius.md, background: colors.lightGray, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' },
-  featureCardTitle: { fontFamily: fonts.serif, fontSize: '17px', fontWeight: '500', color: colors.text, marginBottom: '10px' },
-  featureCardText: { fontSize: '14px', color: colors.textSecondary, lineHeight: 1.6 },
+  // Hero
+  hero: { position: 'relative', height: '100vh', minHeight: '600px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  heroImageWrap: { position: 'absolute', inset: 0 },
+  heroImage: { width: '100%', height: '100%', objectFit: 'cover' },
+  heroOverlay: { position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(28,25,23,0.3) 0%, rgba(28,25,23,0.65) 100%)' },
+  heroContent: { position: 'relative', zIndex: 2, textAlign: 'center', padding: '0 32px' },
+  heroTitle: { fontFamily: fonts.serif, fontSize: 'clamp(44px, 8vw, 80px)', fontWeight: '500', lineHeight: 1.05, color: '#fff', letterSpacing: '-1px', marginBottom: '20px' },
+  heroSub: { fontSize: 'clamp(16px, 2vw, 19px)', color: 'rgba(255,255,255,0.8)', lineHeight: 1.7, marginBottom: '36px', fontWeight: '300' },
+  heroBtn: { display: 'inline-block', padding: '16px 40px', background: colors.terracotta, color: '#fff', fontSize: '14px', fontWeight: '600', letterSpacing: '0.5px', textDecoration: 'none', borderRadius: '2px' },
 
-  whySection: { padding: '80px 24px', background: colors.surface, textAlign: 'center' },
-  whyGrid: { maxWidth: '800px', margin: '48px auto 0', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px', textAlign: 'left' },
-  whyCard: { display: 'flex', gap: '16px', padding: '24px', background: colors.bg, borderRadius: radius.lg, alignItems: 'flex-start' },
-  whyIconWrap: { width: '44px', height: '44px', borderRadius: radius.sm, background: colors.lightGray, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  whyCardTitle: { fontSize: '15px', fontWeight: '600', color: colors.text, marginBottom: '6px' },
-  whyCardText: { fontSize: '14px', color: colors.textSecondary, lineHeight: 1.6 },
+  // Statement
+  statementSection: { padding: '100px 32px' },
+  statementInner: { maxWidth: '750px', margin: '0 auto', textAlign: 'center' },
+  statementText: { fontFamily: fonts.serif, fontSize: 'clamp(24px, 4vw, 36px)', fontWeight: '400', lineHeight: 1.45, color: colors.text, marginBottom: '16px' },
+  statementSub: { fontSize: '16px', color: colors.textSecondary, letterSpacing: '0.3px' },
 
-  waitlistSection: { padding: '80px 24px', background: colors.bg },
-  waitlistInner: { maxWidth: '520px', margin: '0 auto', textAlign: 'center' },
-  waitlistTitle: { fontFamily: fonts.serif, fontSize: 'clamp(24px, 4vw, 32px)', fontWeight: '500', color: colors.text, marginBottom: '12px', lineHeight: 1.3 },
-  waitlistSubtext: { fontSize: '15px', color: colors.textSecondary, lineHeight: 1.7, marginBottom: '32px' },
+  // Features
+  featuresSection: { padding: '80px 32px 100px', background: colors.surface },
+  featuresInner: { maxWidth: '1100px', margin: '0 auto' },
+  featuresGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '48px' },
+  featureCard: { paddingTop: '24px', borderTop: `2px solid ${colors.terracotta}` },
+  featureNumber: { fontFamily: fonts.serif, fontSize: '14px', color: colors.terracotta, marginBottom: '20px' },
+  featureTitle: { fontFamily: fonts.serif, fontSize: '22px', fontWeight: '500', color: colors.text, marginBottom: '12px' },
+  featureText: { fontSize: '15px', color: colors.textSecondary, lineHeight: 1.75 },
 
-  form: { width: '100%', display: 'flex', flexDirection: 'column', gap: '10px', textAlign: 'left' },
-  input: { width: '100%', padding: '14px 18px', fontSize: '15px', border: `1.5px solid ${colors.border}`, borderRadius: radius.md, outline: 'none', background: colors.surface, color: colors.text, fontFamily: fonts.sans, boxSizing: 'border-box' },
-  searchInput: { width: '100%', padding: '10px 14px', fontSize: '14px', border: `1.5px solid ${colors.border}`, borderRadius: radius.sm, outline: 'none', background: colors.bg, color: colors.text, fontFamily: fonts.sans, boxSizing: 'border-box' },
-  autocompleteWrapper: { position: 'relative' },
-  suggestionsDropdown: { position: 'absolute', top: '100%', left: 0, right: 0, background: colors.surface, border: `1.5px solid ${colors.border}`, borderRadius: radius.sm, marginTop: '4px', zIndex: 10, overflow: 'hidden' },
-  suggestionItem: { display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px', fontSize: '13px', color: colors.text, cursor: 'pointer', borderBottom: `1px solid ${colors.lightGray}` },
-  formCard: { width: '100%', background: colors.surface, border: `1.5px solid ${colors.border}`, borderRadius: radius.md, padding: '16px', textAlign: 'left', marginTop: '4px', boxSizing: 'border-box' },
-  formCardTitle: { fontSize: '15px', fontWeight: '600', color: colors.text, marginBottom: '2px' },
-  formCardSub: { fontSize: '12px', color: colors.textMuted, marginBottom: '12px' },
-  groupLabel: { fontSize: '11px', fontWeight: '600', color: colors.textTertiary, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' },
-  chipGrid: { display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '4px' },
-  chip: { display: 'inline-flex', alignItems: 'center', padding: '8px 14px', fontSize: '13px', fontWeight: '600', color: colors.textSecondary, background: colors.surface, border: `1.5px solid ${colors.border}`, borderRadius: radius.full, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s ease' },
-  chipSelected: { background: colors.dark, borderColor: colors.dark, color: colors.cream },
-  submitBtn: { width: '100%', padding: '16px', fontSize: '16px', fontWeight: '600', color: colors.cream, background: colors.dark, border: 'none', borderRadius: radius.md, cursor: 'pointer', fontFamily: 'inherit', marginTop: '8px' },
-  error: { fontSize: '13px', color: colors.error, marginTop: '4px', textAlign: 'center' },
-  privacy: { fontSize: '12px', color: colors.textMuted, marginTop: '16px' },
+  // Who this is for
+  forSection: { padding: '100px 32px', background: colors.dark },
+  forInner: { maxWidth: '1100px', margin: '0 auto' },
+  forGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' },
+  forCard: { padding: '36px', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '3px' },
+  forText: { fontFamily: fonts.serif, fontSize: '17px', lineHeight: 1.65, color: 'rgba(255,255,255,0.75)', fontStyle: 'italic', margin: 0 },
 
-  success: { display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 0' },
-  successIcon: { width: '80px', height: '80px', borderRadius: '50%', background: colors.lightGray, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px' },
-  successTitle: { fontFamily: fonts.serif, fontSize: '28px', fontWeight: '500', color: colors.text, margin: '0 0 12px' },
-  successText: { fontSize: '15px', color: colors.textSecondary, lineHeight: 1.7, maxWidth: '380px', margin: '0 0 8px' },
+  // Founder
+  founderSection: { padding: '100px 32px' },
+  founderInner: { maxWidth: '620px', margin: '0 auto', textAlign: 'center' },
+  founderQuote: { fontFamily: fonts.serif, fontSize: 'clamp(20px, 3vw, 26px)', fontWeight: '400', lineHeight: 1.55, color: colors.text, fontStyle: 'italic', margin: '0 0 32px 0', padding: 0, border: 'none' },
+  founderAttr: { display: 'inline-flex', alignItems: 'center', gap: '16px' },
+  founderImageWrap: { width: '48px', height: '48px', borderRadius: '50%', overflow: 'hidden', flexShrink: 0 },
+  founderImage: { width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 20%' },
+  founderName: { fontSize: '15px', fontWeight: '600', color: colors.text, textAlign: 'left' },
+  founderRole: { fontSize: '13px', color: colors.textSecondary, textAlign: 'left' },
 
-  footer: { background: colors.dark, color: '#fff', padding: '40px 24px' },
-  footerInner: { maxWidth: '600px', margin: '0 auto', textAlign: 'center' },
-  footerTagline: { fontFamily: fonts.serif, fontSize: '16px', fontWeight: '500', color: colors.warmGray, marginBottom: '16px' },
-  footerInsta: { display: 'inline-flex', alignItems: 'center', color: colors.gold, textDecoration: 'none', fontSize: '15px', fontWeight: '500', marginBottom: '20px' },
-  footerCopy: { color: '#6b6b6b', fontSize: '13px' },
+  // Apply
+  applySection: { padding: '100px 32px', background: colors.dark, textAlign: 'center' },
+  applyInner: { maxWidth: '520px', margin: '0 auto' },
+  applyTitle: { fontFamily: fonts.serif, fontSize: 'clamp(28px, 4vw, 36px)', fontWeight: '500', color: '#fff', marginBottom: '16px' },
+  applySub: { fontSize: '15px', color: 'rgba(255,255,255,0.6)', lineHeight: 1.75, marginBottom: '36px' },
+  applyForm: { display: 'flex', gap: '10px', maxWidth: '440px', margin: '0 auto' },
+  applyInput: { flex: 1, padding: '14px 18px', fontSize: '15px', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '2px', background: 'rgba(255,255,255,0.05)', color: '#fff', fontFamily: fonts.sans, outline: 'none', boxSizing: 'border-box' },
+  applyBtn: { padding: '14px 28px', fontSize: '14px', fontWeight: '600', background: colors.terracotta, color: '#fff', border: 'none', borderRadius: '2px', cursor: 'pointer', fontFamily: fonts.sans, letterSpacing: '0.5px', whiteSpace: 'nowrap' },
+  applyError: { fontSize: '13px', color: '#e07c6a', marginTop: '12px' },
+
+  // Footer
+  footer: { padding: '60px 32px 40px', background: colors.dark, borderTop: '1px solid rgba(255,255,255,0.06)' },
+  footerInner: { maxWidth: '1100px', margin: '0 auto' },
+  footerTop: { display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '48px' },
+  footerWordmark: { fontFamily: fonts.serif, fontSize: '18px', fontWeight: '600', letterSpacing: '3px', color: colors.cream, marginBottom: '8px' },
+  footerTagline: { fontSize: '14px', color: colors.textTertiary, fontStyle: 'italic' },
+  footerLinks: { display: 'flex', gap: '32px' },
+  footerLink: { fontSize: '14px', color: colors.textSecondary, textDecoration: 'none' },
+  footerBottom: { borderTop: `1px solid ${colors.glassBorder}`, paddingTop: '24px' },
+  footerCopy: { fontSize: '12px', color: colors.textMuted },
 };
+
+if (!document.getElementById('rihlah-styles')) {
+  const style = document.createElement('style');
+  style.id = 'rihlah-styles';
+  style.textContent = `
+    @media (max-width: 768px) {
+      .rihlah-features-grid { grid-template-columns: 1fr !important; }
+      .rihlah-for-grid { grid-template-columns: 1fr !important; }
+    }
+  `;
+  document.head.appendChild(style);
+}
 
 export default ModernHome;

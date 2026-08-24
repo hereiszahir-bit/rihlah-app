@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { db } from '../firebase';
 import { doc, updateDoc, addDoc, collection } from 'firebase/firestore';
 import { useUser } from '../context/UserContext';
-import { FiX, FiEdit2, FiTrash2, FiChevronDown, FiMapPin, FiNavigation, FiMessageCircle, FiCamera, FiSend, FiMap } from 'react-icons/fi';
+import { FiArrowLeft, FiX, FiEdit2, FiTrash2, FiChevronDown, FiMapPin, FiNavigation, FiMessageCircle, FiCamera, FiSend, FiMap } from 'react-icons/fi';
 import { colors, fonts, radius, components, type } from '../design';
 import { getDestinationImage } from '../data/destinations';
 
@@ -398,8 +398,11 @@ function Saved() {
 
   return (
     <div style={styles.container}>
-      {/* Page title */}
+      {/* Page header with back */}
       <div style={styles.pageHeader}>
+        <button style={styles.backBtn} onClick={() => navigate('/profile')}>
+          <FiArrowLeft size={20} color={colors.text} />
+        </button>
         <h1 style={styles.pageTitle}>Journeys</h1>
       </div>
 
@@ -521,7 +524,8 @@ const styles = {
   loadingState: { display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', color: colors.textTertiary, fontSize: '16px' },
 
   // Page header
-  pageHeader: { padding: '20px 24px 0' },
+  pageHeader: { padding: '20px 24px 0', display: 'flex', alignItems: 'center', gap: '12px' },
+  backBtn: { background: 'none', border: 'none', padding: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center' },
   pageTitle: { fontFamily: fonts.serif, fontSize: '28px', fontWeight: '500', color: colors.text, margin: 0, letterSpacing: '-0.3px' },
 
   // Sub-tabs
@@ -552,13 +556,13 @@ const styles = {
   tripCard: { background: colors.surface, borderRadius: radius.lg, overflow: 'hidden', border: `1px solid ${colors.border}`, cursor: 'pointer' },
   tripHeader: { padding: '24px 20px', position: 'relative' },
   tripDestination: { fontFamily: fonts.serif, color: colors.cream, fontSize: '22px', fontWeight: '600', marginBottom: '4px' },
-  tripDates: { color: 'rgba(248,246,242,0.65)', fontSize: '13px', marginBottom: '14px' },
+  tripDates: { color: colors.textSecondary, fontSize: '13px', marginBottom: '14px' },
   tripMeta: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   tripMetaLeft: {},
-  thereBadge: { fontSize: '12px', fontWeight: '600', color: colors.gold, background: 'rgba(255,255,255,0.1)', padding: '4px 12px', borderRadius: radius.full },
+  thereBadge: { fontSize: '12px', fontWeight: '600', color: colors.gold, background: colors.warmGray, padding: '4px 12px', borderRadius: radius.full },
   daysAway: { fontSize: '13px', fontWeight: '600', color: colors.gold },
   tripAvatars: { display: 'flex' },
-  tripAvatar: { width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(248,246,242,0.2)', color: colors.cream, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: '600', fontFamily: fonts.serif, marginLeft: '-6px', border: '2px solid rgba(26,26,26,0.5)', overflow: 'hidden' },
+  tripAvatar: { width: '32px', height: '32px', borderRadius: '50%', background: colors.warmGray, color: colors.cream, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: '600', fontFamily: fonts.serif, marginLeft: '-6px', border: `2px solid ${colors.surface}`, overflow: 'hidden' },
   tripAvatarImg: { width: '100%', height: '100%', objectFit: 'cover' },
   tripPills: { padding: '12px 20px', display: 'flex', gap: '8px', flexWrap: 'wrap' },
   pill: { fontSize: '12px', fontWeight: '600', color: colors.text, background: colors.lightGray, padding: '6px 12px', borderRadius: radius.full },
@@ -566,7 +570,7 @@ const styles = {
   // Past Trip (shared helper styles for past cards)
   tripHeaderLeft: { flex: 1 },
   tripHeaderMeta: { display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' },
-  tripChevron: { color: 'rgba(248,246,242,0.5)', transition: 'transform 0.2s', display: 'inline-block', flexShrink: 0 },
+  tripChevron: { color: colors.textTertiary, transition: 'transform 0.2s', display: 'inline-block', flexShrink: 0 },
   pastTripCard: { background: colors.surface, borderRadius: radius.md, overflow: 'hidden', border: `1px solid ${colors.border}`, opacity: 0.8 },
   pastTripHeader: { display: 'flex', alignItems: 'center', padding: '16px 20px', cursor: 'pointer' },
   pastTripDestination: { fontFamily: fonts.serif, color: colors.textSecondary, fontSize: '16px', fontWeight: '500', marginBottom: '2px' },
