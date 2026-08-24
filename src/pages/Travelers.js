@@ -383,12 +383,12 @@ function Travelers() {
           ) : (
             <div style={styles.emptyState}>
               <div style={styles.emptyTitle}>
-                {activeFilter !== 'all' ? 'No travelers here yet' : 'Your community is forming'}
+                {activeFilter !== 'all' ? 'No one here yet' : 'Your people are out there'}
               </div>
               <div style={styles.emptyText}>
                 {activeFilter !== 'all'
                   ? 'Try a different destination or check back soon.'
-                  : 'When members plan journeys, they appear here.'}
+                  : 'Plan a journey and see who else is going. You should not have to be curious alone.'}
               </div>
               {activeFilter !== 'all' ? (
                 <button style={styles.emptyCta} onClick={() => setActiveFilter('all')}>

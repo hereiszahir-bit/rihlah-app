@@ -76,10 +76,10 @@ function ModernHome() {
           transition={{ duration: 1, delay: 0.3 }}
         >
           <h1 style={styles.heroTitle}>
-            Travel with<br />your people.
+            Curiosity is an<br />act of faith.
           </h1>
           <p style={styles.heroSub}>
-            A private travel community for Muslims who move with intention.
+            A travel community for Muslims who believe the world is a gift from God — and want to open it with people who get it.
           </p>
           <a href="#apply" style={styles.heroBtn}>Request access</a>
         </motion.div>
@@ -95,11 +95,11 @@ function ModernHome() {
             transition={{ duration: 1 }}
           >
             <p style={styles.statementText}>
-              Rihlah is where Muslim travelers discover cities,
-              find each other, and travel with people worth knowing.
+              Millions of Muslims list "travel" as an interest.
+              Almost none of them ever connect over it.
             </p>
             <p style={styles.statementSub}>
-              Not a travel agency. Not a tour group. A community.
+              Rihlah is where curious Muslims find each other — in the cities that change how you see the world.
             </p>
           </motion.div>
         </div>
@@ -117,10 +117,10 @@ function ModernHome() {
               viewport={{ once: true }}
             >
               <div style={styles.featureNumber}>01</div>
-              <h3 style={styles.featureTitle}>Discover</h3>
+              <h3 style={styles.featureTitle}>See who's going</h3>
               <p style={styles.featureText}>
-                Curated city guides, restaurants, and experiences — built for how you travel.
-                Save what speaks to you. Plan when you're ready.
+                Browse travelers by destination and dates. See who overlaps with your trip.
+                Connect before you land — so you arrive knowing someone.
               </p>
             </motion.div>
             <motion.div
@@ -131,10 +131,10 @@ function ModernHome() {
               transition={{ delay: 0.1 }}
             >
               <div style={styles.featureNumber}>02</div>
-              <h3 style={styles.featureTitle}>Connect</h3>
+              <h3 style={styles.featureTitle}>City intelligence</h3>
               <p style={styles.featureText}>
-                See who's going where. Browse members by destination,
-                city, or interest. No pressure — just presence.
+                Where to pray. Where to eat. What to skip.
+                Guides written by people who have been there — not algorithms that have not.
               </p>
             </motion.div>
             <motion.div
@@ -145,10 +145,10 @@ function ModernHome() {
               transition={{ delay: 0.2 }}
             >
               <div style={styles.featureNumber}>03</div>
-              <h3 style={styles.featureTitle}>Travel intelligence</h3>
+              <h3 style={styles.featureTitle}>Your people</h3>
               <p style={styles.featureText}>
-                AI-powered city concierge — prayer-aware itineraries,
-                verified dining, local knowledge that no guidebook has.
+                Not a tour group. Not a dating app. Just curious Muslims
+                in the same city at the same time. Who knows what happens from there.
               </p>
             </motion.div>
           </div>
@@ -168,20 +168,23 @@ function ModernHome() {
             <div className="rihlah-for-grid" style={styles.forGrid}>
               <div style={styles.forCard}>
                 <p style={styles.forText}>
-                  The one who's traveled the world but always figured out
-                  the Muslim-specific parts alone.
+                  The one whose culture handed them a blueprint — school, career,
+                  marriage, house — and they followed it, but always felt like
+                  something was missing.
                 </p>
               </div>
               <div style={styles.forCard}>
                 <p style={styles.forText}>
-                  The one who wants to explore a new city with people who
-                  get it — without having to explain anything.
+                  The one who prays five times a day and also wants to eat
+                  street tacos in Mexico City at midnight. Who does not see
+                  a contradiction in that.
                 </p>
               </div>
               <div style={styles.forCard}>
                 <p style={styles.forText}>
-                  The one who's tired of choosing between generic travel apps
-                  and budget group tours with matching t-shirts.
+                  The one who wants to live a life where what they want and
+                  what they do are the same thing — and knows that travel is
+                  part of how you get there.
                 </p>
               </div>
             </div>
@@ -199,9 +202,9 @@ function ModernHome() {
             transition={{ duration: 0.6 }}
           >
             <blockquote style={styles.founderQuote}>
-              "Muslim travelers are everywhere, but we're invisible to each other.
-              Same cities, same streets, and we never cross paths.
-              Rihlah exists to change that."
+              "I built Rihlah because I was tired of being curious alone.
+              Every Muslim I know loves to travel. Almost none of us
+              ever connect over it. I wanted to change that."
             </blockquote>
             <div style={styles.founderAttr}>
               <div style={styles.founderImageWrap}>
@@ -226,10 +229,10 @@ function ModernHome() {
               viewport={{ once: true }}
             >
               <div style={styles.sectionLabel}>Early access</div>
-              <h2 style={styles.applyTitle}>Rihlah is opening soon.</h2>
+              <h2 style={styles.applyTitle}>The world is a gift. Open it.</h2>
               <p style={styles.applySub}>
-                We're building something intentional — not for everyone, but for the right people.
-                Request early access and we'll be in touch.
+                Rihlah is not for everyone. It is for the ones who are curious enough to go
+                and intentional enough to go well. If that sounds like you, we want you here.
               </p>
               <form onSubmit={handleSubmit} className="rihlah-apply-form" style={styles.applyForm}>
                 <input

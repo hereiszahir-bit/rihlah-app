@@ -92,21 +92,22 @@ function About() {
               That's the version Rihlah exists to create.
             </p>
             <p>
-              I started this because I noticed something: Muslim travelers are everywhere, but
-              we're invisible to each other. We're in the same cities at the same time, walking
-              the same streets, and we never cross paths. There's no brand that brings us together —
-              not as a religious group, but as people who share a set of values and a way of
-              moving through the world.
+              I started this because I was tired of being curious alone. Every Muslim I know
+              loves to travel — it's the most common interest on every app, every profile,
+              every conversation. But we never actually connect over it. We're in the same cities
+              at the same time, and we never cross paths.
             </p>
             <p>
-              Rihlah is that brand. We curate travel experiences in cities that resonate — places
-              with history, culture, and depth. We bring together small groups of Muslims who are
-              curious, intentional, and good company. We handle the logistics so you can focus on
-              the experience. And when the trip ends, you leave with people worth staying in touch with.
+              Most of us grew up with a blueprint: school, career, marriage, house. Curiosity —
+              the kind that makes you book a flight to a city where you know no one — doesn't
+              fit the blueprint. Rihlah is for the people who followed the blueprint but always
+              felt like something was missing. The ones who love their families and want to see
+              the world. Who pray five times a day and want to eat street tacos at midnight.
+              Who don't see a contradiction in any of that.
             </p>
             <p>
-              The name means "journey" in Arabic. But the real journey isn't the destination.
-              It's what happens when you put the right people in the right place at the right time.
+              The name means "journey" in Arabic. Ibn Battuta called his life's work a rihlah.
+              The word carries intention, curiosity, and faith. That felt right for what we're building.
             </p>
           </div>
 

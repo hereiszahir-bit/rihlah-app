@@ -20,7 +20,7 @@ function Discover() {
       {/* Header */}
       <div style={styles.header}>
         <div style={styles.brand}>RIHLAH</div>
-        <div style={styles.brandSub}>Travel intelligence</div>
+        <div style={styles.brandSub}>The world is a gift. Open it.</div>
       </div>
 
       <div style={styles.feed} ref={scrollRef}>
