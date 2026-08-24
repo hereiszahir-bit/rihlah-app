@@ -20,13 +20,11 @@ They all have one thing in common: curiosity. About cities, cultures, food, hist
 
 ## The kind of person we want here
 
-High-achieving does not mean high-income. It means high-intention. These are people who are actively building lives where what they want and what they do are the same thing. They are not chasing status or trying to be the coolest person in the room. They are doing the work — on their careers, their faith, their bodies, their minds — and travel is part of how they grow.
+Intention is the filter. Not income, not religiosity, not how many countries they have been to. The people we want are the ones who are quietly doing the work — on their careers, their faith, their health, their craft — and see travel as part of how they grow. They are not performing for anyone. They are not collecting passport stamps for content. They are genuinely curious about the world and want to move through it well.
 
-They read. They train. They have opinions about coffee. They show up on time. They tip well in countries where tipping is not expected. They ask good questions. They are the friend you text when you land in a new city.
+They ask good questions. They show up on time. They tip well in countries where tipping is not expected. They are the friend you text when you land somewhere new.
 
-Rihlah is not for everyone and it is not trying to be. We do not gatekeep on religiosity, ethnicity, or wealth. We gatekeep on intention. If you are here to explore the world with genuine curiosity and treat the people you meet with respect, you belong. If you are here for anything else, you will feel it — because the community will not match your energy.
-
-This is a self-selecting space. The tone, the content, the people — they signal who this is for. The right people will recognize it immediately. The wrong ones will not stay.
+We do not gatekeep on sect, ethnicity, or wealth. We gatekeep on character. The tone of the brand, the quality of the content, the caliber of the community — these things self-select. The right people recognize it immediately. The wrong ones do not stay long.
 
 ## What Rihlah is NOT
 

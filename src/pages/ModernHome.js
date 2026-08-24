@@ -95,11 +95,11 @@ function ModernHome() {
             transition={{ duration: 1 }}
           >
             <p style={styles.statementText}>
-              Millions of Muslims list "travel" as an interest.
-              Almost none of them ever connect over it.
+              We are in the same cities at the same time, walking the same streets,
+              and we never cross paths.
             </p>
             <p style={styles.statementSub}>
-              Rihlah is where curious Muslims find each other — in the cities that change how you see the world.
+              Rihlah is the place where that changes.
             </p>
           </motion.div>
         </div>
@@ -168,23 +168,22 @@ function ModernHome() {
             <div className="rihlah-for-grid" style={styles.forGrid}>
               <div style={styles.forCard}>
                 <p style={styles.forText}>
-                  The one whose culture handed them a blueprint — school, career,
-                  marriage, house — and they followed it, but always felt like
-                  something was missing.
+                  The one who has seen more of the world than most people
+                  in their life — and still figured out the Muslim parts alone
+                  every single time.
                 </p>
               </div>
               <div style={styles.forCard}>
                 <p style={styles.forText}>
-                  The one who prays five times a day and also wants to eat
-                  street tacos in Mexico City at midnight. Who does not see
-                  a contradiction in that.
+                  The one who books a flight to a city where they know no one,
+                  not to run from anything, but because standing still
+                  was never really an option.
                 </p>
               </div>
               <div style={styles.forCard}>
                 <p style={styles.forText}>
-                  The one who wants to live a life where what they want and
-                  what they do are the same thing — and knows that travel is
-                  part of how you get there.
+                  The one who does not need the world explained to them.
+                  They just want better company while they explore it.
                 </p>
               </div>
             </div>
@@ -202,9 +201,10 @@ function ModernHome() {
             transition={{ duration: 0.6 }}
           >
             <blockquote style={styles.founderQuote}>
-              "I built Rihlah because I was tired of being curious alone.
-              Every Muslim I know loves to travel. Almost none of us
-              ever connect over it. I wanted to change that."
+              "The best travel advice I ever got came in a 90-second voice note
+              from a friend of a friend. Not Google. Not a listicle. A person
+              who had been there and understood what I needed to know.
+              I wanted to build the place where that happens at scale."
             </blockquote>
             <div style={styles.founderAttr}>
               <div style={styles.founderImageWrap}>
@@ -231,8 +231,8 @@ function ModernHome() {
               <div style={styles.sectionLabel}>Early access</div>
               <h2 style={styles.applyTitle}>The world is a gift. Open it.</h2>
               <p style={styles.applySub}>
-                Rihlah is not for everyone. It is for the ones who are curious enough to go
-                and intentional enough to go well. If that sounds like you, we want you here.
+                We are building something small and intentional. Not for everyone —
+                for people who travel with purpose and treat the people they meet well.
               </p>
               <form onSubmit={handleSubmit} className="rihlah-apply-form" style={styles.applyForm}>
                 <input

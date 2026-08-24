@@ -92,22 +92,22 @@ function About() {
               That's the version Rihlah exists to create.
             </p>
             <p>
-              I started this because I was tired of being curious alone. Every Muslim I know
-              loves to travel — it's the most common interest on every app, every profile,
-              every conversation. But we never actually connect over it. We're in the same cities
-              at the same time, and we never cross paths.
+              I started this because the best travel intelligence I've ever received came
+              through group chats and voice notes — from people who had been where I was going
+              and understood what mattered to me without me having to spell it out. That kind
+              of knowledge exists everywhere. It just disappears in 24 hours. There is no
+              persistent layer where it lives.
             </p>
             <p>
-              Most of us grew up with a blueprint: school, career, marriage, house. Curiosity —
-              the kind that makes you book a flight to a city where you know no one — doesn't
-              fit the blueprint. Rihlah is for the people who followed the blueprint but always
-              felt like something was missing. The ones who love their families and want to see
-              the world. Who pray five times a day and want to eat street tacos at midnight.
-              Who don't see a contradiction in any of that.
+              Rihlah is that layer. Not a travel agency. Not a content platform. A community
+              of people who are genuinely curious about the world and want to explore it alongside
+              others who share their context. People who are building lives with intention — not
+              performing for anyone, just quietly doing the work of becoming who they actually are.
             </p>
             <p>
               The name means "journey" in Arabic. Ibn Battuta called his life's work a rihlah.
-              The word carries intention, curiosity, and faith. That felt right for what we're building.
+              The word carries something heavier than "trip" and lighter than "pilgrimage."
+              It felt right.
             </p>
           </div>
 
