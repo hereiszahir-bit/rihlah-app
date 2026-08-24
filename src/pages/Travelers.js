@@ -237,8 +237,7 @@ function Travelers() {
                 }}
                 onClick={() => setActiveFilter('here-now')}
               >
-                <span style={styles.filterLiveDot} />
-                Here now ({hereNowCount})
+                Now ({hereNowCount})
               </button>
             )}
             {destinations.map(({ city, count }) => (
@@ -321,7 +320,7 @@ function Travelers() {
                           {person.name?.charAt(0).toUpperCase()}
                         </div>
                       )}
-                      {person.isThere && <div style={styles.liveDot} />}
+                      {person.isThere && <div style={styles.activeTripDot} />}
                     </div>
 
                     {/* Info */}
@@ -335,7 +334,10 @@ function Travelers() {
 
                       <div style={styles.cardDestLine}>
                         {person.isThere ? (
-                          <><span style={styles.cardLiveLabel}>In </span><span style={styles.cardCityName}>{person.cityName}</span></>
+                          <>
+                            <span style={styles.cardCityName}>{person.cityName}</span>
+                            <span style={styles.cardTiming}> · through {person.end.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                          </>
                         ) : (
                           <>
                             <span style={styles.cardCityName}>{person.cityName}</span>
@@ -530,7 +532,7 @@ function Travelers() {
                             <div style={styles.modalTripDest}>{trip.destination.split(',')[0]}</div>
                             <div style={styles.modalTripDates}>{formatDateRange(trip.start, trip.end)}</div>
                           </div>
-                          {trip.isThere && <span style={styles.modalTripBadge}>There now</span>}
+                          {trip.isThere && <span style={styles.modalTripBadge}>Active trip</span>}
                         </div>
                       ))}
                     </div>
@@ -580,8 +582,8 @@ const styles = {
   filterChipActive: {
     background: colors.warmGray, borderColor: colors.warmGray, color: colors.text,
   },
-  filterLiveDot: {
-    width: '6px', height: '6px', borderRadius: '50%', background: colors.olive,
+  filterActiveDot: {
+    width: '6px', height: '6px', borderRadius: '50%', background: colors.terracotta,
   },
 
   // Your journeys
@@ -615,7 +617,7 @@ const styles = {
     padding: '18px 0',
     borderBottom: `1px solid ${colors.border}`,
   },
-  // Traveler card — live (there now)
+  // Traveler card — active trip
   cardLive: {
     display: 'flex', alignItems: 'center', gap: '0',
     padding: '18px 0',
@@ -633,10 +635,10 @@ const styles = {
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     fontSize: '20px', fontWeight: '600', fontFamily: fonts.serif,
   },
-  liveDot: {
+  activeTripDot: {
     position: 'absolute', bottom: '1px', right: '1px',
     width: '14px', height: '14px', borderRadius: '50%',
-    background: colors.olive, border: `3px solid ${colors.bg}`,
+    background: colors.terracotta, border: `3px solid ${colors.bg}`,
   },
   cardBody: { flex: 1, minWidth: 0, paddingTop: '2px' },
   cardNameRow: { display: 'flex', alignItems: 'center', gap: '8px' },
@@ -649,7 +651,7 @@ const styles = {
     fontSize: '14px', color: colors.textSecondary,
     marginTop: '3px', lineHeight: 1.4,
   },
-  cardLiveLabel: { color: colors.olive, fontWeight: '600' },
+  cardActiveLabel: { color: colors.terracotta, fontWeight: '600' },
   cardCityName: { fontWeight: '600', color: colors.text },
   cardTiming: { color: colors.textTertiary, fontWeight: '400' },
   cardSharedLine: {
@@ -746,7 +748,7 @@ const styles = {
   modalTripItem: { display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: colors.bg, borderRadius: radius.sm, marginBottom: '6px' },
   modalTripDest: { fontSize: '14px', fontWeight: '600', color: colors.text },
   modalTripDates: { fontSize: '12px', color: colors.textTertiary, marginTop: '2px' },
-  modalTripBadge: { fontSize: '11px', fontWeight: '600', color: colors.olive, background: colors.successBg, padding: '4px 8px', borderRadius: '6px', flexShrink: 0 },
+  modalTripBadge: { fontSize: '11px', fontWeight: '600', color: colors.terracotta, background: colors.warningBg, padding: '4px 8px', borderRadius: '6px', flexShrink: 0 },
   modalStatusBadge: { width: '100%', padding: '14px', background: colors.warmGray, color: colors.text, borderRadius: radius.md, fontSize: '15px', fontWeight: '600', textAlign: 'center' },
   modalConnectBtn: { ...components.btnPrimary },
 };

@@ -2,10 +2,10 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     // Profile photos: readable by all authenticated users, writable only by owner
-    match /profilePhotos/{userId} {
+    match /profilePhotos/{fileName} {
       allow read: if request.auth != null;
       allow write: if request.auth != null
-                   && request.auth.uid == userId
+                   && fileName.split('_')[0] == request.auth.uid
                    && request.resource.size < 5 * 1024 * 1024
                    && request.resource.contentType.matches('image/.*');
     }

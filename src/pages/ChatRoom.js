@@ -20,6 +20,7 @@ function ChatRoom() {
   const [sending, setSending] = useState(false);
   const [selectedMsg, setSelectedMsg] = useState(null);
   const [showProfile, setShowProfile] = useState(false);
+  const [photoIndex, setPhotoIndex] = useState(0);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -165,7 +166,7 @@ function ChatRoom() {
         <button style={styles.backBtn} onClick={() => navigate('/messages')}>
           <FiArrowLeft size={22} color={colors.text} />
         </button>
-        <div style={styles.headerClickable} onClick={() => otherUser && setShowProfile(true)}>
+        <div style={styles.headerClickable} onClick={() => { if (otherUser) { setPhotoIndex(0); setShowProfile(true); } }}>
           <div style={styles.headerAvatar}>
             {otherUser?.photoURL ? (
               <img src={otherUser.photoURL} alt="" style={styles.headerAvatarImg} />
@@ -274,15 +275,36 @@ function ChatRoom() {
               <FiX size={18} />
             </button>
 
-            <div style={styles.largePhotoContainer}>
-              {otherUser.photoURL ? (
-                <img src={otherUser.photoURL} alt={otherUser.name} style={styles.largePhoto} />
-              ) : (
-                <div style={styles.largeAvatarPlaceholder}>
-                  {(otherUser.name || 'U')[0].toUpperCase()}
+            {(() => {
+              const photos = otherUser.photos?.length > 0 ? otherUser.photos : (otherUser.photoURL ? [otherUser.photoURL] : []);
+              if (photos.length > 1) {
+                return (
+                  <div style={styles.carouselWrap}>
+                    <div style={styles.carouselImageWrap}>
+                      <img src={photos[photoIndex]} alt={`${otherUser.name} ${photoIndex + 1}`} style={styles.carouselImage} />
+                      <div style={styles.carouselTapLeft} onClick={() => setPhotoIndex(i => i > 0 ? i - 1 : photos.length - 1)} />
+                      <div style={styles.carouselTapRight} onClick={() => setPhotoIndex(i => i < photos.length - 1 ? i + 1 : 0)} />
+                    </div>
+                    <div style={styles.carouselDots}>
+                      {photos.map((_, i) => (
+                        <div key={i} style={{ ...styles.carouselDot, ...(i === photoIndex ? styles.carouselDotActive : {}) }} onClick={() => setPhotoIndex(i)} />
+                      ))}
+                    </div>
+                  </div>
+                );
+              }
+              return (
+                <div style={styles.largePhotoContainer}>
+                  {photos.length > 0 ? (
+                    <img src={photos[0]} alt={otherUser.name} style={styles.largePhoto} />
+                  ) : (
+                    <div style={styles.largeAvatarPlaceholder}>
+                      {(otherUser.name || 'U')[0].toUpperCase()}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              );
+            })()}
 
             <div style={styles.profileInfo}>
               <div style={styles.profileName}>
@@ -533,7 +555,6 @@ const styles = {
   modalContent: {
     background: colors.surface,
     borderRadius: radius.lg,
-    padding: '32px 24px 24px',
     maxWidth: '380px',
     width: '100%',
     maxHeight: '85vh',
@@ -548,19 +569,31 @@ const styles = {
     width: '32px',
     height: '32px',
     borderRadius: '50%',
-    background: colors.warmGray,
+    background: 'rgba(0,0,0,0.4)',
     border: 'none',
-    color: colors.textSecondary,
+    color: '#fff',
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 2,
   },
+  // Photo carousel
+  carouselWrap: { position: 'relative', marginBottom: '4px' },
+  carouselImageWrap: {
+    position: 'relative', width: '100%', aspectRatio: '4/5',
+    borderRadius: `${radius.lg} ${radius.lg} 0 0`, overflow: 'hidden',
+  },
+  carouselImage: { width: '100%', height: '100%', objectFit: 'cover' },
+  carouselTapLeft: { position: 'absolute', top: 0, left: 0, width: '40%', height: '100%', cursor: 'pointer' },
+  carouselTapRight: { position: 'absolute', top: 0, right: 0, width: '60%', height: '100%', cursor: 'pointer' },
+  carouselDots: { display: 'flex', justifyContent: 'center', gap: '6px', padding: '12px 0 4px' },
+  carouselDot: { width: '6px', height: '6px', borderRadius: '50%', background: colors.warmGray, cursor: 'pointer', transition: 'all 0.2s' },
+  carouselDotActive: { background: colors.terracotta, width: '18px', borderRadius: '3px' },
   largePhotoContainer: {
     display: 'flex',
     justifyContent: 'center',
-    marginBottom: '16px',
+    padding: '32px 0 16px',
   },
   largePhoto: {
     width: '88px',
@@ -584,6 +617,7 @@ const styles = {
   },
   profileInfo: {
     textAlign: 'center',
+    padding: '16px 24px 24px',
   },
   profileName: {
     fontFamily: fonts.serif,

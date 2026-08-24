@@ -10,7 +10,7 @@ service cloud.firestore {
       function allowedUserFields() {
         return ['name', 'age', 'gender', 'profileVisibility', 'city', 'bio',
                 'interests', 'identity', 'whatsapp', 'instagram', 'linkedin', 'photoURL',
-                'createdAt', 'upcomingTrips', 'pastTrips', 'connections',
+                'photos', 'createdAt', 'upcomingTrips', 'pastTrips', 'connections',
                 'onboardingComplete', 'email'];
       }
 
@@ -18,12 +18,13 @@ service cloud.firestore {
       function validUserData() {
         let d = request.resource.data;
         return d.name is string && d.name.size() >= 1 && d.name.size() <= 100
-            && d.age is int && d.age >= 13 && d.age <= 120
-            && d.gender is string && d.gender in ['Male', 'Female']
+            && (d.age is int ? (d.age >= 13 && d.age <= 120) : d.age == null)
+            && d.gender is string && d.gender in ['Male', 'Female', '']
             && d.bio is string && d.bio.size() <= 500
             && d.whatsapp is string && d.whatsapp.size() <= 50
             && d.instagram is string && d.instagram.size() <= 50
             && d.interests is list && d.interests.size() <= 20
+            && (!('photos' in d) || (d.photos is list && d.photos.size() <= 5))
             && d.onboardingComplete is bool;
       }
 
