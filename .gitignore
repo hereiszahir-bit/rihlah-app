@@ -28,3 +28,15 @@ yarn-error.log*
 
 # iOS duplicate plists
 **/GoogleService-Info\ (1).plist
+
+# Generated HTML tools (one-time use)
+generate-favicons.html
+product-showcase.html
+instagram-*.html
+linkinbio.html
+marketing-playbook.html
+rihlah-flyer.html
+rihlah-links-guide.html
+rihlah-brand-brief.md
+roadmap.html
+waitlist-admin.html

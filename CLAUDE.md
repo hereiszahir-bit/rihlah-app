@@ -39,7 +39,7 @@ DIRECTION.md first.
 
 | Screen | Route | Purpose |
 |--------|-------|---------|
-| Landing | `/` | Marketing page + waitlist signup (currently "Coming Soon") |
+| Landing | `/` | Brand landing page (web only; Capacitor routes to app) |
 | Signup | `/signup` | Email + Google registration |
 | Login | `/login` | Authentication |
 | Onboarding | `/onboarding` | Multi-step: name, age, gender, visibility, city, bio, interests, photo |
@@ -55,17 +55,16 @@ DIRECTION.md first.
 
 ---
 
-## Core Mechanic: Here Now / Going Soon
+## Core Mechanic: Active Trips / Going Soon
 
 Fully implemented. This is the product's heartbeat.
 
 - User adds a trip with `startDate` / `endDate`
 - System compares against today's date on every view
-- `today >= startDate && today <= endDate` → **Here Now**
-- Future dates → **Going Soon / Planning**
+- `today >= startDate && today <= endDate` → **Active trip** (terracotta dot, "through [date]")
+- Future dates → **Going Soon** (date shown)
 - Destinations screen shows real-time counts per city
-- Destination detail has subtabs filtering by status
-- Connections display uses green ring (here now) vs gray ring (upcoming)
+- **No "live" or "here now" language** — presence is date-based, not GPS. Active trips use terracotta accent, not green dots.
 - Past trips auto-archive via `runCleanup()` in UserContext on login
 
 ---
@@ -123,7 +122,7 @@ Fully implemented. This is the product's heartbeat.
 users/{userId}
   email, name, age, gender, profileVisibility
   city, bio, interests[], identity[]
-  photoURL, whatsapp, instagram
+  photoURL, photos[], whatsapp, instagram, linkedin
   upcomingTrips[{destination, startDate, endDate, experiences[]}]
   pastTrips[]
   connections[{userId, name, age, gender, bio, photoURL, interests, whatsapp, instagram, connectedAt}]
@@ -193,7 +192,8 @@ firebase deploy          # Hosting + rules + indexes
 - **Privacy-first** — gender visibility controls are non-negotiable
 - **Mobile-first** — designed for phones (vmin/vmax, touch-friendly)
 - **Zero marketing budget** — organic distribution through community
-- **Currently in waitlist mode** — "Coming Soon" on landing is intentional
+- **Brand voice** — see BRAND.md. No emojis, no "halal travel agency" language, no crescent/airplane iconography
+- **Logo** — serif R monogram on dark (#0a0a0a). Terracotta (#c4956a) accent. Wordmark "RIHLAH" in DM Serif Display.
 
 ---
 
@@ -237,7 +237,17 @@ Output goes to `scripts/research-output/`. Review the report before merging cont
 - In-app payments
 - Flight/hotel search
 - Native mobile apps (yet)
-- Content/blog layer
+
+## Key Files
+
+| File | Purpose |
+|------|---------|
+| `DIRECTION.md` | Strategic direction — read before every session |
+| `BRAND.md` | Brand voice, tone, positioning |
+| `firestore.rules` | Firestore security rules (allowed fields, validation) |
+| `storage.rules` | Storage security rules (photo upload auth) |
+| `src/design.js` | Design system (colors, fonts, radius, components) |
+| `src/context/UserContext.js` | Central state — users, connections, requests |
 
 ## Skill routing
 
