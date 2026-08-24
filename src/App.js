@@ -58,7 +58,7 @@ function AppRoutes() {
     <AppShell>
     <Routes>
       {/* Public routes */}
-      <Route path="/" element={currentUser ? <Navigate to="/home" /> : (Capacitor.isNativePlatform() ? <Navigate to="/login" /> : <ModernHome />)} />
+      <Route path="/" element={Capacitor.isNativePlatform() ? (currentUser ? <Navigate to="/home" /> : <Navigate to="/login" />) : <ModernHome />} />
       <Route path="/go/:slug" element={<PublicDestination />} />
       <Route path="/about" element={<About />} />
       <Route path="/blog" element={<Blog />} />

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { db } from '../firebase';
+import { db, auth } from '../firebase';
 import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
+import { useUser } from '../context/UserContext';
 import { colors, fonts } from '../design';
 
 function ModernHome() {
@@ -11,6 +12,7 @@ function ModernHome() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const { currentUser } = useUser();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -48,10 +50,15 @@ function ModernHome() {
       {/* Header */}
       <header style={{ ...styles.header, ...(scrolled ? styles.headerScrolled : {}) }}>
         <div style={styles.headerInner}>
-          <Link to="/" style={{ ...styles.wordmark, color: scrolled ? colors.text : '#fff' }}>RIHLAH</Link>
+          <Link to="/" style={{ ...styles.wordmark, color: '#fff' }}>RIHLAH</Link>
           <nav style={styles.nav}>
-            <Link to="/about" style={{ ...styles.navLink, color: scrolled ? colors.textSecondary : 'rgba(255,255,255,0.8)' }}>Our Story</Link>
-            <a href="#apply" style={{ ...styles.navLinkCTA, background: scrolled ? colors.terracotta : 'rgba(255,255,255,0.15)', color: '#fff' }}>Request access</a>
+            <Link to="/about" style={{ ...styles.navLink, color: 'rgba(255,255,255,0.8)' }}>Our Story</Link>
+            <Link to="/blog" style={{ ...styles.navLink, color: 'rgba(255,255,255,0.8)' }}>Journal</Link>
+            {currentUser ? (
+              <Link to="/home" style={{ ...styles.navLinkCTA, background: 'rgba(255,255,255,0.15)', color: '#fff' }}>Open App</Link>
+            ) : (
+              <Link to="/login" style={{ ...styles.navLinkCTA, background: 'rgba(255,255,255,0.15)', color: '#fff' }}>Sign in</Link>
+            )}
           </nav>
         </div>
       </header>
@@ -102,7 +109,7 @@ function ModernHome() {
       <section style={styles.featuresSection}>
         <div style={styles.featuresInner}>
           <div style={styles.sectionLabel}>What you get</div>
-          <div style={styles.featuresGrid}>
+          <div className="rihlah-features-grid" style={styles.featuresGrid}>
             <motion.div
               style={styles.featureCard}
               initial={{ opacity: 0, y: 20 }}
@@ -158,7 +165,7 @@ function ModernHome() {
             transition={{ duration: 0.8 }}
           >
             <div style={styles.sectionLabelLight}>Who this is for</div>
-            <div style={styles.forGrid}>
+            <div className="rihlah-for-grid" style={styles.forGrid}>
               <div style={styles.forCard}>
                 <p style={styles.forText}>
                   The one who's traveled the world but always figured out
@@ -224,7 +231,7 @@ function ModernHome() {
                 We're building something intentional — not for everyone, but for the right people.
                 Request early access and we'll be in touch.
               </p>
-              <form onSubmit={handleSubmit} style={styles.applyForm}>
+              <form onSubmit={handleSubmit} className="rihlah-apply-form" style={styles.applyForm}>
                 <input
                   type="email"
                   placeholder="Your email"
@@ -251,7 +258,7 @@ function ModernHome() {
       {/* Footer */}
       <footer style={styles.footer}>
         <div style={styles.footerInner}>
-          <div style={styles.footerTop}>
+          <div className="rihlah-footer-top" style={styles.footerTop}>
             <div>
               <div style={styles.footerWordmark}>RIHLAH</div>
               <p style={styles.footerTagline}>Travel with your people.</p>
@@ -276,7 +283,7 @@ const styles = {
 
   // Header
   header: { position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1000, padding: '20px 0', transition: 'all 0.3s ease', background: 'transparent' },
-  headerScrolled: { background: 'rgba(245, 241, 234, 0.95)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', boxShadow: '0 1px 0 rgba(0,0,0,0.05)' },
+  headerScrolled: { background: 'rgba(10, 10, 10, 0.9)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: `1px solid ${colors.glassBorder}` },
   headerInner: { maxWidth: '1200px', margin: '0 auto', padding: '0 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   wordmark: { fontFamily: fonts.serif, fontSize: '20px', fontWeight: '600', letterSpacing: '3px', textDecoration: 'none', transition: 'color 0.3s' },
   nav: { display: 'flex', gap: '24px', alignItems: 'center' },
@@ -356,8 +363,10 @@ if (!document.getElementById('rihlah-styles')) {
   style.id = 'rihlah-styles';
   style.textContent = `
     @media (max-width: 768px) {
-      .rihlah-features-grid { grid-template-columns: 1fr !important; }
+      .rihlah-features-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
       .rihlah-for-grid { grid-template-columns: 1fr !important; }
+      .rihlah-apply-form { flex-direction: column !important; }
+      .rihlah-footer-top { flex-direction: column !important; gap: 32px !important; }
     }
   `;
   document.head.appendChild(style);
