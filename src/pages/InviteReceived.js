@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { db } from '../firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { useUser } from '../context/UserContext';
-import { getDestinationImage } from '../data/destinations';
+import { getPlaceImage } from '../data/places';
 import { colors, fonts, radius } from '../design';
 
 function InviteReceived() {
@@ -43,11 +43,13 @@ function InviteReceived() {
       navigate('/add-trip', {
         state: {
           preselectedDestination: invite.destination,
+          preselectedDestinationId: invite.destinationId || '',
           inviteData: {
             inviteId,
             inviterId: invite.inviterId,
             inviterName: invite.inviterName,
             destination: invite.destination,
+            destinationId: invite.destinationId || '',
             startDate: invite.startDate,
             endDate: invite.endDate,
           },
@@ -63,8 +65,8 @@ function InviteReceived() {
     return (
       <div style={styles.page}>
         <div style={styles.loadingWrap}>
-          <div style={styles.brandMark}>R</div>
-          <div style={styles.brandText}>Rihlah</div>
+          <div style={styles.brandMark}><span style={{ color: '#f8f6f2' }}>R</span><span style={{ color: '#c4956a' }}>.</span></div>
+          <div style={styles.brandText}><span style={{ color: '#c4956a' }}>r</span>ihlah</div>
         </div>
       </div>
     );
@@ -74,8 +76,8 @@ function InviteReceived() {
     return (
       <div style={styles.page}>
         <div style={styles.loadingWrap}>
-          <div style={styles.brandMark}>R</div>
-          <div style={styles.brandText}>Rihlah</div>
+          <div style={styles.brandMark}><span style={{ color: '#f8f6f2' }}>R</span><span style={{ color: '#c4956a' }}>.</span></div>
+          <div style={styles.brandText}><span style={{ color: '#c4956a' }}>r</span>ihlah</div>
           <p style={styles.errorText}>This invite is no longer available.</p>
           <button style={styles.joinBtn} onClick={() => navigate('/')}>
             Explore Rihlah
@@ -86,7 +88,7 @@ function InviteReceived() {
   }
 
   const destCity = invite.destination.split(',')[0];
-  const destImage = getDestinationImage(invite.destination);
+  const destImage = getPlaceImage(invite.destination);
   const startFmt = parseDate(invite.startDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
   const endFmt = parseDate(invite.endDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   const inviterFirst = invite.inviterName?.split(' ')[0] || 'Someone';
@@ -102,7 +104,7 @@ function InviteReceived() {
           backgroundImage: `linear-gradient(rgba(26,26,26,0.7), rgba(26,26,26,0.85)), url(${destImage})`,
         }}
       >
-        <div style={styles.heroBrand}>RIHLAH</div>
+        <div style={styles.heroBrand}><span style={{ color: '#c4956a' }}>r</span>ihlah</div>
         <div style={styles.heroInvite}>{inviterFirst} invited you to join</div>
         <h1 style={styles.heroDest}>{destCity}</h1>
         <div style={styles.heroDates}>{startFmt} — {endFmt}</div>

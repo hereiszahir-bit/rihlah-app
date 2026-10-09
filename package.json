@@ -16,6 +16,7 @@
     "firebase": "^12.11.0",
     "framer-motion": "^12.29.2",
     "leaflet": "^1.9.4",
+    "puppeteer": "^25.10.0",
     "react": "^19.2.4",
     "react-date-range": "^1.4.0",
     "react-dom": "^19.2.4",
@@ -30,7 +31,10 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "generate": "node marketing/generate.js",
+    "slides": "node marketing/slides.js",
+    "content": "node marketing/generate.js"
   },
   "eslintConfig": {
     "extends": [

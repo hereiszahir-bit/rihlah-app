@@ -127,7 +127,7 @@ function PublicDestination() {
       {/* Header */}
       <header style={styles.header}>
         <div style={styles.headerInner}>
-          <Link to="/" style={styles.wordmark}>RIHLAH</Link>
+          <Link to="/" style={styles.wordmark}>rihlah</Link>
           <Link to="/" style={styles.backLink}>All destinations</Link>
         </div>
       </header>
@@ -223,7 +223,7 @@ function PublicDestination() {
       {/* Footer */}
       <footer style={styles.footer}>
         <div style={styles.footerInner}>
-          <div style={styles.footerWordmark}>RIHLAH</div>
+          <div style={styles.footerWordmark}>rihlah</div>
           <p style={styles.footerTagline}>Travel with your people.</p>
           <div style={styles.footerLinks}>
             <a href="https://instagram.com/rihlah.io" target="_blank" rel="noopener noreferrer" style={styles.footerLink}>Instagram</a>

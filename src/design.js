@@ -38,7 +38,7 @@ export const colors = {
 };
 
 export const fonts = {
-  serif: "'DM Serif Display', Georgia, serif",
+  serif: "'EB Garamond', Georgia, serif",
   sans: "'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
 };
 

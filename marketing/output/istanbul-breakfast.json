@@ -1,0 +1,177 @@
+{
+  "carousel": [
+    {
+      "type": "hook",
+      "headline": "Istanbul will change how you think about breakfast.",
+      "body": "Not brunch. Not a hotel buffet. The real thing.",
+      "photo": false,
+      "photo_search": []
+    },
+    {
+      "type": "body",
+      "headline": "The spread.",
+      "body": "Olives, white cheese, honey, clotted cream, tomatoes, cucumbers, soft-boiled eggs, bread still warm. All of it at once. No menu. No choices. It just arrives.",
+      "photo": true,
+      "photo_search": [
+        "turkish breakfast spread table",
+        "istanbul kahvalti wooden table",
+        "turkish breakfast olives cheese honey"
+      ],
+      "photo_local": "istanbul-breakfast-photos/slide-2.jpg",
+      "photo_credit": "Yasin Onus / Pexels"
+    },
+    {
+      "type": "body",
+      "headline": "Simit.",
+      "body": "Sesame-crusted, baked the same morning, sold from a cart by a man who has been at that corner since before you were born. 5 lira. Worth more than anything on the hotel breakfast menu.",
+      "photo": true,
+      "photo_search": [
+        "simit cart istanbul street",
+        "turkish simit sesame bread close up",
+        "istanbul street vendor morning"
+      ],
+      "photo_local": "istanbul-breakfast-photos/slide-3.jpg",
+      "photo_credit": "Fatma Gulgokhan / Pexels"
+    },
+    {
+      "type": "body",
+      "headline": "Kaymak and honey.",
+      "body": "Clotted cream so thick it holds the shape of the spoon. Pour the honey slow. Eat it with bread before you decide anything else about your day.",
+      "photo": true,
+      "photo_search": [
+        "kaymak honey turkish breakfast",
+        "clotted cream honey bread close up",
+        "turkish dairy breakfast morning"
+      ],
+      "photo_local": "istanbul-breakfast-photos/slide-4.jpg",
+      "photo_credit": "Kemalcan Film / Pexels"
+    },
+    {
+      "type": "body",
+      "headline": "Çay. Always çay.",
+      "body": "Tea in a tulip glass, slightly too hot to hold. Refilled without asking. The meal does not begin and does not end without it.",
+      "photo": true,
+      "photo_search": [
+        "turkish tea tulip glass morning",
+        "cay glass saucer istanbul cafe",
+        "turkish breakfast tea copper tray"
+      ],
+      "photo_local": "istanbul-breakfast-photos/slide-5.jpg",
+      "photo_credit": "Nero Sable / Pexels"
+    },
+    {
+      "type": "body",
+      "headline": "Find the neighborhood lokanta.",
+      "body": "Not the rooftop place with the Bosphorus view. The one with four tables and a handwritten menu and a woman in the kitchen who has been making menemen the same way for thirty years. Kadikoy. Balat. Besiktas. Walk until you find it.",
+      "photo": true,
+      "photo_search": [
+        "kadikoy istanbul neighborhood cafe morning",
+        "small turkish lokanta restaurant interior",
+        "balat istanbul street morning light"
+      ],
+      "photo_local": "istanbul-breakfast-photos/slide-6.jpg",
+      "photo_credit": "Meric Tuna / Pexels"
+    },
+    {
+      "type": "cta",
+      "headline": "This is what the morning is for.",
+      "body": "Full Istanbul guide on rihlah.io — link in bio",
+      "photo": false,
+      "photo_search": []
+    }
+  ],
+  "caption": "Istanbul does not do breakfast quickly and it does not apologize for that. You sit, the spread arrives, the tea keeps coming. Clear your morning. rihlah.io — link in bio",
+  "blog": {
+    "title": "The Istanbul Breakfast",
+    "subtitle": "It is not a meal. It is the reason to wake up.",
+    "category": "The Table",
+    "readTime": "5 min",
+    "body": [
+      {
+        "type": "text",
+        "content": "The first time someone put a proper Istanbul breakfast in front of me, I counted eleven small plates before I stopped counting. Olives in two varieties. White cheese, soft and crumbled. A hard cheese, aged and sharp. Tomatoes sliced thin. Cucumbers. A soft-boiled egg still in the shell. Honey in a ceramic pot with a wooden dipper. Kaymak beside it — clotted cream so dense it barely moved when I tilted the bowl. Sliced bread, still warm. A basket of simit on the side. And the tea, always the tea, arriving in a tulip glass before anything else, refilled without being asked."
+      },
+      {
+        "type": "pullquote",
+        "content": "This is not a meal that asks you to decide anything. It simply arrives. Your only job is to be present for it."
+      },
+      {
+        "type": "text",
+        "content": "The word for it is kahvalti. Literally: before coffee. Which tells you something about what the Turks think of coffee's place in the morning hierarchy. Tea comes first and tea comes last. The tulip glass is the frame around the whole event. You hold it by the rim so you do not burn your fingers, and you drink it slightly too hot, and someone brings another one before you realize you wanted it."
+      },
+      {
+        "type": "heading",
+        "content": "The simit question"
+      },
+      {
+        "type": "text",
+        "content": "There is a version of this morning that costs you almost nothing. It happens at a street cart operated by a man with a specific regularity — same corner, same hours, same rings of sesame-studded bread stacked on a red tray. A simit costs almost nothing. It is chewy at the center, crackled at the edge, and covered in sesame seeds that fall onto your shirt and onto the ground as you walk. You can eat it standing at the cart, or carry it to a bench by the water, or bring it back to wherever you are staying and eat it with tea you made yourself. It is not a lesser breakfast. It is a different one. Both are correct."
+      },
+      {
+        "type": "heading",
+        "content": "Where to actually go"
+      },
+      {
+        "type": "text",
+        "content": "The rooftop places exist and the Bosphorus views are real and the photos come out well. But the breakfast you will think about six months later is not served on a rooftop. It is served in a neighborhood lokanta with four tables and a woman in the kitchen who has been making menemen — eggs scrambled soft with tomatoes and green pepper — the same way for a long time. You find these places by walking. Kadikoy on the Asian side has a density of them on the streets behind the market. Balat, in Fatih, has a specific light in the morning and cafes that open early and do not rush you. Besiktas, near the ferry terminal, has working-class breakfast spots that the food writers have mostly ignored, which is exactly the recommendation."
+      },
+      {
+        "type": "short",
+        "content": "Kaymak protocol: pour the honey first, let it pool, then break the surface of the cream with your spoon and drag it through. Eat it on bread. Do not think about anything else while you do this."
+      },
+      {
+        "type": "text",
+        "content": "There is a social logic to the Istanbul breakfast that takes a few mornings to understand. It is not designed to be finished quickly. The spread is abundant not because portions are large but because variety is the point — you are meant to move between things, to take a little of this and then a little of that, to return to the olives after you have eaten the egg, to find that the honey tastes different after the sharp cheese. The tea punctuates all of it. You do not leave when the food is gone. You leave when the conversation is done, or when you are ready to begin the day, which might be the same thing."
+      },
+      {
+        "type": "pullquote",
+        "content": "The meal does not end. It simply becomes the morning."
+      },
+      {
+        "type": "heading",
+        "content": "What it changes"
+      },
+      {
+        "type": "text",
+        "content": "I have had breakfast in a lot of cities. The Istanbul version did something specific to me: it made me suspicious of urgency. The grab-and-go coffee and the protein bar eaten over a keyboard — these things are not wrong, exactly, but after a week of mornings in Istanbul, they feel like a category error. A meal is an occasion. Even a morning meal. Especially a morning meal, because the morning is long and the day will ask things of you and there is something worth protecting about the hour before it does."
+      },
+      {
+        "type": "text",
+        "content": "This is what food does when it is made with intention and eaten without hurry. It adjusts your calibration. The Istanbul breakfast is not the most technically complex food I have eaten. It is not the most expensive or the most acclaimed. But it is the one that most reliably makes me sit down, slow down, and pay attention. Which might be the highest thing you can ask of a meal."
+      },
+      {
+        "type": "note",
+        "content": "Two places worth knowing: Van Kahvalti Evi in Besiktas for a full southeastern-style spread. Ciya Sofrasi in Kadikoy for lunch after — but arrive early, because it fills and then it runs out."
+      }
+    ]
+  },
+  "newsletter": "There is a version of Tuesday that starts with eleven small plates and a tulip glass of tea that gets refilled without asking. Istanbul calls it kahvalti — literally, before coffee — which tells you everything about how seriously they take the morning. The right move is a neighborhood lokanta in Kadikoy, a table by the window, and no plan until at least 10am. Order the menemen. Pour the honey slow over the kaymak. The Bosphorus view can wait. This cannot.",
+  "reel_hooks": [
+    "Istanbul will ruin breakfast everywhere else.",
+    "Eleven plates before you even order anything.",
+    "The meal that made me late for everything."
+  ],
+  "story_ideas": [
+    {
+      "type": "poll",
+      "text": "How do you do mornings when you travel?",
+      "options": [
+        "Hotel breakfast, then move",
+        "Find the local spot, take my time"
+      ]
+    },
+    {
+      "type": "question",
+      "text": "What is the best meal you have ever had before 10am? City and dish. Go.",
+      "options": []
+    },
+    {
+      "type": "slider",
+      "text": "Rate your tolerance for a two-hour breakfast with nowhere to be.",
+      "options": [
+        "I have somewhere to be",
+        "Clear my entire morning"
+      ]
+    }
+  ]
+}

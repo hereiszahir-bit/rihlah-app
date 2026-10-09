@@ -1,0 +1,83 @@
+Rihlah — Product Vision
+========================
+
+Rihlah is a brand, not a platform.
+
+The voice, the editorial, the visual identity, the curation filter — that's the asset. The app is one expression of the brand, not the other way around.
+
+
+The Three Directions
+--------------------
+
+Option A: Travel media company.
+Rihlah is Monocle for this audience. The content is the product. Revenue comes from partnerships, sponsorships, and affiliate — tourism boards, boutique hotels, and experience companies pay to be recommended by a voice this audience trusts. The community exists to validate the brand and create feedback loops, but the business is attention and taste arbitrage.
+
+Option B: Membership community.
+Rihlah is Soho House without the real estate. You're in or you're not. The value is the room — the people, the access, the intel. Revenue is membership fees. The content is marketing for the community, not the product itself. This requires density to work.
+
+Option C: Curation layer.
+Rihlah sits between travelers and everything they book — but never operates anything. You recommend, you vet, you filter. Revenue is commission on transactions that flow through the trust you've built. Trip organizers, hotels, experiences, local guides. This is Option A + transactions.
+
+
+The Tension
+-----------
+
+A works now with low member count. You just need content and audience. But media margins are thin and you're competing for attention with everyone.
+
+B requires density you don't have yet. A membership with 50 people in it isn't a community, it's a group chat.
+
+C is the most valuable long-term but needs both the audience (A) and the trust (B) before it works.
+
+
+The Path: A -> B -> C
+---------------------
+
+Build a media brand that earns the right to become a membership community that earns the right to become a curation layer with transactions.
+
+Phase 1 — Brand (now)
+Content, voice, identity, application filter. Grow the audience through editorial and social. Revenue stays small (affiliate). The blog, the Instagram, the city guides — this is all brand-building. The money isn't the app, it's the trust. Trust takes time to build but is nearly impossible to compete with once you have it.
+
+Phase 2 — Community (next)
+User-generated intel starts flowing. Social discovery has enough density in key cities. The transition from "Rihlah tells you where to go" to "Rihlah members tell each other where to go." This is when the community has its own gravity. Membership fees become viable because the room is worth being in.
+
+Phase 3 — Curation layer (later)
+Marketplace becomes viable. Trip organizers, boutique hotels, local guides — they come to Rihlah because they can't find this audience anywhere else. Muslim travelers with disposable income and taste who are ready to book. Revenue is commission on transactions. 10-15% on group trips, partnership fees from tourism boards and hotels.
+
+
+Revenue Ladder
+--------------
+
+Rung 1: Affiliate (GetYourGuide, bookable experiences) — small, proves transaction willingness
+Rung 2: Partnerships/sponsorships — tourism boards, hotels, brands pay for access to the audience
+Rung 3: Membership fees — premium tier with concierge, priority access, exclusive intel
+Rung 4: Marketplace commission — trip organizers, local guides, curated experiences
+Rung 5: AI concierge / data — personalized trip planning powered by community intel
+
+
+Structural Advantage
+--------------------
+
+Rihlah is the only brand that has earned trust with this specific audience AND has the taste to curate at a level they respect. HalalBooking is functional but has no brand energy. Muslim travel blogs are content but have no transaction layer. Generic platforms don't understand the context.
+
+The community is the moat. The content is the marketing. The brand is the asset.
+
+
+The Flywheel
+------------
+
+Content builds brand
+  -> Brand attracts the right people
+    -> Right people create trust
+      -> Trust enables transactions
+        -> Transactions create stories
+          -> Stories become content
+
+
+User Intel (Where It Fits)
+--------------------------
+
+User-generated intel is what transitions Phase 1 to Phase 2. It's the mechanism that turns "Rihlah the media brand" into "Rihlah the community." When members start sharing what they know — city tips, place recommendations, real-time travel updates — the community generates its own value independent of the editorial team.
+
+This doesn't need to be a Yelp review system. It can be as simple as a city intel thread where members post one-liners: "The ceviche at Contramar is better on Tuesday." "Skip the Galata Tower line, go to Pierre Loti instead." Timestamped, name attached, searchable.
+
+The intel feeds the editorial. The editorial feeds the brand. The brand feeds the community. The community feeds the intel.

@@ -4,7 +4,8 @@ import { doc, updateDoc, addDoc, collection, getDocs, query, where } from 'fireb
 import { db } from '../firebase';
 import { useUser } from '../context/UserContext';
 import { FiArrowLeft, FiMoreHorizontal, FiPlus, FiTrash2, FiStar, FiX, FiMessageCircle, FiCamera, FiMapPin, FiNavigation, FiCheck, FiShare2 } from 'react-icons/fi';
-import { getDestinationImage } from '../data/destinations';
+import { getPlaceById, getPlaceImage } from '../data/places';
+import AIConcierge from '../components/AIConcierge';
 import { colors, fonts, radius, components } from '../design';
 
 function TripDetail() {
@@ -74,7 +75,10 @@ function TripDetail() {
       }
 
       u.upcomingTrips.forEach(ut => {
-        if (ut.destination !== trip.destination) return;
+        const match = trip.destinationId
+          ? ut.destinationId === trip.destinationId
+          : ut.destination?.split(',')[0]?.toLowerCase() === trip.destination?.split(',')[0]?.toLowerCase();
+        if (!match) return;
         const uStart = parseDate(ut.startDate);
         const uEnd = parseDate(ut.endDate);
         if (uStart <= myEnd && uEnd >= myStart) {
@@ -168,6 +172,33 @@ function TripDetail() {
     navigate('/trips');
   };
 
+  // Aggregate crew's interested experiences (must be before early return)
+  const crewInterests = useMemo(() => {
+    if (!trip) return {};
+    const interests = {};
+    travelers.forEach(t => {
+      const tTrip = (t.upcomingTrips || []).find(ut =>
+        trip.destinationId
+          ? ut.destinationId === trip.destinationId
+          : ut.destination?.split(',')[0]?.toLowerCase() === trip.destination?.split(',')[0]?.toLowerCase()
+      );
+      (tTrip?.interestedExperiences || []).forEach(exp => {
+        if (!interests[exp]) interests[exp] = [];
+        interests[exp].push({ name: t.name, id: t.id, isConnected: t.isConnected });
+      });
+    });
+    return interests;
+  }, [travelers, trip]);
+
+  const myInterestedExperiences = trip?.interestedExperiences || [];
+
+  // Experiences your crew is interested in that you haven't marked
+  const crewSuggestions = useMemo(() => {
+    return Object.entries(crewInterests)
+      .filter(([exp]) => !myInterestedExperiences.includes(exp))
+      .sort((a, b) => b[1].length - a[1].length);
+  }, [crewInterests, myInterestedExperiences]);
+
   if (!trip) {
     return (
       <div style={styles.page}>
@@ -180,7 +211,8 @@ function TripDetail() {
   }
 
   const destCity = trip.destination.split(',')[0];
-  const destImage = getDestinationImage(trip.destination);
+  const citySlug = trip.destinationId || destCity.toLowerCase().replace(/\s+/g, '-');
+  const destImage = getPlaceImage(trip.destination);
   const startFmt = parseDate(trip.startDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
   const endFmt = parseDate(trip.endDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   const experiences = trip.experiences || [];
@@ -217,6 +249,9 @@ function TripDetail() {
         <div style={styles.heroBottom}>
           <h1 style={styles.heroCity}>{destCity}</h1>
           <div style={styles.heroDates}>{startFmt} — {endFmt}</div>
+          <button style={styles.guideLink} onClick={() => navigate(`/city/${citySlug}`)}>
+            Open city guide <FiArrowLeft size={12} style={{ marginLeft: '4px', transform: 'rotate(180deg)' }} />
+          </button>
         </div>
       </div>
 
@@ -251,6 +286,57 @@ function TripDetail() {
           {daysAway && <span style={styles.pill}>{daysAway} days away</span>}
           <span style={styles.pill}>{nightCount} night{nightCount !== 1 ? 's' : ''}</span>
         </div>
+
+        {/* Crew interests — what your crew wants to do */}
+        {crewSuggestions.length > 0 && (
+          <div style={styles.section}>
+            <div style={styles.sectionHeader}>
+              <h2 style={styles.sectionTitle}>Your crew is interested in</h2>
+            </div>
+            <div style={styles.crewInterestList}>
+              {crewSuggestions.slice(0, 5).map(([expName, people]) => (
+                <div key={expName} style={styles.crewInterestCard}>
+                  <div style={styles.crewInterestInfo}>
+                    <div style={styles.crewInterestName}>{expName}</div>
+                    <div style={styles.crewInterestPeople}>
+                      {people.map(p => p.name?.split(' ')[0]).join(', ')}
+                    </div>
+                  </div>
+                  <div style={styles.crewInterestCount}>
+                    {people.length}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Shared interests — what you and your crew both want */}
+        {myInterestedExperiences.length > 0 && Object.keys(crewInterests).length > 0 && (() => {
+          const shared = myInterestedExperiences.filter(exp => crewInterests[exp]?.length > 0);
+          if (shared.length === 0) return null;
+          return (
+            <div style={styles.section}>
+              <div style={styles.sectionHeader}>
+                <h2 style={styles.sectionTitle}>Shared interests</h2>
+                <span style={styles.sectionCount}>{shared.length}</span>
+              </div>
+              <div style={styles.crewInterestList}>
+                {shared.map(expName => (
+                  <div key={expName} style={{ ...styles.crewInterestCard, borderColor: colors.terracotta, borderWidth: '1px', borderStyle: 'solid' }}>
+                    <div style={styles.crewInterestInfo}>
+                      <div style={{ ...styles.crewInterestName, color: colors.terracotta }}>{expName}</div>
+                      <div style={styles.crewInterestPeople}>
+                        You + {crewInterests[expName].map(p => p.name?.split(' ')[0]).join(', ')}
+                      </div>
+                    </div>
+                    <FiCheck size={16} color={colors.terracotta} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Your crew — connected travelers */}
         {connectedTravelers.length > 0 && (
@@ -335,46 +421,144 @@ function TripDetail() {
         )}
 
         {/* Experiences */}
-        <div style={styles.section}>
-          <div style={styles.sectionHeader}>
-            <h2 style={styles.sectionTitle}>Experiences</h2>
-            <span style={styles.sectionCount}>{experiences.length}</span>
-          </div>
+        {(() => {
+          const place = getPlaceById(citySlug);
+          const bookableMap = {};
+          (place?.bookableExperiences || []).forEach(exp => { bookableMap[exp.name] = exp; });
+          // Interested experiences that aren't already in the saved list
+          const savedNames = new Set(experiences.map(e => e.name));
+          const interestedOnly = myInterestedExperiences.filter(name => !savedNames.has(name));
+          const totalCount = experiences.length + interestedOnly.length;
 
-          {experiences.length > 0 ? (
-            <div style={styles.expList}>
-              {experiences.map(exp => (
-                <div key={exp.id} style={styles.expCard}>
-                  <div style={{ flex: 1 }}>
-                    <div style={styles.expName}>{exp.name}</div>
-                    <div style={styles.expMeta}>
-                      <FiStar size={12} style={{ marginRight: '3px', verticalAlign: '-1px', color: colors.gold }} />
-                      {exp.rating} · {exp.duration} · ${exp.price}
+          return (
+            <div style={styles.section}>
+              <div style={styles.sectionHeader}>
+                <h2 style={styles.sectionTitle}>Experiences</h2>
+                <span style={styles.sectionCount}>{totalCount}</span>
+              </div>
+
+              {experiences.length > 0 && (
+                <div style={styles.expList}>
+                  {experiences.map(exp => (
+                    <div key={exp.id} style={styles.expCard}>
+                      <div style={{ flex: 1 }}>
+                        <div style={styles.expName}>{exp.name}</div>
+                        <div style={styles.expMeta}>
+                          <FiStar size={12} style={{ marginRight: '3px', verticalAlign: '-1px', color: colors.gold }} />
+                          {exp.rating} · {exp.duration} · ${exp.price}
+                        </div>
+                      </div>
+                      <button
+                        style={styles.removeExpBtn}
+                        onClick={() => handleRemoveExperience(exp.id)}
+                        disabled={removingExp === exp.id}
+                      >
+                        <FiTrash2 size={14} />
+                      </button>
                     </div>
-                  </div>
-                  <button
-                    style={styles.removeExpBtn}
-                    onClick={() => handleRemoveExperience(exp.id)}
-                    disabled={removingExp === exp.id}
-                  >
-                    <FiTrash2 size={14} />
-                  </button>
+                  ))}
                 </div>
-              ))}
+              )}
+
+              {interestedOnly.length > 0 && (
+                <div style={styles.expList}>
+                  {interestedOnly.map(name => {
+                    const exp = bookableMap[name];
+                    return (
+                      <div key={name} style={styles.expCard}>
+                        <div style={{ flex: 1 }}>
+                          <div style={styles.expName}>{name}</div>
+                          {exp ? (
+                            <div style={styles.expMeta}>
+                              <FiStar size={12} style={{ marginRight: '3px', verticalAlign: '-1px', color: colors.gold }} />
+                              {exp.rating} · {exp.duration} · ${exp.price}
+                            </div>
+                          ) : (
+                            <div style={styles.expMeta}>Interested</div>
+                          )}
+                        </div>
+                        <div style={{ fontSize: '10px', fontWeight: '600', color: colors.terracotta, letterSpacing: '0.5px' }}>INTERESTED</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {totalCount === 0 && (
+                <div style={styles.emptyExp}>
+                  <div style={styles.emptyText}>No experiences saved yet.</div>
+                </div>
+              )}
+              <button
+                style={styles.addExpBtn}
+                onClick={() => navigate(`/city/${citySlug}`, { state: { fromTrip: idx } })}
+              >
+                Browse {destCity} city guide
+              </button>
             </div>
-          ) : (
-            <div style={styles.emptyExp}>
-              <div style={styles.emptyText}>No experiences saved yet.</div>
-            </div>
-          )}
-          <button
-            style={styles.addExpBtn}
-            onClick={() => navigate(`/destination/${encodeURIComponent(trip.destination)}`)}
-          >
-            Browse {destCity} experiences
-          </button>
-        </div>
+          );
+        })()}
       </div>
+
+      {/* AI Concierge */}
+      {(() => {
+        const place = getPlaceById(citySlug);
+        const guideData = place ? {
+          city: place.city,
+          country: place.country,
+          tagline: place.tagline,
+          intro: place.intro,
+          prayerNote: place.prayerNote,
+          neighborhoods: place.neighborhoods,
+          dining: place.dining,
+          mosques: place.mosques,
+          coffee: place.coffee,
+          experiences: place.experiences,
+          insiderTips: place.insiderTips,
+          bookableExperiences: place.bookableExperiences || [],
+        } : {
+          city: destCity,
+        };
+
+        const crewCtx = {
+          count: travelers.length,
+          crewInterests: Object.keys(crewInterests),
+          travelers: travelers.slice(0, 10).map(t => {
+            const tTrip = (t.upcomingTrips || []).find(ut =>
+              trip.destinationId
+                ? ut.destinationId === trip.destinationId
+                : ut.destination?.split(',')[0]?.toLowerCase() === trip.destination?.split(',')[0]?.toLowerCase()
+            );
+            return {
+              name: t.name?.split(' ')[0],
+              dates: `${parseDate(t.tripStart).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${parseDate(t.tripEnd).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
+              isConnected: t.isConnected,
+              isThere: t.isThere,
+              interests: t.interests || [],
+              interestedExperiences: tTrip?.interestedExperiences || [],
+              savedExperiences: (tTrip?.experiences || []).map(e => e.name),
+            };
+          }),
+        };
+
+        const userCtx = {
+          name: currentUserData?.name?.split(' ')[0],
+          dates: `${startFmt} — ${endFmt}`,
+          nights: nightCount,
+          savedExperiences: experiences.map(e => e.name),
+          interestedExperiences: myInterestedExperiences,
+          interests: currentUserData?.interests || [],
+        };
+
+        return (
+          <AIConcierge
+            cityGuideData={guideData}
+            crewContext={crewCtx}
+            userContext={userCtx}
+            destCity={destCity}
+          />
+        );
+      })()}
 
       {/* Profile Preview Modal */}
       {previewUser && (() => {
@@ -505,6 +689,19 @@ const styles = {
     color: colors.textSecondary,
     marginTop: '6px',
   },
+  guideLink: {
+    marginTop: '10px',
+    padding: '0',
+    background: 'none',
+    border: 'none',
+    fontSize: '13px',
+    fontWeight: '600',
+    color: colors.terracotta,
+    cursor: 'pointer',
+    fontFamily: 'inherit',
+    display: 'inline-flex',
+    alignItems: 'center',
+  },
 
   // Travelers bar
   travelersBar: {
@@ -609,6 +806,34 @@ const styles = {
     background: colors.lightGray,
     padding: '2px 8px',
     borderRadius: radius.full,
+  },
+
+  // Crew interests
+  crewInterestList: { display: 'flex', flexDirection: 'column', gap: '8px' },
+  crewInterestCard: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    padding: '14px 16px',
+    background: colors.surface,
+    borderRadius: radius.md,
+    border: `1px solid ${colors.border}`,
+  },
+  crewInterestInfo: { flex: 1, minWidth: 0 },
+  crewInterestName: { fontSize: '15px', fontWeight: '600', color: colors.text },
+  crewInterestPeople: { fontSize: '12px', color: colors.textTertiary, marginTop: '2px' },
+  crewInterestCount: {
+    width: '32px',
+    height: '32px',
+    borderRadius: '50%',
+    background: colors.warningBg,
+    color: colors.terracotta,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '14px',
+    fontWeight: '700',
+    flexShrink: 0,
   },
 
   // People list

@@ -1,0 +1,282 @@
+{
+  "carousel": [
+    {
+      "type": "hook",
+      "headline": "Tbilisi will rearrange something in you.",
+      "body": "You just won't know what until you're home.",
+      "photo": false,
+      "photo_search": []
+    },
+    {
+      "type": "body",
+      "headline": "The city smells like sulfur and woodsmoke.",
+      "body": "The baths beneath Abanotubani have been running since the 5th century. You soak in water that comes out of the earth hot. It costs almost nothing. It feels ancient because it is.",
+      "photo": true,
+      "photo_search": [
+        "tbilisi sulfur baths abanotubani georgia",
+        "tbilisi bath house dome exterior georgia",
+        "tbilisi abanotubani district steam georgia"
+      ],
+      "photo_local": "tbilisi-photos/slide-2.jpg",
+      "photo_credit": "Genadi Yakovlev / Pexels"
+    },
+    {
+      "type": "body",
+      "headline": "Soviet concrete and medieval churches share the same block.",
+      "body": "Tbilisi never resolved the contradiction. It just lived with it. That tension — between eras, between empires, between identities — is what makes the city feel real.",
+      "photo": true,
+      "photo_search": [
+        "tbilisi old town architecture georgia streets",
+        "tbilisi soviet modernist building georgia",
+        "tbilisi balcony old district georgia"
+      ],
+      "photo_local": "tbilisi-photos/slide-3.jpg",
+      "photo_credit": "Maria Loznevaya / Pexels"
+    },
+    {
+      "type": "body",
+      "headline": "Order the khinkali. Order more than you think you need.",
+      "body": "Soup dumplings twisted at the top, filled with spiced meat and broth. You eat them with your hands. The technique takes about thirty seconds to learn and the rest of your life to forget.",
+      "photo": true,
+      "photo_search": [
+        "khinkali georgian dumplings tbilisi georgia",
+        "khinkali soup dumplings hands georgia restaurant",
+        "georgian food tbilisi traditional khinkali"
+      ],
+      "photo_local": "tbilisi-photos/slide-4.jpg",
+      "photo_credit": "Nadin Sh / Pexels"
+    },
+    {
+      "type": "body",
+      "headline": "You will pray in a city that does not pause for you.",
+      "body": "No call to prayer echoing through the streets. No halal sign on every corner. But the Jumah Mosque anchors the old town — Sunni and Shia under one roof — and the city holds space without making a show of it. You figure it out. You always do.",
+      "photo": true,
+      "photo_search": [
+        "tbilisi jumah mosque old town georgia",
+        "tbilisi old town street evening georgia",
+        "tbilisi narikala fortress view georgia"
+      ],
+      "photo_local": "tbilisi-photos/slide-5.jpg",
+      "photo_credit": "Netlenka / Pexels"
+    },
+    {
+      "type": "body",
+      "headline": "The wine is everywhere and the grapes are 8,000 years old.",
+      "body": "Georgia invented winemaking. They age it in clay vessels underground. You don't have to drink it to understand what it means to a people — that a culture built something this old and kept it alive. That is worth paying attention to.",
+      "photo": true,
+      "photo_search": [
+        "georgian wine kvevri clay vessel georgia",
+        "kakheti wine region vineyard georgia",
+        "tbilisi wine bar natural georgia"
+      ],
+      "photo_local": "tbilisi-photos/slide-6.jpg",
+      "photo_credit": "Anna Romanova / Pexels"
+    },
+    {
+      "type": "cta",
+      "headline": "Tbilisi is not on everyone's list yet. Go before it is.",
+      "body": "rihlah.io — link in bio",
+      "photo": false,
+      "photo_search": []
+    }
+  ],
+  "caption": "Tbilisi smells like sulfur, tastes like spiced meat folded in dough, and looks like four centuries could not agree on a plan. It is one of the most quietly disorienting cities on earth. The full guide is at rihlah.io — link in bio",
+  "blog": {
+    "title": "Tbilisi Will Rearrange Something in You",
+    "subtitle": "On sulfur baths, ancient wine, Orthodox gold, and what it means to be Muslim in a city that was never yours but never makes you feel unwelcome.",
+    "category": "The City",
+    "readTime": "6 min",
+    "body": [
+      {
+        "type": "text",
+        "content": "There is a moment, somewhere in your first day in Tbilisi, when the city stops being a collection of things to see and starts being a place that exists on its own terms. For me it happened in Abanotubani, the old bath district, standing on a stone bridge over the Mtkvari river at dusk while sulfur steam rose from the domed bathhouses below and an Orthodox church caught the last light on the hill above. I had nowhere to be for another two hours. I just stood there."
+      },
+      {
+        "type": "pullquote",
+        "content": "Tbilisi never resolved its contradictions. It just lived with them. That is what makes it feel real."
+      },
+      {
+        "type": "heading",
+        "content": "The Baths"
+      },
+      {
+        "type": "text",
+        "content": "The sulfur baths have been running since the 5th century. The water comes out of the earth already hot, already mineral-rich, already smelling like something primordial. You rent a private room — a stone chamber with a central pool — for the equivalent of almost nothing, and you soak until your muscles stop arguing with you. This is where Pushkin came. This is where kings came. Now you are here, and nobody makes a fuss about it. That is the correct attitude."
+      },
+      {
+        "type": "short",
+        "content": "Book a private room at Chreli-Abano or Royal Bath. Shared pools exist but private rooms cost very little more and are worth every lari."
+      },
+      {
+        "type": "heading",
+        "content": "The Architecture"
+      },
+      {
+        "type": "text",
+        "content": "Tbilisi did not get to choose its history. Persian, Ottoman, Russian, Soviet — each empire left something behind. The result is a city that looks like it was designed by four different people who never spoke to each other, which is exactly what happened. Crumbling wooden balconies lean over narrow streets in the old town. A Stalinist ministry building sits three blocks from a medieval fortress. A postmodern bridge made of glass and steel — the Bridge of Peace — connects the old district to a neighborhood that feels like it was imported from a European capital in 2009. None of it should work. All of it does."
+      },
+      {
+        "type": "text",
+        "content": "The old town neighborhoods — Abanotubani, Kala, Sololaki — are where you want to spend most of your time. The streets are steep and irregular and the signage is in Mkhedruli script, which looks like nothing else in the world. Walk without a plan. Get lost deliberately. The city rewards it."
+      },
+      {
+        "type": "heading",
+        "content": "The Food"
+      },
+      {
+        "type": "text",
+        "content": "Order khinkali. This is not a suggestion. Soup dumplings twisted at the top, filled with spiced pork or beef and broth. You hold them by the twisted crown — the part you do not eat — and bite carefully, drinking the broth before going further. The technique takes about thirty seconds to learn. Restaurants that specialize in khinkali will bring them in rounds and keep a count. The number is a mild point of pride."
+      },
+      {
+        "type": "text",
+        "content": "Lobiani — flatbread stuffed with spiced kidney beans — is where Muslim travelers find easy ground. Badrijani nigvzit, fried eggplant rolled around walnut paste with pomegranate seeds on top, should be ordered at every table without discussion. Georgian cuisine is ancient and specific and confident. It does not need your approval."
+      },
+      {
+        "type": "note",
+        "content": "Pork is everywhere in Georgia. Many traditional dishes use it. Ask specifically and the kitchen will tell you what is available without it. The Tbilisi food scene is experienced enough with this question not to make it awkward."
+      },
+      {
+        "type": "heading",
+        "content": "Being Muslim Here"
+      },
+      {
+        "type": "text",
+        "content": "The Jumah Mosque is the heart of Muslim Tbilisi. It sits in the old town, a ten-minute walk from the sulfur baths, and it has served the city's Muslim community — Sunni and Shia sharing the same space, which is rare enough to be worth noting — for centuries. There is no call to prayer amplified across the city. The rhythm of the streets does not pause for Jumu'ah. You pray in your room, or in the mosque when timing allows, or in a quiet corner of a park, and the city pays you no particular attention in either direction."
+      },
+      {
+        "type": "pullquote",
+        "content": "The city holds space without making a show of it. You figure it out. You always do."
+      },
+      {
+        "type": "text",
+        "content": "Georgia has a Muslim population — roughly ten percent nationally, concentrated in certain regions — and Tbilisi itself has centuries of coexistence written into its geography. There are synagogues, mosques, Armenian churches, and Orthodox cathedrals within a few hundred meters of each other in the old town. This is not a marketing claim. It is just the texture of a city that was a crossroads before crossroads had a brand strategy. You will feel welcome because the city is too old and too layered to feel otherwise."
+      },
+      {
+        "type": "heading",
+        "content": "The Wine and What It Means"
+      },
+      {
+        "type": "text",
+        "content": "Georgia is where winemaking was invented, eight thousand years ago, in clay vessels called qvevri buried in the earth. The country holds this fact with the quiet pride of people who do not need to explain themselves. You do not have to drink it to understand what it means. Sit in a wine bar in Vera or Vake and watch how Georgians relate to a glass — the toasts, the eye contact, the weight they give to certain words — and you will learn something about a culture that built something ancient and kept it alive through every empire that came through."
+      },
+      {
+        "type": "heading",
+        "content": "When to Go"
+      },
+      {
+        "type": "text",
+        "content": "May and October are the answer most people give, and they are right. The summers are hot and increasingly crowded. The winters are cold but thin on tourists. Spring and autumn give you the city at its most generous — warm enough to walk for hours, cool enough to want the food."
+      },
+      {
+        "type": "text",
+        "content": "Tbilisi is still early. The prices reflect a city that has not finished catching on. That will change. Go before the rooftop bars outnumber the bathhouses. Go while you can still get lost and have it feel like a gift."
+      }
+    ]
+  },
+  "newsletter": "Tbilisi is the city I keep telling people about and watching their face go blank. They have not been. They have not heard the argument. So here it is in one paragraph: sulfur baths running since the 5th century, a cuisine so specific and confident it does not bother explaining itself, four centuries of architecture that never agreed on a plan, and a single mosque in the old town that has been holding space for a thousand years. It is not a Muslim city. It is a city that has always been a crossroads, and crossroads make room. Flights from Istanbul are under two hours. The lari is generous. Go.",
+  "reel_hooks": [
+    "Nobody talks about Tbilisi. That is the whole point.",
+    "The water comes out of the earth already hot.",
+    "Sunni and Shia share one mosque in Tbilisi. That tells you everything."
+  ],
+  "story_ideas": [
+    {
+      "type": "poll",
+      "text": "Tbilisi is on your radar.",
+      "options": [
+        "It is now.",
+        "Been. Life-changing."
+      ]
+    },
+    {
+      "type": "question",
+      "text": "What is the most underrated city you have ever been to? We are building a list.",
+      "options": []
+    },
+    {
+      "type": "slider",
+      "text": "You are in Tbilisi. It is 6pm. The sulfur baths or the khinkali spot first.",
+      "options": [
+        "Baths",
+        "Khinkali"
+      ]
+    }
+  ],
+  "qa": {
+    "score": 8,
+    "pass": true,
+    "issues": [
+      {
+        "severity": "critical",
+        "category": "accuracy",
+        "slide": null,
+        "issue": "Subtitle claims Tbilisi made room for 'everyone except the people who needed it to' — this is unresolved and confusing; who specifically was excluded?",
+        "fix": "Rewrite subtitle to remove the dangling implication or make the specific tension explicit and earned."
+      },
+      {
+        "severity": "warning",
+        "category": "accuracy",
+        "slide": 5,
+        "issue": "Claiming 'one mosque' in Tbilisi is an oversimplification — there are several mosques, though the Jumah Mosque is the most prominent in the old town.",
+        "fix": "Change to 'one mosque anchors the old town' or name the Jumah Mosque specifically and accurately."
+      },
+      {
+        "severity": "warning",
+        "category": "accuracy",
+        "slide": null,
+        "issue": "Chreli-Abano named as a recommendation — verify this is a real, currently operating bath house and spelling is correct.",
+        "fix": "Confirm operating status and correct spelling before publishing; 'Royal Bath' is also unverified as a proper name."
+      },
+      {
+        "severity": "warning",
+        "category": "accuracy",
+        "slide": 6,
+        "issue": "'8,000 years old' wine claim is cited frequently but contested; some archaeological evidence suggests 6,000 BCE (8,000 years), others cite different ranges.",
+        "fix": "Use 'among the world's oldest' or cite 'up to 8,000 years' with appropriate hedging to stay defensible."
+      },
+      {
+        "severity": "warning",
+        "category": "photos",
+        "slide": 3,
+        "issue": "Search term 'tbilisi soviet modernist building georgia' could return generic Soviet architecture not specific to Tbilisi.",
+        "fix": "Add a landmark name — e.g., 'tbilisi house of justice or ministry building georgia' — to anchor the search geographically."
+      },
+      {
+        "severity": "warning",
+        "category": "voice",
+        "slide": null,
+        "issue": "Blog note section uses 'without discussion' which slightly tips into prescriptive/preachy tone inconsistent with brand voice.",
+        "fix": "Change to 'Order it. You will not regret it.' or simply remove the directive framing."
+      },
+      {
+        "severity": "warning",
+        "category": "quality",
+        "slide": null,
+        "issue": "Blog heading 'The Wine and What It Means' sets up a meaningful section but the payoff — watching Georgians toast — is generic and vague.",
+        "fix": "Name a specific bar, a specific word from the Georgian toasting tradition (e.g., 'gaumarjos'), or a concrete observed detail."
+      },
+      {
+        "severity": "note",
+        "category": "design",
+        "slide": 4,
+        "issue": "Khinkali slide body is the longest in the carousel — 'the rest of your life to forget' is a strong closer but the setup runs slightly long for 1080x1080.",
+        "fix": "Cut 'The technique takes about thirty seconds to learn and' — open directly with 'The rest of your life to forget it.'"
+      },
+      {
+        "severity": "note",
+        "category": "quality",
+        "slide": null,
+        "issue": "Reel hook three — 'One mosque. Eight thousand years of wine. One city.' — is a list, not a hook; it does not create tension or curiosity.",
+        "fix": "Replace with something that creates a question: 'What does it feel like to be Muslim in a city with one mosque and eight thousand years of wine?'"
+      },
+      {
+        "severity": "note",
+        "category": "voice",
+        "slide": 7,
+        "issue": "CTA slide body 'rihlah.io — link in bio' has no period, which is correct per guidelines, but the headline 'Go before it is' ends abruptly — reads incomplete.",
+        "fix": "Rephrase to 'Tbilisi is not on everyone's list yet.' as the headline and move the directional urgency into body copy."
+      }
+    ],
+    "summary": "Strong, voice-consistent package with one critical subtitle that needs resolution and a factual overclaim on mosque count that must be corrected before publish."
+  }
+}

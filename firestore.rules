@@ -2,23 +2,43 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Admin UID
+    function isAdmin() {
+      return request.auth.uid == 'o5pb2aGXmGRJQgMhZwdXLdY9Mrd2';
+    }
+
     // ── Users ──────────────────────────────────────────────
     match /users/{userId} {
+      // Any authenticated user can read any user doc.
+      // PII filtering is handled client-side (fetchAllUsers strips sensitive fields).
+      // Own doc + admin: always readable. Other users: also readable (needed for collection queries).
       allow read: if request.auth != null;
 
-      // Helper: list of every field a user document may contain
-      function allowedUserFields() {
-        return ['name', 'age', 'gender', 'profileVisibility', 'city', 'bio',
+      // Fields a user can write to their own profile
+      function userWritableFields() {
+        return ['name', 'age', 'dateOfBirth', 'gender', 'profileVisibility', 'city', 'bio',
                 'interests', 'identity', 'whatsapp', 'instagram', 'linkedin', 'photoURL',
                 'photos', 'createdAt', 'upcomingTrips', 'pastTrips', 'connections',
-                'onboardingComplete', 'email'];
+                'onboardingComplete', 'email', 'travelStyle', 'occupation',
+                'screeningAnswer', 'referralSource', 'status', 'appliedAt',
+                'blockedUsers', 'savedPlaces'];
       }
 
-      // Shared field-value validation (used by both create & update)
+      // All fields including admin-only ones
+      function allUserFields() {
+        return ['name', 'age', 'dateOfBirth', 'gender', 'profileVisibility', 'city', 'bio',
+                'interests', 'identity', 'whatsapp', 'instagram', 'linkedin', 'photoURL',
+                'photos', 'createdAt', 'upcomingTrips', 'pastTrips', 'connections',
+                'onboardingComplete', 'email', 'status', 'appliedAt', 'foundingMember',
+                'reviewedAt', 'reviewedBy', 'travelStyle', 'occupation',
+                'screeningAnswer', 'referralSource', 'blockedUsers', 'savedPlaces'];
+      }
+
+      // Field-value validation
       function validUserData() {
         let d = request.resource.data;
         return d.name is string && d.name.size() >= 1 && d.name.size() <= 100
-            && (d.age is int ? (d.age >= 13 && d.age <= 120) : d.age == null)
+            && (d.age is int || d.age == null)
             && d.gender is string && d.gender in ['Male', 'Female', '']
             && d.bio is string && d.bio.size() <= 500
             && d.whatsapp is string && d.whatsapp.size() <= 50
@@ -35,18 +55,54 @@ service cloud.firestore {
             && d.email is string;
       }
 
+      // Users cannot set admin-only fields (foundingMember, reviewedAt, reviewedBy)
       allow create: if request.auth.uid == userId
-                    && request.resource.data.keys().hasOnly(allowedUserFields())
+                    && request.resource.data.keys().hasOnly(userWritableFields())
                     && (validUserData() || validPartialCreate());
 
-      // Own profile: full validation. Other user: only connections field if self is involved.
+      // Own profile: can't modify admin-only fields (foundingMember, reviewedAt, reviewedBy).
+      // Other user: only connections field.
+      // Admin: can update any fields (for approve/reject/founding member).
       allow update: if request.auth != null
-                    && request.resource.data.keys().hasOnly(allowedUserFields())
                     && (
-                      (request.auth.uid == userId && validUserData())
+                      (request.auth.uid == userId
+                        && request.resource.data.keys().hasOnly(allUserFields())
+                        && validUserData()
+                        && request.resource.data.diff(resource.data).affectedKeys()
+                            .hasAny(['foundingMember', 'reviewedAt', 'reviewedBy']) == false)
                       || (request.auth.uid != userId
+                          && request.resource.data.keys().hasOnly(allUserFields())
                           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['connections']))
+                      || (isAdmin()
+                          && request.resource.data.keys().hasOnly(allUserFields()))
                     );
+
+      // Admin can delete any user. Users can delete own account. Dummy users deletable by any auth user.
+      allow delete: if request.auth != null
+                    && (isAdmin() || request.auth.uid == userId || userId.matches('dummy-.*'));
+    }
+
+    // ── Mail (Trigger Email extension) ────────────────────
+    match /mail/{mailId} {
+      allow read: if false;
+      allow create: if request.auth != null;
+      allow update, delete: if false;
+    }
+
+    // ── City Guides ────────────────────────────────────────
+    match /cityGuides/{cityId} {
+      allow read: if request.auth != null
+                  && resource.data.status == 'published';
+      allow create, update: if request.auth != null;
+      allow delete: if false;
+    }
+
+    // ── Destinations ─────────────────────────────────────
+    match /destinations/{destId} {
+      allow read: if request.auth != null
+                  && resource.data.status == 'published';
+      allow create, update: if request.auth != null;
+      allow delete: if false;
     }
 
     // ── Waitlist ────────────────────────────────────────────
@@ -66,12 +122,11 @@ service cloud.firestore {
 
     // ── Connection Requests ────────────────────────────────
     match /connectionRequests/{requestId} {
-      // Both sender and receiver may read
       allow read: if request.auth != null
                   && (resource.data.fromUserId == request.auth.uid
-                      || resource.data.toUserId == request.auth.uid);
+                      || resource.data.toUserId == request.auth.uid
+                      || isAdmin());
 
-      // Only the sender can create; must be "pending", can't connect to self
       allow create: if request.auth != null
                     && request.resource.data.keys().hasOnly(
                          ['fromUserId', 'fromUserName', 'fromUserAge', 'fromUserGender',
@@ -83,7 +138,6 @@ service cloud.firestore {
                     && request.resource.data.fromUserId != request.resource.data.toUserId
                     && request.resource.data.status == 'pending';
 
-      // Only the receiver can accept / reject (change status only)
       allow update: if request.auth != null
                     && resource.data.toUserId == request.auth.uid
                     && request.resource.data.status in ['accepted', 'rejected']
@@ -95,59 +149,57 @@ service cloud.firestore {
                           'fromUserBio', 'fromUserPhotoURL', 'fromUserInterests',
                           'toUserId', 'toUserName', 'status', 'createdAt']);
 
-      // Sender or receiver can delete
+      // Sender, receiver, or admin can delete
       allow delete: if request.auth != null
                     && (resource.data.fromUserId == request.auth.uid
-                        || resource.data.toUserId == request.auth.uid);
+                        || resource.data.toUserId == request.auth.uid
+                        || isAdmin());
+    }
+
+    // ── Reports ─────────────────────────────────────────
+    match /reports/{reportId} {
+      allow read: if request.auth != null && isAdmin();
+      allow create: if request.auth != null
+                    && request.resource.data.reporterId == request.auth.uid
+                    && request.resource.data.reportedUserId is string
+                    && request.resource.data.reason is string
+                    && request.resource.data.reason.size() >= 1
+                    && request.resource.data.reason.size() <= 1000
+                    && request.resource.data.keys().hasOnly(
+                         ['reporterId', 'reportedUserId', 'reportedUserName',
+                          'reason', 'createdAt']);
+      allow update, delete: if false;
     }
 
     // ── Invites ──────────────────────────────────────────
     match /invites/{inviteId} {
-      // Anyone can read an invite (recipients may not be logged in yet)
       allow read: if true;
-
-      // Authenticated users can create invites they own
       allow create: if request.auth != null
                     && request.resource.data.inviterId == request.auth.uid;
-
-      // No updates or deletes
       allow update, delete: if false;
     }
 
     // ── Conversations ─────────────────────────────────────
     match /conversations/{convId} {
-      // Only participants can read conversations
       allow read: if request.auth != null
                   && request.auth.uid in resource.data.participants;
-
-      // Authenticated users can create conversations they're part of
       allow create: if request.auth != null
                     && request.auth.uid in request.resource.data.participants
                     && request.resource.data.participants.size() == 2;
-
-      // Only participants can update (for lastMessage, unread counts)
       allow update: if request.auth != null
                     && request.auth.uid in resource.data.participants;
-
-      // Participants can delete conversations
       allow delete: if request.auth != null
                     && request.auth.uid in resource.data.participants;
 
-      // Messages subcollection
       match /messages/{messageId} {
-        // Only conversation participants can read messages
         allow read: if request.auth != null
                     && request.auth.uid in get(/databases/$(database)/documents/conversations/$(convId)).data.participants;
-
-        // Only participants can send messages, senderId must match auth, validate content
         allow create: if request.auth != null
                       && request.auth.uid in get(/databases/$(database)/documents/conversations/$(convId)).data.participants
                       && request.resource.data.senderId == request.auth.uid
                       && request.resource.data.text is string
                       && request.resource.data.text.size() >= 1
                       && request.resource.data.text.size() <= 5000;
-
-        // Conversation participants can delete messages
         allow delete: if request.auth != null
                       && request.auth.uid in get(/databases/$(database)/documents/conversations/$(convId)).data.participants;
       }

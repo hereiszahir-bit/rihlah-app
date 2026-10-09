@@ -146,7 +146,7 @@ function Home() {
     <div style={styles.page}>
       {/* Header */}
       <div style={styles.header}>
-        <div style={styles.brand}>Rihlah</div>
+        <div style={styles.brand}><span style={{ color: '#c4956a' }}>r</span>ihlah</div>
         <div
           style={styles.avatar}
           onClick={() => navigate('/profile')}

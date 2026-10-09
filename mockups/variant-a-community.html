@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Rihlah - Variant A: Community-Forward</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: #faf9f7;
+    max-width: 390px;
+    margin: 0 auto;
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* Header */
+  .header {
+    padding: 56px 20px 16px;
+    background: #fff;
+  }
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .header h1 {
+    font-size: 28px;
+    font-weight: 900;
+    color: #1a1a1a;
+    letter-spacing: -0.5px;
+  }
+  .header-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #047857, #10b981);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 700;
+    font-size: 14px;
+  }
+
+  /* Stories / Here Now */
+  .stories-section {
+    padding: 0 0 16px;
+    background: #fff;
+    border-bottom: 1px solid #f0eeeb;
+  }
+  .stories-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #047857;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 0 20px;
+    margin-bottom: 12px;
+  }
+  .stories-scroll {
+    display: flex;
+    gap: 16px;
+    padding: 0 20px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .stories-scroll::-webkit-scrollbar { display: none; }
+  .story-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .story-ring {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    padding: 3px;
+    background: linear-gradient(135deg, #047857, #10b981);
+  }
+  .story-ring.upcoming {
+    background: linear-gradient(135deg, #d1d5db, #9ca3af);
+  }
+  .story-img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    background: #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: #6b7280;
+    font-size: 20px;
+  }
+  .story-dest {
+    font-size: 11px;
+    font-weight: 700;
+    color: #047857;
+    max-width: 72px;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .story-name {
+    font-size: 10px;
+    color: #6b7280;
+    font-weight: 600;
+  }
+
+  /* Active travelers count */
+  .active-bar {
+    padding: 12px 20px;
+    background: #f0fdf4;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #047857;
+    font-weight: 600;
+  }
+  .active-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* Destination Cards */
+  .section {
+    padding: 20px;
+  }
+  .section-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: #1a1a1a;
+    margin-bottom: 16px;
+  }
+  .dest-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .dest-card {
+    border-radius: 16px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.08);
+  }
+  .dest-img {
+    height: 140px;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+  .dest-img::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 70%;
+    background: linear-gradient(transparent, rgba(0,0,0,0.6));
+  }
+  .dest-info {
+    position: relative;
+    z-index: 1;
+    padding: 12px;
+  }
+  .dest-city {
+    font-size: 16px;
+    font-weight: 800;
+    color: #fff;
+  }
+  .dest-country {
+    font-size: 11px;
+    color: rgba(255,255,255,0.8);
+  }
+  .dest-footer {
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .dest-avatars {
+    display: flex;
+  }
+  .dest-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    margin-left: -8px;
+    background: #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    color: #6b7280;
+  }
+  .dest-avatar:first-child { margin-left: 0; }
+  .dest-avatar.green { background: #d1fae5; color: #047857; }
+  .dest-count {
+    font-size: 12px;
+    font-weight: 700;
+    color: #047857;
+  }
+  .dest-empty {
+    font-size: 11px;
+    color: #9ca3af;
+    font-weight: 600;
+  }
+
+  /* Featured card (full width) */
+  .featured-card {
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08), 0 12px 32px rgba(0,0,0,0.1);
+  }
+  .featured-img {
+    height: 200px;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+  .featured-img::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60%;
+    background: linear-gradient(transparent, rgba(0,0,0,0.7));
+  }
+  .featured-overlay {
+    position: relative;
+    z-index: 1;
+    padding: 20px;
+  }
+  .featured-badge {
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    background: rgba(4,120,87,0.8);
+    padding: 4px 10px;
+    border-radius: 8px;
+    display: inline-block;
+    margin-bottom: 8px;
+    backdrop-filter: blur(4px);
+  }
+  .featured-city {
+    font-size: 24px;
+    font-weight: 900;
+    color: #fff;
+    margin-bottom: 4px;
+  }
+  .featured-meta {
+    font-size: 13px;
+    color: rgba(255,255,255,0.85);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  /* Tab bar */
+  .tab-bar {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 390px;
+    background: #fff;
+    border-top: 1px solid #f0eeeb;
+    display: flex;
+    justify-content: space-around;
+    padding: 8px 0 24px;
+    z-index: 100;
+  }
+  .tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    font-size: 10px;
+    color: #a3a3a3;
+    font-weight: 500;
+  }
+  .tab.active { color: #047857; }
+  .tab-icon {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .tab-center {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #047857, #059669);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: -20px;
+    box-shadow: 0 4px 12px rgba(4,120,87,0.35);
+    color: #fff;
+    font-size: 24px;
+  }
+
+  .label {
+    padding: 4px 20px 100px;
+    text-align: center;
+  }
+  .label-tag {
+    display: inline-block;
+    padding: 8px 16px;
+    background: #f0f9f4;
+    color: #047857;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <h1>Rihlah</h1>
+    <div class="header-avatar">Z</div>
+  </div>
+</div>
+
+<!-- Stories: Connections traveling -->
+<div class="stories-section">
+  <div class="stories-label">Connections Traveling</div>
+  <div class="stories-scroll">
+    <div class="story-item">
+      <div class="story-ring">
+        <div class="story-img">A</div>
+      </div>
+      <div class="story-dest">Istanbul</div>
+      <div class="story-name">Amira</div>
+    </div>
+    <div class="story-item">
+      <div class="story-ring">
+        <div class="story-img">K</div>
+      </div>
+      <div class="story-dest">Dubai</div>
+      <div class="story-name">Khalid</div>
+    </div>
+    <div class="story-item">
+      <div class="story-ring upcoming">
+        <div class="story-img">S</div>
+      </div>
+      <div class="story-dest">Marrakech</div>
+      <div class="story-name">Sara</div>
+    </div>
+    <div class="story-item">
+      <div class="story-ring upcoming">
+        <div class="story-img">Y</div>
+      </div>
+      <div class="story-dest">Cairo</div>
+      <div class="story-name">Yusuf</div>
+    </div>
+    <div class="story-item">
+      <div class="story-ring">
+        <div class="story-img">F</div>
+      </div>
+      <div class="story-dest">Mecca</div>
+      <div class="story-name">Fatima</div>
+    </div>
+  </div>
+</div>
+
+<div class="active-bar">
+  <div class="active-dot"></div>
+  47 travelers active across 12 destinations
+</div>
+
+<!-- Featured destination -->
+<div class="section">
+  <div class="featured-card">
+    <div class="featured-img" style="background-image: url('https://images.pexels.com/photos/1559825/pexels-photo-1559825.jpeg?auto=compress&w=800')">
+      <div class="featured-overlay">
+        <div class="featured-badge">8 here now</div>
+        <div class="featured-city">Istanbul</div>
+        <div class="featured-meta">
+          <span>Turkey</span>
+          <span>12 planning</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">Destinations</div>
+  <div class="dest-grid">
+    <div class="dest-card">
+      <div class="dest-img" style="background-image: url('https://images.pexels.com/photos/2291789/pexels-photo-2291789.jpeg?auto=compress&w=400')">
+        <div class="dest-info">
+          <div class="dest-city">Mecca</div>
+          <div class="dest-country">Saudi Arabia</div>
+        </div>
+      </div>
+      <div class="dest-footer">
+        <div class="dest-avatars">
+          <div class="dest-avatar green">F</div>
+          <div class="dest-avatar green">M</div>
+          <div class="dest-avatar green">+3</div>
+        </div>
+        <div class="dest-count">5 here</div>
+      </div>
+    </div>
+
+    <div class="dest-card">
+      <div class="dest-img" style="background-image: url('https://images.pexels.com/photos/3889855/pexels-photo-3889855.jpeg?auto=compress&w=400')">
+        <div class="dest-info">
+          <div class="dest-city">Dubai</div>
+          <div class="dest-country">UAE</div>
+        </div>
+      </div>
+      <div class="dest-footer">
+        <div class="dest-avatars">
+          <div class="dest-avatar green">K</div>
+          <div class="dest-avatar">N</div>
+        </div>
+        <div class="dest-count">3 here</div>
+      </div>
+    </div>
+
+    <div class="dest-card">
+      <div class="dest-img" style="background-image: url('https://images.pexels.com/photos/3889743/pexels-photo-3889743.jpeg?auto=compress&w=400')">
+        <div class="dest-info">
+          <div class="dest-city">Marrakech</div>
+          <div class="dest-country">Morocco</div>
+        </div>
+      </div>
+      <div class="dest-footer">
+        <div class="dest-empty">Be the first</div>
+      </div>
+    </div>
+
+    <div class="dest-card">
+      <div class="dest-img" style="background-image: url('https://images.pexels.com/photos/3290075/pexels-photo-3290075.jpeg?auto=compress&w=400')">
+        <div class="dest-info">
+          <div class="dest-city">Cairo</div>
+          <div class="dest-country">Egypt</div>
+        </div>
+      </div>
+      <div class="dest-footer">
+        <div class="dest-avatars">
+          <div class="dest-avatar">Y</div>
+        </div>
+        <div class="dest-count">1 planning</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="label">
+  <div class="label-tag">Variant A: Community-Forward</div>
+  <p style="margin-top: 12px; font-size: 13px; color: #6b7280; line-height: 1.6;">
+    Social-first. People are the product. Stories, avatars, real-time presence counts on every surface. Feels like Instagram for Muslim travelers. The question: does this have value at 50 users?
+  </p>
+</div>
+
+<!-- Tab bar -->
+<div class="tab-bar">
+  <div class="tab active">
+    <div class="tab-icon"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="9"/><path d="M11 7v4l2.5 2.5"/></svg></div>
+    Explore
+  </div>
+  <div class="tab">
+    <div class="tab-icon"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></div>
+    Saved
+  </div>
+  <div class="tab">
+    <div class="tab-center">+</div>
+  </div>
+  <div class="tab">
+    <div class="tab-icon"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
+    Messages
+  </div>
+  <div class="tab">
+    <div class="tab-icon"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+    Profile
+  </div>
+</div>
+
+</body>
+</html>

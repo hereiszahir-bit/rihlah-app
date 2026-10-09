@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+functions/node_modules
 /.pnp
 .pnp.js
 
@@ -25,6 +26,16 @@ yarn-error.log*
 # Firebase
 **/serviceAccountKey.json
 .firebase/
+
+# Marketing secrets & temp files
+marketing/.env
+marketing/output/*-slides/
+marketing/output/*-photos/
+marketing/output/*.mp4
+
+# Large media (served from hosting, not git)
+public/hero.mp4
+public/hero.jpg
 
 # iOS duplicate plists
 **/GoogleService-Info\ (1).plist

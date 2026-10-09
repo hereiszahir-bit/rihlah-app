@@ -3,9 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { auth, db } from '../firebase';
 import { doc, updateDoc, addDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import { useUser } from '../context/UserContext';
-import { FiArrowLeft, FiX, FiMapPin, FiNavigation, FiClock, FiMessageCircle, FiCamera, FiPlus, FiCheck } from 'react-icons/fi';
+import { FiArrowLeft, FiX, FiMapPin, FiNavigation, FiClock, FiMessageCircle, FiCamera, FiPlus, FiCheck, FiAlertTriangle, FiSlash } from 'react-icons/fi';
 import { getExperiencesForDestination, getDestinationByName, getDestinationImage } from '../data/destinations';
 import { colors, fonts, radius, components } from '../design';
+import { blockUser, reportUser } from '../utils/safety';
 
 function DestinationDetail() {
   const { destination } = useParams();
@@ -20,6 +21,8 @@ function DestinationDetail() {
   const [localSentRequests, setLocalSentRequests] = useState([]);
   const [previewUser, setPreviewUser] = useState(null);
   const [tripPickerData, setTripPickerData] = useState(null);
+  const [showReportModal, setShowReportModal] = useState(null);
+  const [reportReason, setReportReason] = useState('');
   const [localCurrentUserData, setLocalCurrentUserData] = useState(null);
   const effectiveUserData = localCurrentUserData || currentUserData;
 
@@ -174,6 +177,30 @@ function DestinationDetail() {
     }
   };
 
+  const handleBlockUser = async (user) => {
+    const confirmed = window.confirm(`Block ${user.name}? They won't be able to see your profile or send you requests.`);
+    if (!confirmed) return;
+    try {
+      await blockUser(user.id);
+      setPreviewUser(null);
+      refreshAll();
+    } catch (error) {
+      console.error('Error blocking user:', error);
+    }
+  };
+
+  const submitReport = async () => {
+    if (!reportReason.trim() || !showReportModal) return;
+    try {
+      await reportUser(showReportModal.id, showReportModal.name, reportReason.trim());
+      setShowReportModal(null);
+      setReportReason('');
+      alert('Report submitted. Our team will review it.');
+    } catch (error) {
+      console.error('Error reporting user:', error);
+    }
+  };
+
   const isExperienceSaved = (expId) => {
     return effectiveUserData?.upcomingTrips
       ?.find(trip => trip.destination === destinationName)
@@ -317,7 +344,7 @@ function DestinationDetail() {
           style={styles.ctaBtn}
           onClick={() => hasTrip
             ? navigate(`/trip/${existingTripIndex}`)
-            : navigate('/add-trip', { state: { preselectedDestination: destinationName } })
+            : navigate('/add-trip', { state: { preselectedDestination: destinationName, preselectedDestinationId: destinationData?.id || '' } })
           }
         >
           {hasTrip ? `View your ${destCity} journey` : `Add ${destCity} to a Trip`}
@@ -421,11 +448,46 @@ function DestinationDetail() {
                     Connect
                   </button>
                 )}
+
+                <div style={styles.safetyActions}>
+                  <button style={styles.safetyBtn} onClick={() => { setShowReportModal(previewUser); setReportReason(''); }}>
+                    <FiAlertTriangle size={13} style={{ marginRight: '4px', verticalAlign: '-2px' }} /> Report
+                  </button>
+                  <button style={styles.safetyBtn} onClick={() => handleBlockUser(previewUser)}>
+                    <FiSlash size={13} style={{ marginRight: '4px', verticalAlign: '-2px' }} /> Block
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         );
       })()}
+
+      {/* Report Modal */}
+      {showReportModal && (
+        <div style={styles.reportOverlay} onClick={() => setShowReportModal(null)}>
+          <div style={styles.reportModalContent} onClick={(e) => e.stopPropagation()}>
+            <button style={styles.modalCloseBtn} onClick={() => setShowReportModal(null)}><FiX size={18} /></button>
+            <h3 style={styles.reportTitle}>Report {showReportModal.name}</h3>
+            <p style={styles.reportDesc}>Tell us what happened. Reports are reviewed by our team and kept confidential.</p>
+            <textarea
+              style={styles.reportTextarea}
+              value={reportReason}
+              onChange={(e) => setReportReason(e.target.value)}
+              placeholder="Describe the issue..."
+              maxLength={1000}
+              rows={4}
+            />
+            <button
+              style={{ ...styles.reportSubmitBtn, opacity: reportReason.trim() ? 1 : 0.4 }}
+              onClick={submitReport}
+              disabled={!reportReason.trim()}
+            >
+              Submit Report
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Trip Picker Modal */}
       {tripPickerData && (
@@ -750,6 +812,17 @@ const styles = {
   tripPickerDest: { fontFamily: fonts.serif, fontSize: '16px', fontWeight: '500', color: colors.text, marginBottom: '2px' },
   tripPickerDates: { fontSize: '13px', color: colors.textSecondary },
   tripPickerBadge: { fontSize: '11px', fontWeight: '600', color: colors.gold, background: colors.lightGray, padding: '4px 10px', borderRadius: radius.sm, display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 },
+
+  // Safety
+  safetyActions: { display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '16px', paddingTop: '12px', borderTop: `1px solid ${colors.lightGray}` },
+  safetyBtn: { background: 'none', border: 'none', color: colors.textMuted, fontSize: '12px', fontWeight: '500', cursor: 'pointer', padding: '4px 8px', display: 'flex', alignItems: 'center' },
+  reportOverlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1001, padding: '20px' },
+  reportModalContent: { background: colors.surface, borderRadius: radius.lg, padding: '24px', maxWidth: '400px', width: '100%', position: 'relative' },
+  reportTitle: { fontFamily: fonts.serif, fontSize: '18px', fontWeight: '500', margin: '0 0 8px 0', color: colors.text },
+  reportDesc: { fontSize: '13px', color: colors.textSecondary, lineHeight: 1.5, margin: '0 0 16px 0' },
+  reportTextarea: { width: '100%', padding: '12px', border: `1px solid ${colors.warmGray}`, borderRadius: radius.sm, fontSize: '14px', fontFamily: 'inherit', resize: 'vertical', minHeight: '100px', boxSizing: 'border-box' },
+  reportSubmitBtn: { width: '100%', padding: '14px', background: colors.dark, color: colors.cream, border: 'none', borderRadius: radius.sm, fontSize: '14px', fontWeight: '600', cursor: 'pointer', fontFamily: 'inherit', marginTop: '12px' },
+  modalCloseBtn: { position: 'absolute', top: '16px', right: '16px', background: 'none', border: 'none', color: colors.textTertiary, cursor: 'pointer', padding: '4px' },
 };
 
 export default DestinationDetail;

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FiCompass, FiUsers, FiMessageCircle, FiUser } from 'react-icons/fi';
+import { FiCompass, FiMap, FiMessageCircle, FiUser } from 'react-icons/fi';
 import { colors, fonts } from '../design';
 
 function TabBar() {
@@ -9,7 +9,7 @@ function TabBar() {
 
   const tabs = [
     { path: '/home', icon: FiCompass, label: 'Discover' },
-    { path: '/travelers', icon: FiUsers, label: 'Travelers' },
+    { path: '/trips', icon: FiMap, label: 'Trips' },
     { path: '/messages', icon: FiMessageCircle, label: 'Messages' },
     { path: '/profile', icon: FiUser, label: 'Profile' },
   ];

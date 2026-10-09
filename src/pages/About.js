@@ -26,7 +26,7 @@ function About() {
         WebkitBackdropFilter: scrolled ? 'blur(20px)' : 'none',
       }}>
         <div style={styles.headerInner}>
-          <Link to="/" style={{ ...styles.wordmark, color: scrolled ? colors.text : '#fff' }}>RIHLAH</Link>
+          <Link to="/" style={{ ...styles.wordmark, color: scrolled ? colors.text : '#fff' }}>rihlah</Link>
           <Link to="/" style={{ ...styles.backLink, color: scrolled ? colors.textSecondary : 'rgba(255,255,255,0.8)' }}>Home</Link>
         </div>
       </header>
@@ -173,7 +173,7 @@ function About() {
       {/* Footer */}
       <footer style={styles.footer}>
         <div style={styles.footerInner}>
-          <div style={styles.footerWordmark}>RIHLAH</div>
+          <div style={styles.footerWordmark}>rihlah</div>
           <p style={styles.footerTagline}>Travel with your people.</p>
           <div style={styles.footerLinks}>
             <a href="https://instagram.com/rihlah.io" target="_blank" rel="noopener noreferrer" style={styles.footerLink}>Instagram</a>

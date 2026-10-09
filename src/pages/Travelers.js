@@ -432,49 +432,39 @@ function Travelers() {
 
               <div style={styles.modalContent}>
                 {/* Photo carousel */}
-                {previewUser.photos && previewUser.photos.length > 1 ? (
-                  <div style={styles.carouselWrap}>
-                    <div style={styles.carouselImageWrap}>
-                      <img
-                        src={previewUser.photos[photoIndex]}
-                        alt={`${previewUser.name} ${photoIndex + 1}`}
-                        style={styles.carouselImage}
-                      />
-                      {/* Tap zones */}
-                      <div
-                        style={styles.carouselTapLeft}
-                        onClick={() => setPhotoIndex(i => i > 0 ? i - 1 : previewUser.photos.length - 1)}
-                      />
-                      <div
-                        style={styles.carouselTapRight}
-                        onClick={() => setPhotoIndex(i => i < previewUser.photos.length - 1 ? i + 1 : 0)}
-                      />
-                    </div>
-                    {/* Dots */}
-                    <div style={styles.carouselDots}>
-                      {previewUser.photos.map((_, i) => (
-                        <div
-                          key={i}
-                          style={{
-                            ...styles.carouselDot,
-                            ...(i === photoIndex ? styles.carouselDotActive : {}),
-                          }}
-                          onClick={() => setPhotoIndex(i)}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <div style={styles.modalAvatarWrap}>
-                    {previewUser.photoURL ? (
-                      <img src={previewUser.photoURL} alt={previewUser.name} style={styles.modalAvatar} />
-                    ) : (
-                      <div style={styles.modalAvatarPlaceholder}>
-                        {previewUser.name?.charAt(0).toUpperCase()}
+                {(() => {
+                  const photos = previewUser.photos || (previewUser.photoURL ? [previewUser.photoURL] : []);
+                  if (photos.length > 1) {
+                    return (
+                      <div style={styles.carouselWrap}>
+                        <div style={styles.carouselImageWrap}>
+                          <img src={photos[photoIndex]} alt={`${previewUser.name} ${photoIndex + 1}`} style={styles.carouselImage} />
+                          <div style={styles.carouselTapLeft} onClick={() => setPhotoIndex(i => i > 0 ? i - 1 : photos.length - 1)} />
+                          <div style={styles.carouselTapRight} onClick={() => setPhotoIndex(i => i < photos.length - 1 ? i + 1 : 0)} />
+                        </div>
+                        <div style={styles.carouselDots}>
+                          {photos.map((_, i) => (
+                            <div key={i} style={{ ...styles.carouselDot, ...(i === photoIndex ? styles.carouselDotActive : {}) }} onClick={() => setPhotoIndex(i)} />
+                          ))}
+                        </div>
                       </div>
-                    )}
-                  </div>
-                )}
+                    );
+                  } else if (photos.length === 1) {
+                    return (
+                      <div style={styles.carouselWrap}>
+                        <div style={styles.carouselImageWrap}>
+                          <img src={photos[0]} alt={previewUser.name} style={styles.carouselImage} />
+                        </div>
+                      </div>
+                    );
+                  } else {
+                    return (
+                      <div style={styles.modalAvatarWrap}>
+                        <div style={styles.modalAvatarPlaceholder}>{previewUser.name?.charAt(0).toUpperCase()}</div>
+                      </div>
+                    );
+                  }
+                })()}
                 <div style={styles.modalTextContent}>
                   <div style={styles.modalName}>
                     {previewUser.name}{previewUser.age ? `, ${previewUser.age}` : ''}

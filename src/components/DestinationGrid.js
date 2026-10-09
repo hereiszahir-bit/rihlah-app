@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { FiMapPin, FiNavigation } from 'react-icons/fi';
-import { getDestinationImage } from '../data/destinations';
+import { getPlaceImage } from '../data/places';
 
 function DestinationGrid({ destinations }) {
 
@@ -29,7 +29,7 @@ function DestinationGrid({ destinations }) {
             <div
               style={{
                 ...styles.image,
-                backgroundImage: `linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.6)), url(${getDestinationImage(dest.name)})`,
+                backgroundImage: `linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.6)), url(${getPlaceImage(dest.name)})`,
               }}
             >
               <div style={styles.overlay}>

@@ -1,0 +1,282 @@
+{
+  "carousel": [
+    {
+      "type": "hook",
+      "headline": "Go somewhere that will not accommodate you.",
+      "body": "Oaxaca does not have halal on every corner. Go anyway.",
+      "photo": false,
+      "photo_search": []
+    },
+    {
+      "type": "body",
+      "headline": "It will not make it easy for you.",
+      "body": "No halal butcher on the corner. No azaan at dawn. You will eat around pork, not because of it. You will learn the Spanish word for seafood quickly. And none of that will matter once you taste mole negro for the first time.",
+      "photo": true,
+      "photo_search": [
+        "oaxaca mexico mole negro clay pot",
+        "oaxaca mercado negro food stalls",
+        "oaxaca mexico traditional food market"
+      ],
+      "photo_local": "oaxaca-photos/slide-2.jpg",
+      "photo_credit": "Yessi Trex / Pexels"
+    },
+    {
+      "type": "body",
+      "headline": "The ruins at Monte Albán will rearrange you.",
+      "body": "A civilization that built a city on a flattened mountain in 500 BCE. No ramp. No easy road. They chose the hard place on purpose. You walk it at golden hour and you understand something about intention that no book could explain.",
+      "photo": true,
+      "photo_search": [
+        "monte alban ruins oaxaca mexico sunset",
+        "zapotec ruins oaxaca mexico hilltop",
+        "monte alban oaxaca mexico archaeological site"
+      ],
+      "photo_local": "oaxaca-photos/slide-3.jpg",
+      "photo_credit": "Magaly Taboada / Pexels"
+    },
+    {
+      "type": "body",
+      "headline": "The mercados are the real museum.",
+      "body": "Mercado Benito Juárez. Mercado 20 de Noviembre. Not markets for tourists — markets for people who eat here every day. Tlayudas the size of your forearm. Chocolate ground fresh on the premises. The smell of toasted chiles and copal smoke. You could spend three days and not see the same thing twice.",
+      "photo": true,
+      "photo_search": [
+        "mercado benito juarez oaxaca mexico stalls",
+        "oaxaca mexico market tlayuda street food",
+        "oaxaca chocolate molinillo mercado"
+      ],
+      "photo_local": "oaxaca-photos/slide-4.jpg",
+      "photo_credit": "Miguel González / Pexels"
+    },
+    {
+      "type": "body",
+      "headline": "Día de los Muertos is not a party. It is a theology.",
+      "body": "The cemeteries fill with marigolds and candles and families who stay all night. They are not mourning. They are hosting. The dead are expected. A culture that built grief into celebration — that understood continuity across death — is doing something worth witnessing.",
+      "photo": true,
+      "photo_search": [
+        "dia de muertos oaxaca cemetery marigolds candles",
+        "oaxaca mexico day of dead ofrendas cemetery night",
+        "panteón general oaxaca dia muertos flowers"
+      ],
+      "photo_local": "oaxaca-photos/slide-5.jpg",
+      "photo_credit": "Jhovani  Morales / Pexels"
+    },
+    {
+      "type": "body",
+      "headline": "The textiles are not souvenirs. They are arguments.",
+      "body": "Zapotec weavers in Teotitlan del Valle have been working backstrap looms for centuries. Natural dyes from cochineal, indigo, pomegranate. Each rug takes weeks. You buy one and you carry home someone's time.",
+      "photo": true,
+      "photo_search": [
+        "oaxaca mexico textile weaving teotitlan",
+        "zapotec weaving oaxaca backstrap loom mexico",
+        "oaxaca mexico natural dye cochineal textile"
+      ],
+      "photo_local": "oaxaca-photos/slide-6.jpg",
+      "photo_credit": "Miguel González / Pexels"
+    },
+    {
+      "type": "cta",
+      "headline": "Go somewhere that does not accommodate you. Let it teach you anyway.",
+      "body": "Rihlah — the travel community for Muslims who move with intention. rihlah.io — link in bio",
+      "photo": false,
+      "photo_search": []
+    }
+  ],
+  "caption": "Oaxaca will not bend for you. That is exactly why you should go. The full guide is on the blog — rihlah.io — link in bio",
+  "blog": {
+    "title": "Oaxaca Is Not a Muslim City. Go Anyway.",
+    "subtitle": "The places that do not accommodate you are often the ones that change you most.",
+    "category": "The City",
+    "readTime": "6 min read",
+    "body": [
+      {
+        "type": "text",
+        "content": "There is a version of Muslim travel that optimizes for comfort. Halal restaurants within walking distance of the hotel. A mosque in every neighborhood. A city that already knows how to hold you. Istanbul. Kuala Lumpur. Amman. These are real and worthy and I have loved them."
+      },
+      {
+        "type": "text",
+        "content": "And then there is Oaxaca."
+      },
+      {
+        "type": "pullquote",
+        "content": "The places that do not accommodate you are often the ones that change you most. Oaxaca does not accommodate anyone. It simply is."
+      },
+      {
+        "type": "text",
+        "content": "Oaxaca de Juárez sits in a valley in southern Mexico at 1,550 meters above sea level, surrounded by mountains that the Zapotecs turned into a civilization before Rome was a footnote. It is a city of about 300,000 people that punches so far above its weight in food, art, craft, and culture that it routinely ends up on lists it has no business being on — and belongs at the top of all of them."
+      },
+      {
+        "type": "text",
+        "content": "It will not make life easy for you as a Muslim traveler. There is no halal butcher. The carnitas are everywhere and they smell incredible. Pork is woven into the culinary fabric in ways you cannot always see on a menu. You will need to ask. You will need to learn the Spanish word for lard — manteca — and use it as a question more than you expect. You will figure it out. Seafood is your friend. Tlayudas with black beans and quesillo cheese. Vegetable-forward dishes you would not have found otherwise. The constraint becomes a discovery."
+      },
+      {
+        "type": "heading",
+        "content": "The ruins will rearrange your sense of scale"
+      },
+      {
+        "type": "text",
+        "content": "Monte Albán. Go at four in the afternoon when the tour groups have thinned and the light is doing what it does at elevation. This was the capital of the Zapotec empire — a city of 25,000 people built on a mountain they flattened by hand, beginning around 500 BCE. The main plaza is surrounded by pyramids and temples and an observatory aligned to the stars. They chose this place deliberately. The difficulty of the location was not a problem to solve — it was a statement of intention."
+      },
+      {
+        "type": "text",
+        "content": "I have stood at the top of Monte Albán and thought about what it means to build something that lasts. A civilization that is mostly gone now, absorbed and replaced and overlooked, but whose physical will is still right there on a mountaintop, unchanged. There is a particular kind of humility that comes from standing somewhere ancient. It is not sadness. It is perspective."
+      },
+      {
+        "type": "heading",
+        "content": "The mercados are the real archaeology"
+      },
+      {
+        "type": "text",
+        "content": "Mercado Benito Juárez and Mercado 20 de Noviembre sit across the street from each other, a few blocks from the zócalo. Neither of them is performing for you. These are working markets where Oaxacans buy their food, their flowers, their rope, their saints. Walk through slowly. The chocolate section of Benito Juárez alone will take twenty minutes — dozens of stalls grinding cacao with sugar and cinnamon into tablets that you take home and melt into milk. The smell is overwhelming in the best possible way."
+      },
+      {
+        "type": "text",
+        "content": "Across the street, the Mercado 20 de Noviembre has a section of open grills where vendors compete for your attention by fanning smoke in your direction. The tlayuda — Oaxaca's foundational street food, a large toasted corn tortilla spread with beans, quesillo, and your choice of protein — is available with tasajo (dried beef) or chorizo negro, the local black sausage. Ask what is in the chorizo before you commit. The tasajo is your friend."
+      },
+      {
+        "type": "pullquote",
+        "content": "Mole negro is not a sauce. It is a document. A record of every civilization that passed through this valley and left something behind."
+      },
+      {
+        "type": "text",
+        "content": "Mole negro deserves its own paragraph. It contains more than thirty ingredients — dried chiles, chocolate, spices, charred tortilla, toasted seeds — and takes days to make properly. Every family has their version. Every restaurant claims theirs is definitive. It is one of the most complex things you will ever put in your mouth and it will taste like nothing you have had before, even if you think you have had mole before. You have not. Order it over chicken at a sit-down restaurant where you can confirm the preparation. Take your time with it."
+      },
+      {
+        "type": "heading",
+        "content": "On Día de los Muertos"
+      },
+      {
+        "type": "text",
+        "content": "If you have the option to be in Oaxaca on the first and second of November, go. The Day of the Dead celebrations here are not the costume parties that have migrated north. The cemeteries — particularly the Panteón General — fill with families who come to spend the night with their dead. Marigold petals mark paths. Candles burn on graves. People eat, talk, and stay until morning. The atmosphere is not mournful. It is warm in a way that is hard to articulate."
+      },
+      {
+        "type": "text",
+        "content": "Muslims believe in the persistence of the soul and the reality of what comes after this life. Watching a culture that has built that belief into a public, communal, annual practice — that refuses to treat death as something to be hidden and grieved privately — is worth the trip on its own."
+      },
+      {
+        "type": "heading",
+        "content": "The mezcal is a philosophy"
+      },
+      {
+        "type": "text",
+        "content": "You do not have to drink mezcal to understand what it means. Visit a palenque — a traditional mezcal distillery — and watch the process. Agave plants that take eight to fifteen years to mature, harvested and roasted and crushed and fermented over weeks. Each variety of agave produces something different. Each producer, each village, each season. The patience built into this craft is extraordinary. Something about a substance that requires twelve years of growth before it becomes anything is worth contemplating regardless of whether it ends up in your glass."
+      },
+      {
+        "type": "note",
+        "content": "Practical note: Book accommodation in the historic center, within walking distance of the zócalo. The city is walkable and the neighborhoods close to the center — Jalatlaco especially — are worth exploring on foot. Jalatlaco is a small residential neighborhood of cobblestone streets and painted walls and bougainvillea that somehow manages to feel completely unhurried despite being five minutes from the tourist center."
+      },
+      {
+        "type": "text",
+        "content": "Oaxaca will not bend to meet you. It will not put a prayer room in your hotel or guarantee a halal option on every corner. What it will do is show you a civilization that built extraordinary things with intention, a food culture that is among the most complex on earth, and a relationship with death and memory that is, quietly, one of the most spiritually serious things you can witness as a traveler."
+      },
+      {
+        "type": "text",
+        "content": "The Quran tells you to walk the earth and observe. It does not specify which parts."
+      }
+    ]
+  },
+  "newsletter": "This month the argument is for Oaxaca, and I will keep it brief: go somewhere that does not accommodate you. The city sits at 1,550 meters in southern Mexico surrounded by mountains the Zapotecs built a civilization on before Rome was relevant. The mole negro contains thirty ingredients and takes three days. The ruins at Monte Albán will recalibrate your sense of what human intention looks like. You will navigate the food situation — tasajo over carnitas, seafood, beans and cheese in quantities that are genuinely fine — and in doing so you will discover things you would not have found if the trip had been easy. That is the whole point of leaving.",
+  "reel_hooks": [
+    "The best city for Muslim travelers right now is not Istanbul.",
+    "Oaxaca will not accommodate you. Go anyway.",
+    "A civilization built a city on a mountain they flattened by hand. You should see it."
+  ],
+  "story_ideas": [
+    {
+      "type": "poll",
+      "text": "Would you travel somewhere with almost no halal options?",
+      "options": [
+        "Yes — I figure it out",
+        "No — not worth the stress"
+      ]
+    },
+    {
+      "type": "question",
+      "text": "Tell us about a city that surprised you. The one you almost didn't book.",
+      "options": []
+    },
+    {
+      "type": "slider",
+      "text": "How far outside your comfort zone do you travel? (1 = familiar cities only, 10 = show up and figure it out)",
+      "options": [
+        "Familiar only",
+        "Figure it out"
+      ]
+    }
+  ],
+  "qa": {
+    "score": 8,
+    "pass": true,
+    "issues": [
+      {
+        "severity": "warning",
+        "category": "accuracy",
+        "slide": null,
+        "issue": "Monte Albán founding stated as '500 BCE' in carousel but blog body says 'around 500 BCE' — scholarly consensus places initial occupation closer to 500–400 BCE, acceptable range but carousel slide drops the qualifier.",
+        "fix": "Add 'around' before 500 BCE in carousel slide 3 for consistency with blog."
+      },
+      {
+        "severity": "warning",
+        "category": "accuracy",
+        "slide": null,
+        "issue": "Blog states Monte Albán population as '25,000 people' — estimates range widely (15,000–25,000+); citing a single figure without qualification overstates certainty.",
+        "fix": "Change to 'as many as 25,000 people' or 'estimates suggest up to 25,000.'"
+      },
+      {
+        "severity": "warning",
+        "category": "accuracy",
+        "slide": null,
+        "issue": "Carousel slide 6 says 'twelve years to grow a single plant'; blog says 'eight to fifteen years' — inconsistent figure for agave maturation within the same content package.",
+        "fix": "Standardize to 'eight to fifteen years' across carousel and blog."
+      },
+      {
+        "severity": "warning",
+        "category": "accuracy",
+        "slide": null,
+        "issue": "Blog states mole negro 'takes days to make' and carousel says it contains 'more than thirty ingredients' — ingredient count varies by source (20–40+); unverified as a universal claim.",
+        "fix": "Soften to 'can contain more than thirty ingredients' or cite a specific preparation."
+      },
+      {
+        "severity": "note",
+        "category": "photos",
+        "slide": 2,
+        "issue": "Photo credit contains emojis ('Yessi Trex📸🦖✨️') — brand guidelines prohibit emojis in content.",
+        "fix": "Strip emojis from credit: 'Yessi Trex / Pexels.'"
+      },
+      {
+        "severity": "note",
+        "category": "photos",
+        "slide": 6,
+        "issue": "Search term 'oaxaca mexico artisanal mezcal clay cup' may return lifestyle shots with liquid in glass — problematic for a brand serving an audience where alcohol imagery is sensitive.",
+        "fix": "Replace with 'oaxaca agave plant harvest palenque worker' to keep focus on craft, not the drink."
+      },
+      {
+        "severity": "note",
+        "category": "voice",
+        "slide": null,
+        "issue": "Caption ends with 'rihlah.io — link in bio' with no period, correct — but 'The full guide is on the blog' is slightly generic; brand voice prefers specific over directional.",
+        "fix": "Consider 'The full Oaxaca guide — what to eat, what to skip, what will rearrange you — is at rihlah.io.'"
+      },
+      {
+        "severity": "note",
+        "category": "quality",
+        "slide": null,
+        "issue": "Reel hook 3 ('A civilization built a city on a mountain they flattened by hand. You should see it.') is 17 words — over the 10-word guideline.",
+        "fix": "Trim to: 'They flattened a mountain by hand. You should see it.' (10 words)"
+      },
+      {
+        "severity": "note",
+        "category": "quality",
+        "slide": null,
+        "issue": "Blog pullquote 'Mole negro is not a sauce. It is a document.' is strong, but 'a record of every civilization that passed through this valley' edges toward generic romantic overreach.",
+        "fix": "Cut the second sentence of the pullquote; the first two lines are sufficient and sharper alone."
+      },
+      {
+        "severity": "note",
+        "category": "design",
+        "slide": 4,
+        "issue": "Mercado slide lists four specific details (two market names, tlayuda size, chocolate, copal smoke) — likely too dense for 1080x1080 at readable type size.",
+        "fix": "Cut to two anchoring details; move remaining specifics to blog body where they already appear."
+      }
+    ],
+    "summary": "Solid, on-brand package with genuine editorial voice — flagged issues are refinements, not failures; fix the agave maturation inconsistency and emoji in photo credit before publishing."
+  }
+}

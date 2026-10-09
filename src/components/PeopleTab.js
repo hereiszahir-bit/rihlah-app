@@ -2,15 +2,18 @@ import React, { useState, useMemo } from 'react';
 import { addDoc, collection } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useUser } from '../context/UserContext';
-import { FiX, FiMapPin, FiMessageCircle, FiCamera } from 'react-icons/fi';
+import { FiX, FiMapPin, FiMessageCircle, FiCamera, FiAlertTriangle, FiSlash } from 'react-icons/fi';
+import { blockUser, reportUser } from '../utils/safety';
 
 function PeopleTab({ destination }) {
   const [timeFilter, setTimeFilter] = useState('now');
   const [selectedPerson, setSelectedPerson] = useState(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [localSentRequests, setLocalSentRequests] = useState([]);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState('');
 
-  const { currentUserData, allUsers, currentUser, sentRequestUserIds, receivedRequestUserIds, refreshConnections } = useUser();
+  const { currentUserData, allUsers, currentUser, sentRequestUserIds, receivedRequestUserIds, refreshConnections, refreshAll } = useUser();
   const myConnections = currentUserData?.connections || [];
 
   const allSentRequests = useMemo(() => {
@@ -133,6 +136,37 @@ function PeopleTab({ destination }) {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const handleBlockPerson = async () => {
+    if (!selectedPerson) return;
+    const confirmed = window.confirm(`Block ${selectedPerson.name}? They won't be able to see your profile or send you requests.`);
+    if (!confirmed) return;
+    try {
+      await blockUser(selectedPerson.userId);
+      setShowProfileModal(false);
+      setSelectedPerson(null);
+      refreshAll();
+    } catch (error) {
+      console.error('Error blocking user:', error);
+    }
+  };
+
+  const handleReportPerson = () => {
+    setShowReportModal(true);
+    setReportReason('');
+  };
+
+  const submitReport = async () => {
+    if (!reportReason.trim() || !selectedPerson) return;
+    try {
+      await reportUser(selectedPerson.userId, selectedPerson.name, reportReason.trim());
+      setShowReportModal(false);
+      setReportReason('');
+      alert('Report submitted. Our team will review it.');
+    } catch (error) {
+      console.error('Error reporting user:', error);
+    }
   };
 
   const formatDate = (dateString) => {
@@ -353,7 +387,42 @@ function PeopleTab({ destination }) {
                   </div>
                 </div>
               )}
+
+              <div style={styles.safetyActions}>
+                <button style={styles.safetyBtn} onClick={handleReportPerson}>
+                  <FiAlertTriangle size={13} style={{ marginRight: '4px', verticalAlign: '-2px' }} /> Report
+                </button>
+                <button style={styles.safetyBtn} onClick={handleBlockPerson}>
+                  <FiSlash size={13} style={{ marginRight: '4px', verticalAlign: '-2px' }} /> Block
+                </button>
+              </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Report Modal */}
+      {showReportModal && (
+        <div style={styles.reportOverlay} onClick={() => setShowReportModal(false)}>
+          <div style={styles.reportModal} onClick={(e) => e.stopPropagation()}>
+            <button style={styles.closeButton} onClick={() => setShowReportModal(false)}><FiX size={18} /></button>
+            <h3 style={styles.reportTitle}>Report {selectedPerson?.name}</h3>
+            <p style={styles.reportDesc}>Tell us what happened. Reports are reviewed by our team and kept confidential.</p>
+            <textarea
+              style={styles.reportTextarea}
+              value={reportReason}
+              onChange={(e) => setReportReason(e.target.value)}
+              placeholder="Describe the issue..."
+              maxLength={1000}
+              rows={4}
+            />
+            <button
+              style={{ ...styles.reportSubmitBtn, opacity: reportReason.trim() ? 1 : 0.4 }}
+              onClick={submitReport}
+              disabled={!reportReason.trim()}
+            >
+              Submit Report
+            </button>
           </div>
         </div>
       )}
@@ -631,6 +700,18 @@ const styles = {
     fontWeight: '600',
     cursor: 'pointer',
   },
+
+  // Safety
+  safetyActions: { display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '16px', paddingTop: '12px', borderTop: '1px solid #e8e5e0' },
+  safetyBtn: { background: 'none', border: 'none', color: '#999', fontSize: '12px', fontWeight: '500', cursor: 'pointer', padding: '4px 8px', display: 'flex', alignItems: 'center' },
+
+  // Report modal
+  reportOverlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1001, padding: '20px' },
+  reportModal: { background: '#fff', borderRadius: '16px', padding: '24px', maxWidth: '400px', width: '100%', position: 'relative' },
+  reportTitle: { fontSize: '18px', fontWeight: '600', margin: '0 0 8px 0', color: '#1a1a1a' },
+  reportDesc: { fontSize: '13px', color: '#6b6b6b', lineHeight: 1.5, margin: '0 0 16px 0' },
+  reportTextarea: { width: '100%', padding: '12px', border: '1px solid #d4d0c8', borderRadius: '8px', fontSize: '14px', fontFamily: 'inherit', resize: 'vertical', minHeight: '100px', boxSizing: 'border-box' },
+  reportSubmitBtn: { width: '100%', padding: '14px', background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: '600', cursor: 'pointer', fontFamily: 'inherit', marginTop: '12px' },
 };
 
 export default PeopleTab;

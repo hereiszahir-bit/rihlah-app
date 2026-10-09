@@ -1,29 +1,34 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { auth, db, storage } from '../firebase';
 import { doc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { FiCamera } from 'react-icons/fi';
+import { FiCamera, FiX } from 'react-icons/fi';
 import { colors, fonts, radius, components } from '../design';
+import { sendApplicationReceived, sendAdminNotification, scheduleNurtureSequence } from '../utils/sendEmail';
+import { useUser } from '../context/UserContext';
+import { calculateAge } from '../utils/age';
 
 function Onboarding() {
-  const navigate = useNavigate();
+  const { refreshAll } = useUser();
   const [step, setStep] = useState(1);
-  const [photoFile, setPhotoFile] = useState(null);
-  const [photoPreview, setPhotoPreview] = useState(null);
+  const [photoFiles, setPhotoFiles] = useState([]);
+  const [photoPreviews, setPhotoPreviews] = useState([]);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   const [formData, setFormData] = useState({
     name: auth.currentUser?.displayName || '',
-    age: '',
+    dateOfBirth: '',
     gender: '',
     profileVisibility: '',
     city: '',
     bio: '',
+    occupation: '',
+    screeningAnswer: '',
     interests: [],
     identity: [],
-    whatsapp: '',
-    instagram: ''
+    instagram: '',
+    referralSource: '',
+    travelStyle: ''
   });
   const [citySuggestions, setCitySuggestions] = useState([]);
   const [showCitySuggestions, setShowCitySuggestions] = useState(false);
@@ -71,10 +76,26 @@ function Onboarding() {
     setCitySuggestions([]);
   };
 
+  // Pre-load Google photo as a local data URL so it works like any uploaded photo
   useEffect(() => {
-    if (auth.currentUser?.photoURL) {
-      setPhotoPreview(auth.currentUser.photoURL);
-    }
+    const loadGooglePhoto = async () => {
+      const googleUrl = auth.currentUser?.photoURL;
+      if (!googleUrl) return;
+      try {
+        const res = await fetch(googleUrl);
+        const blob = await res.blob();
+        const file = new File([blob], 'google-photo.jpg', { type: blob.type });
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setPhotoFiles([file]);
+          setPhotoPreviews([reader.result]);
+        };
+        reader.readAsDataURL(file);
+      } catch {
+        // Google photo failed to load — user can upload their own
+      }
+    };
+    loadGooglePhoto();
   }, []);
 
   useEffect(() => {
@@ -91,7 +112,7 @@ function Onboarding() {
         setFormData(prev => ({
           ...prev,
           name: data.name || prev.name,
-          age: data.age ? String(data.age) : prev.age,
+          dateOfBirth: data.dateOfBirth || prev.dateOfBirth,
           gender: data.gender || prev.gender,
           profileVisibility: data.profileVisibility || prev.profileVisibility,
           city: data.homeCity || prev.city,
@@ -134,14 +155,33 @@ function Onboarding() {
 
   const nextStep = () => {
     setValidationError('');
-    if (step === 1 && (!formData.name.trim() || !formData.age || !formData.gender)) {
+    if (step === 1 && (!formData.name.trim() || !formData.dateOfBirth || !formData.gender)) {
       setValidationError('Please fill in all required fields');
       return;
     }
-    if (step === 1 && formData.age) {
-      const ageNum = parseInt(formData.age);
-      if (isNaN(ageNum) || ageNum < 13 || ageNum > 120) {
-        setValidationError('Please enter a valid age between 13 and 120');
+    if (step === 1 && formData.dateOfBirth) {
+      const age = calculateAge(formData.dateOfBirth);
+      if (age === null || age < 13 || age > 120) {
+        setValidationError('You must be at least 13 years old');
+        return;
+      }
+    }
+    if (step === 2 && !formData.city.trim()) {
+      setValidationError('Please enter your city');
+      return;
+    }
+    if (step === 2 && !formData.occupation.trim()) {
+      setValidationError('Please tell us what you do');
+      return;
+    }
+    if (step === 2 && !formData.screeningAnswer.trim()) {
+      setValidationError('Please answer the travel question');
+      return;
+    }
+    if (step === 3) {
+      const totalPhotos = photoPreviews.length;
+      if (totalPhotos < 2) {
+        setValidationError(`At least 2 photos required (${totalPhotos}/2)`);
         return;
       }
     }
@@ -155,13 +195,21 @@ function Onboarding() {
 
   const handlePhotoSelect = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) return;
-      setPhotoFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => setPhotoPreview(reader.result);
-      reader.readAsDataURL(file);
-    }
+    if (!file || file.size > 5 * 1024 * 1024) return;
+    if (photoPreviews.length >= 5) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPhotoFiles(prev => [...prev, file]);
+      setPhotoPreviews(prev => [...prev, reader.result]);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  const removeOnboardingPhoto = (index) => {
+    setPhotoPreviews(prev => prev.filter((_, i) => i !== index));
+    setPhotoFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   const [submitError, setSubmitError] = useState('');
@@ -169,52 +217,66 @@ function Onboarding() {
   const handleSubmit = async () => {
     try {
       const user = auth.currentUser;
-      if (!user) {
-        navigate('/login');
-        return;
-      }
+      if (!user) return;
 
       setUploadingPhoto(true);
       setSubmitError('');
-      let photoURL = '';
+      const uploadedURLs = [];
 
-      if (photoFile) {
+      // Upload each photo file
+      for (let i = 0; i < photoFiles.length; i++) {
         try {
-          const photoRef = ref(storage, `profilePhotos/${user.uid}`);
-          await uploadBytes(photoRef, photoFile);
-          photoURL = await getDownloadURL(photoRef);
+          const photoRef = ref(storage, `profilePhotos/${user.uid}_${i === 0 ? 'main' : i}`);
+          await uploadBytes(photoRef, photoFiles[i]);
+          const url = await getDownloadURL(photoRef);
+          uploadedURLs.push(url);
         } catch (photoError) {
           console.error('Photo upload error:', photoError.message);
         }
       }
 
+      const allPhotos = uploadedURLs;
+      const photoURL = allPhotos[0] || '';
+
       const userData = {
+        email: user.email || '',
         name: formData.name.trim(),
-        age: parseInt(formData.age),
+        dateOfBirth: formData.dateOfBirth,
+        age: calculateAge(formData.dateOfBirth),
         gender: formData.gender,
         profileVisibility: formData.profileVisibility || formData.gender,
+        occupation: (formData.occupation || '').trim(),
+        screeningAnswer: (formData.screeningAnswer || '').trim(),
         city: (formData.city || '').trim(),
         bio: (formData.bio || '').trim(),
         interests: formData.interests,
         identity: formData.identity,
-        whatsapp: (formData.whatsapp || '').trim(),
+        whatsapp: '',
         instagram: (formData.instagram || '').trim(),
+        referralSource: formData.referralSource || '',
+        travelStyle: formData.travelStyle || '',
         photoURL: photoURL,
+        photos: allPhotos,
         createdAt: new Date().toISOString(),
+        appliedAt: new Date().toISOString(),
         upcomingTrips: [],
         connections: [],
-        onboardingComplete: true
+        onboardingComplete: true,
+        status: 'pending',
       };
 
       await setDoc(doc(db, 'users', user.uid), userData);
 
-      const pendingInvite = localStorage.getItem('rihlah_pending_invite');
-      if (pendingInvite) {
-        localStorage.removeItem('rihlah_pending_invite');
-        navigate(`/join/${pendingInvite}`);
-      } else {
-        navigate('/home');
+      // Send confirmation + admin notification (fire-and-forget)
+      const userEmail = user.email;
+      if (userEmail) {
+        sendApplicationReceived(userEmail, userData.name).catch(console.error);
+        sendAdminNotification('hereiszahir@gmail.com', userData.name, userData.city).catch(console.error);
+        scheduleNurtureSequence(userEmail, userData.name).catch(console.error);
       }
+
+      // Refresh context — route guard will auto-redirect to /pending
+      await refreshAll();
 
     } catch (error) {
       console.error('Profile creation error:', error.message);
@@ -271,17 +333,18 @@ function Onboarding() {
           {validationError && <div style={styles.errorMsg}>{validationError}</div>}
 
           <div style={styles.inputGroup}>
-            <label style={styles.label}>Name *</label>
+            <label style={styles.label}>Name <span style={styles.required}>*</span></label>
             <input type="text" name="name" value={formData.name} onChange={handleChange} style={styles.input} placeholder="Your name" maxLength={100} />
           </div>
 
           <div style={styles.inputGroup}>
-            <label style={styles.label}>Age *</label>
-            <input type="number" name="age" value={formData.age} onChange={handleChange} style={styles.input} placeholder="Your age" min={13} max={120} />
+            <label style={styles.label}>Date of Birth <span style={styles.required}>*</span></label>
+            <input type="date" name="dateOfBirth" value={formData.dateOfBirth} onChange={handleChange} style={styles.input} max={new Date(new Date().setFullYear(new Date().getFullYear() - 13)).toISOString().split('T')[0]} />
+            {formData.dateOfBirth && <div style={{ fontSize: '13px', color: colors.textMuted, marginTop: '6px' }}>Age: {calculateAge(formData.dateOfBirth)}</div>}
           </div>
 
           <div style={styles.inputGroup}>
-            <label style={styles.label}>Gender *</label>
+            <label style={styles.label}>Gender <span style={styles.required}>*</span></label>
             <select name="gender" value={formData.gender} onChange={handleChange} style={styles.input}>
               <option value="">Select gender</option>
               <option value="Male">Male</option>
@@ -291,7 +354,7 @@ function Onboarding() {
 
           {formData.gender && (
             <div style={styles.inputGroup}>
-              <label style={styles.label}>I'd like to connect with *</label>
+              <label style={styles.label}>I'd like to connect with <span style={styles.required}>*</span></label>
               <div style={styles.visibilityOptions}>
                 {[
                   { key: formData.gender, label: formData.gender === 'Male' ? 'Brothers' : 'Sisters' },
@@ -320,6 +383,25 @@ function Onboarding() {
             </div>
           )}
 
+          <div style={styles.inputGroup}>
+            <label style={styles.label}>How do you usually travel?</label>
+            <div style={styles.visibilityOptions}>
+              {['Solo', 'Couple', 'Family', 'Friends'].map(opt => (
+                <button
+                  key={opt}
+                  type="button"
+                  style={{
+                    ...styles.visibilityBtn,
+                    ...(formData.travelStyle === opt ? styles.visibilityBtnActive : {}),
+                  }}
+                  onClick={() => setFormData({ ...formData, travelStyle: opt })}
+                >
+                  {opt}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <button style={styles.nextButton} onClick={nextStep}>Continue</button>
         </div>
       )}
@@ -329,8 +411,10 @@ function Onboarding() {
           <h2 style={styles.stepTitle}>Where are you based?</h2>
           <p style={styles.stepSubtitle}>Help us connect you with nearby travelers</p>
 
+          {validationError && <div style={styles.errorMsg}>{validationError}</div>}
+
           <div style={styles.inputGroup}>
-            <label style={styles.label}>City</label>
+            <label style={styles.label}>City <span style={styles.required}>*</span></label>
             <div style={styles.cityInputWrapper}>
               <input
                 type="text"
@@ -353,8 +437,18 @@ function Onboarding() {
           </div>
 
           <div style={styles.inputGroup}>
-            <label style={styles.label}>Bio (Optional)</label>
-            <textarea name="bio" value={formData.bio} onChange={handleChange} style={styles.textarea} placeholder="Tell us about yourself..." rows="4" maxLength={500} />
+            <label style={styles.label}>What do you do? <span style={styles.required}>*</span></label>
+            <input type="text" name="occupation" value={formData.occupation} onChange={handleChange} style={styles.input} placeholder="e.g. Product designer, Medical student, Entrepreneur" maxLength={100} />
+          </div>
+
+          <div style={styles.inputGroup}>
+            <label style={styles.label}>Where's the last place you traveled that changed how you think? <span style={styles.required}>*</span></label>
+            <textarea name="screeningAnswer" value={formData.screeningAnswer} onChange={handleChange} style={styles.textarea} placeholder="Tell us about a place and what it shifted for you..." rows="4" maxLength={500} />
+          </div>
+
+          <div style={styles.inputGroup}>
+            <label style={styles.label}>Bio <span style={styles.optional}>optional</span></label>
+            <textarea name="bio" value={formData.bio} onChange={handleChange} style={styles.textarea} placeholder="A short line about yourself for your profile" rows="3" maxLength={300} />
           </div>
 
           <button style={styles.nextButton} onClick={nextStep}>Continue</button>
@@ -364,23 +458,40 @@ function Onboarding() {
 
       {step === 3 && (
         <div style={styles.stepContainer}>
-          <h2 style={styles.stepTitle}>Add Your Photo</h2>
-          <p style={styles.stepSubtitle}>Help other travelers recognize you (optional)</p>
+          <h2 style={styles.stepTitle}>Add Your Photos</h2>
+          <p style={styles.stepSubtitle}>At least 2 photos required. Show us who you are.</p>
+
+          {validationError && <div style={styles.errorMsg}>{validationError}</div>}
 
           <div style={styles.photoUploadSection}>
-            {photoPreview ? (
-              <div style={styles.photoPreviewContainer}>
-                <img src={photoPreview} alt="Preview" style={styles.photoPreview} />
-                <button style={styles.changePhotoBtn} onClick={() => document.getElementById('photoInput').click()}>Change Photo</button>
-              </div>
-            ) : (
-              <div style={styles.photoUploadPlaceholder} onClick={() => document.getElementById('photoInput').click()}>
-                <div style={styles.uploadIcon}><FiCamera size={28} color={colors.gold} /></div>
-                <div style={styles.uploadText}>Tap to Upload Photo</div>
-                <div style={styles.uploadSubtext}>JPG, PNG (Max 5MB)</div>
-              </div>
-            )}
+            <div style={styles.onboardingPhotoRow}>
+              {photoPreviews.map((preview, i) => (
+                <div key={i} style={styles.onboardingPhotoCard}>
+                  <img src={preview} alt={`Photo ${i + 1}`} style={styles.onboardingPhotoImg} />
+                  <button type="button" style={styles.onboardingPhotoRemove} onClick={() => removeOnboardingPhoto(i)}>
+                    <FiX size={14} />
+                  </button>
+                  {i === 0 && <div style={styles.onboardingMainLabel}>Main</div>}
+                </div>
+              ))}
+              {photoPreviews.length < 5 && (
+                <div
+                  style={styles.onboardingPhotoCard}
+                  onClick={() => document.getElementById('photoInput').click()}
+                >
+                  <div style={styles.photoPlaceholder}>
+                    <FiCamera size={24} color={colors.textMuted} />
+                    <div style={{ fontSize: '12px', color: colors.textMuted, marginTop: '6px' }}>
+                      {photoPreviews.length === 0 ? 'Add photo' : 'Add more'}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
             <input id="photoInput" type="file" accept="image/*" style={styles.hiddenInput} onChange={handlePhotoSelect} />
+            <div style={{ fontSize: '13px', color: colors.textMuted, marginTop: '12px', textAlign: 'center' }}>
+              {photoPreviews.length}/5 photos {photoPreviews.length < 2 && ` \u00b7 ${2 - photoPreviews.length} more needed`}
+            </div>
           </div>
 
           <button style={styles.nextButton} onClick={nextStep}>Continue</button>
@@ -431,17 +542,25 @@ function Onboarding() {
 
       {step === 5 && (
         <div style={styles.stepContainer}>
-          <h2 style={styles.stepTitle}>Stay Connected</h2>
-          <p style={styles.stepSubtitle}>Add your contact info (optional)</p>
+          <h2 style={styles.stepTitle}>Almost There</h2>
+          <p style={styles.stepSubtitle}>A few final details</p>
 
           <div style={styles.inputGroup}>
-            <label style={styles.label}>WhatsApp Number</label>
-            <input type="tel" name="whatsapp" value={formData.whatsapp} onChange={handleChange} style={styles.input} placeholder="+1234567890" maxLength={50} />
+            <label style={styles.label}>Instagram <span style={styles.optional}>optional</span></label>
+            <input type="text" name="instagram" value={formData.instagram} onChange={handleChange} style={styles.input} placeholder="@username" maxLength={50} />
           </div>
 
           <div style={styles.inputGroup}>
-            <label style={styles.label}>Instagram Handle</label>
-            <input type="text" name="instagram" value={formData.instagram} onChange={handleChange} style={styles.input} placeholder="@username" maxLength={50} />
+            <label style={styles.label}>How did you hear about Rihlah? <span style={styles.optional}>optional</span></label>
+            <select name="referralSource" value={formData.referralSource} onChange={handleChange} style={styles.input}>
+              <option value="">Select one</option>
+              <option value="instagram">Instagram</option>
+              <option value="tiktok">TikTok</option>
+              <option value="friend">A friend</option>
+              <option value="search">Google / Search</option>
+              <option value="event">Event or conference</option>
+              <option value="other">Other</option>
+            </select>
           </div>
 
           <button style={styles.nextButton} onClick={nextStep}>Continue</button>
@@ -451,28 +570,32 @@ function Onboarding() {
 
       {step === 6 && (
         <div style={styles.stepContainer}>
-          <h2 style={styles.stepTitle}>Looking Good</h2>
-          <p style={styles.stepSubtitle}>Review your profile</p>
+          <h2 style={styles.stepTitle}>Almost There</h2>
+          <p style={styles.stepSubtitle}>Review your application</p>
 
           {submitError && <div style={styles.errorMsg}>{submitError}</div>}
 
           <div style={styles.reviewSection}>
-            {photoPreview && (
-              <div style={styles.reviewPhotoContainer}>
-                <img src={photoPreview} alt="Profile" style={styles.reviewPhoto} />
+            {photoPreviews.length > 0 && (
+              <div style={styles.reviewPhotoRow}>
+                {photoPreviews.map((p, i) => (
+                  <img key={i} src={p} alt={`Photo ${i + 1}`} style={styles.reviewPhotoThumb} />
+                ))}
               </div>
             )}
 
             <div style={styles.reviewItem}><strong>Name:</strong> {formData.name}</div>
-            <div style={styles.reviewItem}><strong>Age:</strong> {formData.age}</div>
+            <div style={styles.reviewItem}><strong>Age:</strong> {calculateAge(formData.dateOfBirth)}</div>
             <div style={styles.reviewItem}><strong>Gender:</strong> {formData.gender}</div>
+            <div style={styles.reviewItem}><strong>City:</strong> {formData.city}</div>
             <div style={styles.reviewItem}><strong>Connect with:</strong> {formData.profileVisibility === 'both' ? 'Everyone' : formData.profileVisibility === 'Male' ? 'Brothers' : 'Sisters'}</div>
-            {formData.city && <div style={styles.reviewItem}><strong>City:</strong> {formData.city}</div>}
+            {formData.occupation && <div style={styles.reviewItem}><strong>Occupation:</strong> {formData.occupation}</div>}
+            {formData.screeningAnswer && <div style={styles.reviewItem}><strong>Travel answer:</strong> {formData.screeningAnswer}</div>}
             {formData.bio && <div style={styles.reviewItem}><strong>Bio:</strong> {formData.bio}</div>}
             {formData.identity.length > 0 && <div style={styles.reviewItem}><strong>Identity:</strong> {formData.identity.join(', ')}</div>}
             {formData.interests.length > 0 && <div style={styles.reviewItem}><strong>Interests:</strong> {formData.interests.join(', ')}</div>}
-            {formData.whatsapp && <div style={styles.reviewItem}><strong>WhatsApp:</strong> {formData.whatsapp}</div>}
-            {formData.instagram && <div style={styles.reviewItem}><strong>Instagram:</strong> {formData.instagram}</div>}
+            {formData.travelStyle && <div style={styles.reviewItem}><strong>Travel style:</strong> {formData.travelStyle}</div>}
+            {formData.instagram && <div style={styles.reviewItem}><strong>Instagram:</strong> @{formData.instagram.replace('@', '')}</div>}
           </div>
 
           <button
@@ -480,7 +603,7 @@ function Onboarding() {
             onClick={handleSubmit}
             disabled={uploadingPhoto}
           >
-            {uploadingPhoto ? 'Creating Profile...' : "Let's Go"}
+            {uploadingPhoto ? 'Submitting...' : 'Submit Application'}
           </button>
           <button style={styles.backButton} onClick={prevStep}>Back</button>
         </div>
@@ -558,6 +681,16 @@ const styles = {
     color: colors.text,
     marginBottom: '8px',
   },
+  required: {
+    color: colors.terracotta,
+    fontWeight: '400',
+  },
+  optional: {
+    color: colors.textMuted,
+    fontWeight: '400',
+    fontSize: '12px',
+    fontStyle: 'italic',
+  },
   input: {
     ...components.input,
     background: colors.bg,
@@ -606,52 +739,61 @@ const styles = {
   photoUploadSection: {
     marginBottom: '30px',
   },
-  photoPreviewContainer: {
-    textAlign: 'center',
+  onboardingPhotoRow: {
+    display: 'flex',
+    gap: '10px',
+    flexWrap: 'wrap',
   },
-  photoPreview: {
-    width: '200px',
-    height: '200px',
-    borderRadius: '50%',
-    objectFit: 'cover',
-    marginBottom: '20px',
-    border: `3px solid ${colors.dark}`,
-  },
-  changePhotoBtn: {
-    padding: '10px 20px',
-    background: colors.lightGray,
-    color: colors.text,
-    border: 'none',
-    borderRadius: radius.sm,
-    fontSize: '14px',
-    fontWeight: '600',
+  onboardingPhotoCard: {
+    position: 'relative',
+    width: 'calc(33.33% - 7px)',
+    aspectRatio: '3/4',
+    borderRadius: radius.md,
+    overflow: 'hidden',
+    border: `1.5px dashed ${colors.warmGray}`,
+    background: colors.bg,
     cursor: 'pointer',
   },
-  photoUploadPlaceholder: {
-    width: '200px',
-    height: '200px',
-    margin: '0 auto 20px',
+  onboardingPhotoImg: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+  },
+  onboardingPhotoRemove: {
+    position: 'absolute',
+    top: '6px',
+    right: '6px',
+    width: '26px',
+    height: '26px',
+    background: 'rgba(0,0,0,0.6)',
     borderRadius: '50%',
-    background: colors.bg,
-    border: `3px dashed ${colors.warmGray}`,
+    border: 'none',
+    color: '#fff',
     display: 'flex',
-    flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
     cursor: 'pointer',
   },
-  uploadIcon: {
-    marginBottom: '12px',
-  },
-  uploadText: {
-    fontSize: '15px',
+  onboardingMainLabel: {
+    position: 'absolute',
+    bottom: '8px',
+    left: '8px',
+    fontSize: '11px',
     fontWeight: '600',
-    color: colors.text,
-    marginBottom: '4px',
+    color: '#fff',
+    background: 'rgba(0,0,0,0.5)',
+    padding: '3px 8px',
+    borderRadius: '4px',
+    textTransform: 'uppercase',
+    letterSpacing: '1px',
   },
-  uploadSubtext: {
-    fontSize: '12px',
-    color: colors.textMuted,
+  photoPlaceholder: {
+    width: '100%',
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   hiddenInput: {
     display: 'none',
@@ -689,16 +831,19 @@ const styles = {
   reviewSection: {
     marginBottom: '32px',
   },
-  reviewPhotoContainer: {
-    textAlign: 'center',
-    marginBottom: '24px',
+  reviewPhotoRow: {
+    display: 'flex',
+    gap: '8px',
+    marginBottom: '20px',
+    overflowX: 'auto',
   },
-  reviewPhoto: {
-    width: '150px',
-    height: '150px',
-    borderRadius: '50%',
+  reviewPhotoThumb: {
+    width: '72px',
+    height: '72px',
+    borderRadius: radius.sm,
     objectFit: 'cover',
-    border: `3px solid ${colors.dark}`,
+    border: `2px solid ${colors.border}`,
+    flexShrink: 0,
   },
   reviewItem: {
     padding: '12px',

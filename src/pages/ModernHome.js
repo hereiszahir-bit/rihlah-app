@@ -50,7 +50,7 @@ function ModernHome() {
       {/* Header */}
       <header style={{ ...styles.header, ...(scrolled ? styles.headerScrolled : {}) }}>
         <div style={styles.headerInner}>
-          <Link to="/" style={{ ...styles.wordmark, color: '#fff' }}>RIHLAH</Link>
+          <Link to="/" style={{ ...styles.wordmark, color: '#fff' }}>rihlah</Link>
           <nav style={styles.nav}>
             <Link to="/about" style={{ ...styles.navLink, color: 'rgba(255,255,255,0.8)' }}>Our Story</Link>
             <Link to="/blog" style={{ ...styles.navLink, color: 'rgba(255,255,255,0.8)' }}>Journal</Link>
@@ -81,7 +81,7 @@ function ModernHome() {
           <p style={styles.heroSub}>
             A travel community for Muslims who believe the world is a gift from God — and want to open it with people who get it.
           </p>
-          <a href="#apply" style={styles.heroBtn}>Request access</a>
+          <a href="#apply" style={styles.heroBtn}>Apply to join</a>
         </motion.div>
       </section>
 
@@ -101,6 +101,9 @@ function ModernHome() {
             <p style={styles.statementSub}>
               Rihlah is the place where that changes.
             </p>
+            <p style={{ fontSize: '14px', fontWeight: '600', letterSpacing: '2px', textTransform: 'uppercase', color: colors.terracotta, marginTop: '20px' }}>
+              Application only. We accept fewer than 30% of applicants.
+            </p>
           </motion.div>
         </div>
       </section>
@@ -117,10 +120,9 @@ function ModernHome() {
               viewport={{ once: true }}
             >
               <div style={styles.featureNumber}>01</div>
-              <h3 style={styles.featureTitle}>See who's going</h3>
+              <h3 style={styles.featureTitle}>Find your crew</h3>
               <p style={styles.featureText}>
-                Browse travelers by destination and dates. See who overlaps with your trip.
-                Connect before you land — so you arrive knowing someone.
+                See who is going where you are going. Connect before you land. Travel with people who get it — not strangers from a forum.
               </p>
             </motion.div>
             <motion.div
@@ -131,10 +133,9 @@ function ModernHome() {
               transition={{ delay: 0.1 }}
             >
               <div style={styles.featureNumber}>02</div>
-              <h3 style={styles.featureTitle}>City intelligence</h3>
+              <h3 style={styles.featureTitle}>Destination intel</h3>
               <p style={styles.featureText}>
-                Where to pray. Where to eat. What to skip.
-                Guides written by people who have been there — not algorithms that have not.
+                Curated editorial briefings for major destinations. Community tips from members who have actually been there. Prayer info, neighborhoods, real recommendations — not SEO listicles.
               </p>
             </motion.div>
             <motion.div
@@ -145,10 +146,11 @@ function ModernHome() {
               transition={{ delay: 0.2 }}
             >
               <div style={styles.featureNumber}>03</div>
-              <h3 style={styles.featureTitle}>Your people</h3>
+              <h3 style={styles.featureTitle}>AI travel concierge</h3>
               <p style={styles.featureText}>
-                Not a tour group. Not a dating app. Just curious Muslims
-                in the same city at the same time. Who knows what happens from there.
+                "I land at 3pm, Asr is at 5:15 — what should I do?"
+                An AI that knows the city, your prayer times, your crew's plans,
+                and where to eat tonight. Built for how you travel.
               </p>
             </motion.div>
           </div>
@@ -185,6 +187,47 @@ function ModernHome() {
                   The one who does not need the world explained to them.
                   They just want better company while they explore it.
                 </p>
+              </div>
+              <div style={styles.forCard}>
+                <p style={styles.forText}>
+                  The young couple planning their first trip together who want to meet another couple doing the same thing in the same city.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section style={styles.howSection}>
+        <div style={styles.howInner}>
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+          >
+            <div style={styles.sectionLabel}>How it works</div>
+            <div className="rihlah-how-grid" style={styles.howGrid}>
+              <div style={styles.howStep}>
+                <div style={styles.howStepNum}>1</div>
+                <h3 style={styles.howStepTitle}>Add your trip</h3>
+                <p style={styles.howStepText}>Pick a city, set your dates. Any of 200+ cities worldwide.</p>
+              </div>
+              <div style={styles.howStep}>
+                <div style={styles.howStepNum}>2</div>
+                <h3 style={styles.howStepTitle}>See who is going</h3>
+                <p style={styles.howStepText}>Browse travelers with overlapping dates. Connect with the ones who match your vibe.</p>
+              </div>
+              <div style={styles.howStep}>
+                <div style={styles.howStepNum}>3</div>
+                <h3 style={styles.howStepTitle}>Plan together</h3>
+                <p style={styles.howStepText}>Use the AI concierge to plan around your crew, your prayer times, and your interests.</p>
+              </div>
+              <div style={styles.howStep}>
+                <div style={styles.howStepNum}>4</div>
+                <h3 style={styles.howStepTitle}>Invite your people</h3>
+                <p style={styles.howStepText}>Share a link. They join in one tap. The crew grows from there.</p>
               </div>
             </div>
           </motion.div>
@@ -228,11 +271,18 @@ function ModernHome() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
             >
-              <div style={styles.sectionLabel}>Early access</div>
-              <h2 style={styles.applyTitle}>The world is a gift. Open it.</h2>
+              <div style={styles.sectionLabel}>Join the community</div>
+              <h2 style={styles.applyTitle}>This is not for everyone.</h2>
               <p style={styles.applySub}>
-                We are building something small and intentional. Not for everyone —
-                for people who travel with purpose and treat the people they meet well.
+                Rihlah is a curated community of Muslim travelers. We review every application personally. The first 100 accepted members receive Founding Member status — free, permanently.
+              </p>
+              <div style={{ fontSize: '11px', fontWeight: '700', letterSpacing: '4px', textTransform: 'uppercase', color: colors.terracotta, border: `1px solid ${colors.terracotta}`, padding: '8px 20px', borderRadius: '2px', display: 'inline-block', marginBottom: '32px' }}>
+                FOUNDING MEMBER
+              </div>
+              <br />
+              <Link to="/signup" style={styles.applyBtnMain}>Apply to join</Link>
+              <p style={{ ...styles.applySub, marginTop: '24px', marginBottom: '16px', fontSize: '13px' }}>
+                Or leave your email and we will reach out.
               </p>
               <form onSubmit={handleSubmit} className="rihlah-apply-form" style={styles.applyForm}>
                 <input
@@ -244,7 +294,7 @@ function ModernHome() {
                   style={styles.applyInput}
                 />
                 <button type="submit" disabled={loading} style={{ ...styles.applyBtn, opacity: loading ? 0.7 : 1 }}>
-                  {loading ? 'Requesting...' : 'Request access'}
+                  {loading ? 'Sending...' : 'Notify me'}
                 </button>
               </form>
               {error && <div style={styles.applyError}>{error}</div>}
@@ -263,7 +313,7 @@ function ModernHome() {
         <div style={styles.footerInner}>
           <div className="rihlah-footer-top" style={styles.footerTop}>
             <div>
-              <div style={styles.footerWordmark}>RIHLAH</div>
+              <div style={styles.footerWordmark}>rihlah</div>
               <p style={styles.footerTagline}>Travel with your people.</p>
             </div>
             <div style={styles.footerLinks}>
@@ -288,7 +338,7 @@ const styles = {
   header: { position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1000, padding: '20px 0', transition: 'all 0.3s ease', background: 'transparent' },
   headerScrolled: { background: 'rgba(10, 10, 10, 0.9)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: `1px solid ${colors.glassBorder}` },
   headerInner: { maxWidth: '1200px', margin: '0 auto', padding: '0 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  wordmark: { fontFamily: fonts.serif, fontSize: '20px', fontWeight: '600', letterSpacing: '3px', textDecoration: 'none', transition: 'color 0.3s' },
+  wordmark: { fontFamily: fonts.serif, fontSize: '22px', fontWeight: '500', letterSpacing: '2px', textDecoration: 'none', transition: 'color 0.3s' },
   nav: { display: 'flex', gap: '24px', alignItems: 'center' },
   navLink: { fontSize: '13px', fontWeight: '500', textDecoration: 'none', letterSpacing: '0.5px', transition: 'color 0.3s' },
   navLinkCTA: { fontSize: '12px', fontWeight: '600', textDecoration: 'none', letterSpacing: '0.5px', padding: '10px 20px', borderRadius: '2px', transition: 'background 0.3s' },
@@ -325,9 +375,21 @@ const styles = {
   // Who this is for
   forSection: { padding: '100px 32px', background: colors.dark },
   forInner: { maxWidth: '1100px', margin: '0 auto' },
-  forGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' },
+  forGrid: { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px' },
   forCard: { padding: '36px', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '3px' },
   forText: { fontFamily: fonts.serif, fontSize: '17px', lineHeight: 1.65, color: 'rgba(255,255,255,0.75)', fontStyle: 'italic', margin: 0 },
+
+  // How it works
+  howSection: { padding: '100px 32px', background: colors.surface },
+  howInner: { maxWidth: '1100px', margin: '0 auto' },
+  howGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '32px' },
+  howStep: { textAlign: 'center', padding: '32px 16px' },
+  howStepNum: { width: '48px', height: '48px', borderRadius: '50%', background: colors.terracotta, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', fontWeight: '700', fontFamily: fonts.serif, margin: '0 auto 20px' },
+  howStepTitle: { fontFamily: fonts.serif, fontSize: '18px', fontWeight: '600', color: colors.text, marginBottom: '10px' },
+  howStepText: { fontSize: '14px', color: colors.textSecondary, lineHeight: 1.6 },
+
+  // Apply main CTA
+  applyBtnMain: { display: 'inline-block', padding: '18px 48px', background: colors.terracotta, color: '#fff', fontSize: '16px', fontWeight: '600', letterSpacing: '0.5px', textDecoration: 'none', borderRadius: '2px' },
 
   // Founder
   founderSection: { padding: '100px 32px' },
@@ -368,6 +430,7 @@ if (!document.getElementById('rihlah-styles')) {
     @media (max-width: 768px) {
       .rihlah-features-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
       .rihlah-for-grid { grid-template-columns: 1fr !important; }
+      .rihlah-how-grid { grid-template-columns: repeat(2, 1fr) !important; }
       .rihlah-apply-form { flex-direction: column !important; }
       .rihlah-footer-top { flex-direction: column !important; gap: 32px !important; }
     }

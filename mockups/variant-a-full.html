@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Variant A: Community-Forward (All Tabs)</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', -apple-system, sans-serif; background: #faf9f7; max-width: 390px; margin: 0 auto; min-height: 100vh; position: relative; overflow-x: hidden; }
+
+  .page { display: none; min-height: 100vh; padding-bottom: 80px; }
+  .page.active { display: block; }
+
+  /* Tab bar */
+  .tab-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 390px; background: #fff; border-top: 1px solid #f0eeeb; display: flex; justify-content: space-around; padding: 8px 0 24px; z-index: 100; }
+  .tab { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 10px; color: #a3a3a3; font-weight: 500; background: none; border: none; cursor: pointer; padding: 4px 8px; }
+  .tab.active { color: #047857; }
+  .tab svg { width: 22px; height: 22px; }
+  .tab-center-wrap { display: flex; align-items: center; justify-content: center; background: none; border: none; cursor: pointer; padding: 0; }
+  .tab-center { width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, #047857, #059669); display: flex; align-items: center; justify-content: center; margin-top: -20px; box-shadow: 0 4px 12px rgba(4,120,87,0.35); color: #fff; font-size: 24px; font-weight: 300; }
+
+  /* Shared styles */
+  .page-header { padding: 52px 20px 16px; background: #fff; }
+  .page-title { font-size: 28px; font-weight: 900; color: #1a1a1a; letter-spacing: -0.5px; }
+  .page-subtitle { font-size: 14px; color: #6b7280; margin-top: 4px; }
+  .section { padding: 20px; }
+  .section-label { font-size: 13px; font-weight: 700; color: #047857; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px; }
+  .section-title { font-size: 20px; font-weight: 800; color: #1a1a1a; margin-bottom: 16px; }
+  .card { background: #fff; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.08); overflow: hidden; margin-bottom: 12px; }
+  .empty-state { display: flex; flex-direction: column; align-items: center; padding: 80px 20px; text-align: center; }
+  .empty-icon { font-size: 48px; margin-bottom: 16px; }
+  .empty-title { font-size: 18px; font-weight: 700; color: #1a1a1a; margin-bottom: 8px; }
+  .empty-text { font-size: 14px; color: #6b7280; margin-bottom: 24px; line-height: 1.5; }
+  .btn-primary { padding: 14px 28px; background: linear-gradient(135deg, #047857, #059669); color: #fff; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; box-shadow: 0 2px 8px rgba(4,120,87,0.3); }
+
+  /* Stories */
+  .stories-section { padding: 0 0 16px; background: #fff; border-bottom: 1px solid #f0eeeb; }
+  .stories-scroll { display: flex; gap: 16px; padding: 0 20px; overflow-x: auto; scrollbar-width: none; }
+  .stories-scroll::-webkit-scrollbar { display: none; }
+  .story-item { display: flex; flex-direction: column; align-items: center; gap: 6px; flex-shrink: 0; }
+  .story-ring { width: 68px; height: 68px; border-radius: 50%; padding: 3px; background: linear-gradient(135deg, #047857, #10b981); }
+  .story-ring.gray { background: linear-gradient(135deg, #d1d5db, #9ca3af); }
+  .story-img { width: 100%; height: 100%; border-radius: 50%; border: 3px solid #fff; background: #e5e7eb; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #6b7280; font-size: 20px; }
+  .story-dest { font-size: 11px; font-weight: 700; color: #047857; max-width: 72px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .story-name { font-size: 10px; color: #6b7280; font-weight: 600; }
+
+  /* Active bar */
+  .active-bar { padding: 12px 20px; background: #f0fdf4; display: flex; align-items: center; gap: 8px; font-size: 14px; color: #047857; font-weight: 600; }
+  .active-dot { width: 8px; height: 8px; border-radius: 50%; background: #10b981; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* Dest grid */
+  .dest-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .dest-card-img { height: 140px; background-size: cover; background-position: center; position: relative; display: flex; flex-direction: column; justify-content: flex-end; }
+  .dest-card-img::after { content:''; position: absolute; bottom: 0; left: 0; right: 0; height: 70%; background: linear-gradient(transparent, rgba(0,0,0,0.6)); }
+  .dest-info { position: relative; z-index: 1; padding: 12px; }
+  .dest-city { font-size: 16px; font-weight: 800; color: #fff; }
+  .dest-country { font-size: 11px; color: rgba(255,255,255,0.8); }
+  .dest-footer { padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; }
+  .dest-avatars { display: flex; }
+  .dest-avatar { width: 24px; height: 24px; border-radius: 50%; border: 2px solid #fff; margin-left: -8px; background: #d1fae5; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #047857; }
+  .dest-avatar:first-child { margin-left: 0; }
+  .dest-count { font-size: 12px; font-weight: 700; color: #047857; }
+  .dest-empty-label { font-size: 11px; color: #9ca3af; font-weight: 600; }
+
+  /* Featured */
+  .featured { border-radius: 20px; overflow: hidden; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08), 0 12px 32px rgba(0,0,0,0.1); }
+  .featured-img { height: 200px; background-size: cover; background-position: center; position: relative; display: flex; flex-direction: column; justify-content: flex-end; }
+  .featured-img::after { content:''; position: absolute; bottom: 0; left: 0; right: 0; height: 60%; background: linear-gradient(transparent, rgba(0,0,0,0.7)); }
+  .featured-overlay { position: relative; z-index: 1; padding: 20px; }
+  .featured-badge { font-size: 11px; font-weight: 700; color: #fff; background: rgba(4,120,87,0.8); padding: 4px 10px; border-radius: 8px; display: inline-block; margin-bottom: 8px; backdrop-filter: blur(4px); }
+  .featured-city { font-size: 24px; font-weight: 900; color: #fff; margin-bottom: 4px; }
+  .featured-meta { font-size: 13px; color: rgba(255,255,255,0.85); display: flex; gap: 12px; }
+
+  /* Trip cards (Saved) */
+  .trip-card { background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.08); margin-bottom: 12px; }
+  .trip-header { padding: 16px 20px; background: linear-gradient(135deg, #047857, #059669); }
+  .trip-header.there { background: linear-gradient(135deg, #065f46, #047857); }
+  .trip-dest { font-size: 18px; font-weight: 800; color: #fff; margin-bottom: 4px; }
+  .trip-dates { font-size: 13px; color: rgba(255,255,255,0.8); }
+  .trip-badge { display: inline-block; font-size: 11px; font-weight: 700; color: #fff; background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 8px; margin-left: 8px; }
+  .trip-body { padding: 16px 20px; }
+  .trip-people { display: flex; gap: 12px; align-items: center; }
+  .trip-people-label { font-size: 12px; color: #6b7280; font-weight: 600; }
+  .trip-exp-count { font-size: 12px; color: #047857; font-weight: 600; margin-top: 8px; }
+
+  /* Messages */
+  .msg-item { display: flex; gap: 12px; padding: 16px 20px; border-bottom: 1px solid #f5f3f0; align-items: center; }
+  .msg-avatar { width: 48px; height: 48px; border-radius: 50%; background: #e5e7eb; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #6b7280; font-size: 18px; flex-shrink: 0; }
+  .msg-content { flex: 1; min-width: 0; }
+  .msg-name { font-size: 15px; font-weight: 700; color: #1a1a1a; }
+  .msg-preview { font-size: 13px; color: #6b7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+  .msg-time { font-size: 11px; color: #9ca3af; flex-shrink: 0; }
+  .msg-unread { width: 10px; height: 10px; border-radius: 50%; background: #047857; flex-shrink: 0; }
+
+  /* Profile */
+  .profile-header { text-align: center; padding: 20px; background: #fff; }
+  .profile-photo { width: 96px; height: 96px; border-radius: 50%; background: linear-gradient(135deg, #047857, #10b981); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 36px; font-weight: 800; margin: 0 auto 12px; }
+  .profile-name { font-size: 22px; font-weight: 800; color: #1a1a1a; }
+  .profile-bio { font-size: 14px; color: #6b7280; margin-top: 4px; line-height: 1.5; }
+  .profile-stats { display: flex; justify-content: center; gap: 32px; margin-top: 16px; padding-top: 16px; border-top: 1px solid #f0eeeb; }
+  .profile-stat { text-align: center; }
+  .profile-stat-value { font-size: 20px; font-weight: 800; color: #1a1a1a; }
+  .profile-stat-label { font-size: 11px; color: #6b7280; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .profile-interests { display: flex; flex-wrap: wrap; gap: 8px; padding: 20px; }
+  .interest-chip { padding: 8px 14px; background: #f0fdf4; border-radius: 20px; font-size: 13px; font-weight: 600; color: #047857; }
+  .profile-menu { padding: 0 20px; }
+  .profile-menu-item { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid #f5f3f0; font-size: 15px; font-weight: 600; color: #1a1a1a; }
+  .profile-menu-arrow { color: #9ca3af; }
+
+  /* Add Trip */
+  .addtrip-header { padding: 52px 20px 20px; background: #fff; text-align: center; }
+  .addtrip-title { font-size: 28px; font-weight: 900; color: #1a1a1a; margin-bottom: 4px; }
+  .addtrip-sub { font-size: 15px; color: #6b7280; }
+  .addtrip-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 20px; }
+  .addtrip-card { border-radius: 16px; overflow: hidden; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.08); cursor: pointer; }
+  .addtrip-img { height: 120px; background-size: cover; background-position: center; position: relative; display: flex; align-items: flex-end; }
+  .addtrip-img::after { content:''; position: absolute; inset: 0; background: linear-gradient(transparent 40%, rgba(0,0,0,0.6)); }
+  .addtrip-name { position: relative; z-index: 1; padding: 10px; font-size: 15px; font-weight: 800; color: #fff; }
+
+  .variant-label { text-align: center; padding: 20px; margin-bottom: 20px; }
+  .variant-tag { display: inline-block; padding: 6px 14px; background: #f0f9f4; color: #047857; border-radius: 16px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+</style>
+</head>
+<body>
+
+<!-- ===== EXPLORE TAB ===== -->
+<div class="page active" id="page-explore">
+  <div class="page-header">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div class="page-title">Rihlah</div>
+      <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#047857,#10b981);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;">Z</div>
+    </div>
+  </div>
+  <div class="stories-section">
+    <div class="section-label" style="padding:0 20px;margin-bottom:12px;">Connections Traveling</div>
+    <div class="stories-scroll">
+      <div class="story-item"><div class="story-ring"><div class="story-img">A</div></div><div class="story-dest">Istanbul</div><div class="story-name">Amira</div></div>
+      <div class="story-item"><div class="story-ring"><div class="story-img">K</div></div><div class="story-dest">Dubai</div><div class="story-name">Khalid</div></div>
+      <div class="story-item"><div class="story-ring gray"><div class="story-img">S</div></div><div class="story-dest">Marrakech</div><div class="story-name">Sara</div></div>
+      <div class="story-item"><div class="story-ring gray"><div class="story-img">Y</div></div><div class="story-dest">Cairo</div><div class="story-name">Yusuf</div></div>
+      <div class="story-item"><div class="story-ring"><div class="story-img">F</div></div><div class="story-dest">Mecca</div><div class="story-name">Fatima</div></div>
+    </div>
+  </div>
+  <div class="active-bar"><div class="active-dot"></div>47 travelers active across 12 destinations</div>
+  <div class="section">
+    <div class="featured">
+      <div class="featured-img" style="background-image:url('https://images.pexels.com/photos/1559825/pexels-photo-1559825.jpeg?auto=compress&w=800')">
+        <div class="featured-overlay"><div class="featured-badge">8 here now</div><div class="featured-city">Istanbul</div><div class="featured-meta"><span>Turkey</span><span>12 planning</span></div></div>
+      </div>
+    </div>
+    <div class="section-title">Destinations</div>
+    <div class="dest-grid">
+      <div class="card"><div class="dest-card-img" style="background-image:url('https://images.pexels.com/photos/2291789/pexels-photo-2291789.jpeg?auto=compress&w=400')"><div class="dest-info"><div class="dest-city">Mecca</div><div class="dest-country">Saudi Arabia</div></div></div><div class="dest-footer"><div class="dest-avatars"><div class="dest-avatar">F</div><div class="dest-avatar">M</div><div class="dest-avatar">+3</div></div><div class="dest-count">5 here</div></div></div>
+      <div class="card"><div class="dest-card-img" style="background-image:url('https://images.pexels.com/photos/3889855/pexels-photo-3889855.jpeg?auto=compress&w=400')"><div class="dest-info"><div class="dest-city">Dubai</div><div class="dest-country">UAE</div></div></div><div class="dest-footer"><div class="dest-avatars"><div class="dest-avatar">K</div><div class="dest-avatar">N</div></div><div class="dest-count">3 here</div></div></div>
+      <div class="card"><div class="dest-card-img" style="background-image:url('https://images.pexels.com/photos/3889743/pexels-photo-3889743.jpeg?auto=compress&w=400')"><div class="dest-info"><div class="dest-city">Marrakech</div><div class="dest-country">Morocco</div></div></div><div class="dest-footer"><div class="dest-empty-label">Be the first</div></div></div>
+      <div class="card"><div class="dest-card-img" style="background-image:url('https://images.pexels.com/photos/3290075/pexels-photo-3290075.jpeg?auto=compress&w=400')"><div class="dest-info"><div class="dest-city">Cairo</div><div class="dest-country">Egypt</div></div></div><div class="dest-footer"><div class="dest-avatars"><div class="dest-avatar">Y</div></div><div class="dest-count">1 planning</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SAVED TAB ===== -->
+<div class="page" id="page-saved">
+  <div class="page-header">
+    <div class="page-title">My Trips</div>
+    <div class="page-subtitle">Your upcoming and past journeys</div>
+  </div>
+  <div style="display:flex;gap:8px;padding:12px 20px;background:#fff;border-bottom:1px solid #f0eeeb;">
+    <div style="flex:1;padding:12px;background:#f0f9f4;border:2px solid #047857;border-radius:12px;text-align:center;font-size:14px;font-weight:700;color:#047857;">Upcoming (2)</div>
+    <div style="flex:1;padding:12px;background:#f5f3f0;border:2px solid transparent;border-radius:12px;text-align:center;font-size:14px;font-weight:700;color:#6b7280;">Past (3)</div>
+  </div>
+  <div class="section">
+    <div class="trip-card">
+      <div class="trip-header there">
+        <div class="trip-dest">Istanbul<span class="trip-badge">There now</span></div>
+        <div class="trip-dates">May 24 - Jun 2</div>
+      </div>
+      <div class="trip-body">
+        <div class="trip-people"><div class="dest-avatars"><div class="dest-avatar">A</div><div class="dest-avatar">K</div><div class="dest-avatar">+4</div></div><div class="trip-people-label">6 travelers during your dates</div></div>
+        <div class="trip-exp-count">3 experiences saved</div>
+      </div>
+    </div>
+    <div class="trip-card">
+      <div class="trip-header">
+        <div class="trip-dest">Marrakech</div>
+        <div class="trip-dates">Jul 10 - Jul 18</div>
+      </div>
+      <div class="trip-body">
+        <div class="trip-people"><div class="dest-avatars"><div class="dest-avatar">S</div></div><div class="trip-people-label">1 traveler during your dates</div></div>
+        <div class="trip-exp-count">2 experiences saved</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ADD TRIP TAB ===== -->
+<div class="page" id="page-add">
+  <div class="addtrip-header">
+    <div class="addtrip-title">Where to?</div>
+    <div class="addtrip-sub">Pick a destination</div>
+  </div>
+  <div style="padding:0 20px 12px;">
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:#f5f3f0;border-radius:14px;color:#9ca3af;font-size:15px;">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      Search destinations...
+    </div>
+  </div>
+  <div class="addtrip-grid">
+    <div class="addtrip-card"><div class="addtrip-img" style="background-image:url('https://images.pexels.com/photos/1559825/pexels-photo-1559825.jpeg?auto=compress&w=400')"><div class="addtrip-name">Istanbul</div></div></div>
+    <div class="addtrip-card"><div class="addtrip-img" style="background-image:url('https://images.pexels.com/photos/2291789/pexels-photo-2291789.jpeg?auto=compress&w=400')"><div class="addtrip-name">Mecca</div></div></div>
+    <div class="addtrip-card"><div class="addtrip-img" style="background-image:url('https://images.pexels.com/photos/3889855/pexels-photo-3889855.jpeg?auto=compress&w=400')"><div class="addtrip-name">Dubai</div></div></div>
+    <div class="addtrip-card"><div class="addtrip-img" style="background-image:url('https://images.pexels.com/photos/3889743/pexels-photo-3889743.jpeg?auto=compress&w=400')"><div class="addtrip-name">Marrakech</div></div></div>
+    <div class="addtrip-card"><div class="addtrip-img" style="background-image:url('https://images.pexels.com/photos/3290075/pexels-photo-3290075.jpeg?auto=compress&w=400')"><div class="addtrip-name">Cairo</div></div></div>
+    <div class="addtrip-card"><div class="addtrip-img" style="background-image:url('https://images.pexels.com/photos/2895185/pexels-photo-2895185.jpeg?auto=compress&w=400')"><div class="addtrip-name">Medina</div></div></div>
+  </div>
+</div>
+
+<!-- ===== MESSAGES TAB ===== -->
+<div class="page" id="page-messages">
+  <div class="page-header">
+    <div class="page-title">Messages</div>
+  </div>
+  <div style="background:#fff;">
+    <div class="msg-item">
+      <div class="msg-avatar" style="background:#d1fae5;color:#047857;">A</div>
+      <div class="msg-content"><div class="msg-name">Amira</div><div class="msg-preview">Are you near Sultanahmet? We should meet up!</div></div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;"><div class="msg-time">2m</div><div class="msg-unread"></div></div>
+    </div>
+    <div class="msg-item">
+      <div class="msg-avatar">K</div>
+      <div class="msg-content"><div class="msg-name">Khalid</div><div class="msg-preview">The halal food tour was amazing, highly recommend</div></div>
+      <div class="msg-time">1h</div>
+    </div>
+    <div class="msg-item">
+      <div class="msg-avatar">S</div>
+      <div class="msg-content"><div class="msg-name">Sara</div><div class="msg-preview">See you in Marrakech insha'Allah!</div></div>
+      <div class="msg-time">3h</div>
+    </div>
+    <div class="msg-item">
+      <div class="msg-avatar">Y</div>
+      <div class="msg-content"><div class="msg-name">Yusuf</div><div class="msg-preview">Thanks for the mosque recommendation</div></div>
+      <div class="msg-time">1d</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PROFILE TAB ===== -->
+<div class="page" id="page-profile">
+  <div class="page-header" style="padding-bottom:0;"></div>
+  <div class="profile-header">
+    <div class="profile-photo">Z</div>
+    <div class="profile-name">Zahir, 27</div>
+    <div class="profile-bio">Solo traveler. History & food. Based in Knoxville.</div>
+    <div class="profile-stats">
+      <div class="profile-stat"><div class="profile-stat-value">5</div><div class="profile-stat-label">Trips</div></div>
+      <div class="profile-stat"><div class="profile-stat-value">12</div><div class="profile-stat-label">Connections</div></div>
+      <div class="profile-stat"><div class="profile-stat-value">8</div><div class="profile-stat-label">Countries</div></div>
+    </div>
+  </div>
+  <div class="profile-interests">
+    <span class="interest-chip">History & Culture</span>
+    <span class="interest-chip">Halal Dining</span>
+    <span class="interest-chip">Photography</span>
+    <span class="interest-chip">Islamic History</span>
+    <span class="interest-chip">Adventure</span>
+  </div>
+  <div class="profile-menu">
+    <div class="profile-menu-item">Edit Profile <span class="profile-menu-arrow">&#8250;</span></div>
+    <div class="profile-menu-item">My Connections <span class="profile-menu-arrow">&#8250;</span></div>
+    <div class="profile-menu-item">Saved Experiences <span class="profile-menu-arrow">&#8250;</span></div>
+    <div class="profile-menu-item">Privacy Settings <span class="profile-menu-arrow">&#8250;</span></div>
+    <div class="profile-menu-item" style="color:#dc2626;">Log Out <span class="profile-menu-arrow">&#8250;</span></div>
+  </div>
+</div>
+
+<div class="variant-label"><div class="variant-tag">Variant A: Community-Forward</div></div>
+
+<!-- TAB BAR -->
+<div class="tab-bar">
+  <button class="tab active" onclick="showTab('explore',this)">
+    <svg fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+    Explore
+  </button>
+  <button class="tab" onclick="showTab('saved',this)">
+    <svg fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+    Saved
+  </button>
+  <button class="tab-center-wrap" onclick="showTab('add',this)">
+    <div class="tab-center">+</div>
+  </button>
+  <button class="tab" onclick="showTab('messages',this)">
+    <svg fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+    Messages
+  </button>
+  <button class="tab" onclick="showTab('profile',this)">
+    <svg fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    Profile
+  </button>
+</div>
+
+<script>
+function showTab(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.querySelectorAll('.tab-bar .tab, .tab-bar .tab-center-wrap').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  window.scrollTo(0, 0);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,1713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rihlah — Variant C Screens</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #1a1a1a;
+    color: #f8f6f2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 40px 20px;
+  }
+
+  h1.gallery-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px;
+    font-weight: 400;
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+  }
+  .gallery-sub {
+    color: #999;
+    font-size: 14px;
+    margin-bottom: 48px;
+    font-weight: 300;
+  }
+
+  .screen-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, 375px);
+    gap: 48px;
+    justify-content: center;
+    max-width: 1600px;
+  }
+
+  .screen-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .screen-label {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    margin-bottom: 6px;
+    color: #f8f6f2;
+  }
+  .screen-desc {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 16px;
+    text-align: center;
+    max-width: 340px;
+    line-height: 1.5;
+  }
+
+  .phone {
+    width: 375px;
+    height: 812px;
+    background: #f8f6f2;
+    border-radius: 40px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    color: #1a1a1a;
+  }
+
+  /* Status bar */
+  .status-bar {
+    height: 54px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding: 0 28px 8px;
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .status-bar.dark { background: #1a1a1a; color: #fff; }
+  .status-bar.light { background: #f8f6f2; color: #1a1a1a; }
+  .status-bar.cream { background: #f8f6f2; color: #1a1a1a; }
+  .status-icons { display: flex; gap: 6px; font-size: 12px; }
+
+  /* Scrollable content */
+  .screen-content {
+    height: calc(812px - 54px - 83px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .screen-content::-webkit-scrollbar { display: none; }
+  .screen-content.no-tab { height: calc(812px - 54px); }
+
+  /* Tab bar */
+  .tab-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 83px;
+    background: #fff;
+    border-top: 1px solid #e8e5e0;
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-start;
+    padding-top: 10px;
+  }
+  .tab-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    color: #999;
+    font-weight: 500;
+  }
+  .tab-item.active { color: #1a1a1a; }
+  .tab-icon { font-size: 22px; }
+  .tab-center {
+    width: 52px;
+    height: 52px;
+    background: #1a1a1a;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: -20px;
+    color: #fff;
+    font-size: 24px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }
+
+  /* Common patterns */
+  .section-pad { padding: 0 24px; }
+  .serif { font-family: 'Playfair Display', serif; }
+  .mt-16 { margin-top: 16px; }
+  .mt-24 { margin-top: 24px; }
+  .mt-32 { margin-top: 32px; }
+  .mb-8 { margin-bottom: 8px; }
+  .mb-16 { margin-bottom: 16px; }
+  .mb-24 { margin-bottom: 24px; }
+
+  /* Card styles */
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .card-dark {
+    background: #1a1a1a;
+    color: #f8f6f2;
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .card-img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    display: block;
+  }
+  .card-body { padding: 16px; }
+
+  /* Pill/tag */
+  .pill {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    background: #f0ede8;
+    color: #1a1a1a;
+  }
+  .pill-dark {
+    background: #2a2a2a;
+    color: #f8f6f2;
+  }
+  .pill-outline {
+    background: transparent;
+    border: 1px solid #d4d0c8;
+    color: #1a1a1a;
+  }
+
+  /* Button */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 28px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+  }
+  .btn-primary {
+    background: #1a1a1a;
+    color: #fff;
+    width: 100%;
+  }
+  .btn-outline {
+    background: transparent;
+    border: 1.5px solid #1a1a1a;
+    color: #1a1a1a;
+    width: 100%;
+  }
+  .btn-sm {
+    padding: 10px 20px;
+    font-size: 13px;
+    border-radius: 10px;
+  }
+
+  /* Horizontal scroll */
+  .h-scroll {
+    display: flex;
+    gap: 14px;
+    overflow-x: auto;
+    padding: 0 24px 8px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .h-scroll::-webkit-scrollbar { display: none; }
+
+  /* Avatar */
+  .avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e0ddd6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a1a1a;
+    flex-shrink: 0;
+  }
+  .avatar-sm { width: 32px; height: 32px; font-size: 13px; }
+  .avatar-lg { width: 56px; height: 56px; font-size: 22px; }
+  .avatar-stack {
+    display: flex;
+  }
+  .avatar-stack .avatar { margin-left: -10px; border: 2px solid #f8f6f2; }
+  .avatar-stack .avatar:first-child { margin-left: 0; }
+
+  /* Divider */
+  .divider {
+    height: 1px;
+    background: #e8e5e0;
+    margin: 20px 24px;
+  }
+
+  /* Input */
+  .input-field {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1.5px solid #d4d0c8;
+    border-radius: 12px;
+    font-size: 15px;
+    font-family: 'Inter', sans-serif;
+    background: #fff;
+    color: #1a1a1a;
+    outline: none;
+  }
+  .input-field::placeholder { color: #b0ab9f; }
+
+  /* Trip card dark */
+  .trip-hero {
+    margin: 0 24px;
+    border-radius: 20px;
+    overflow: hidden;
+    background: #1a1a1a;
+    color: #f8f6f2;
+  }
+  .trip-hero-img {
+    width: 100%;
+    height: 160px;
+    background: linear-gradient(135deg, #2a2a2a, #3a3a3a);
+    display: flex;
+    align-items: flex-end;
+    padding: 16px;
+    position: relative;
+  }
+  .trip-hero-img::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(transparent 40%, rgba(0,0,0,0.6));
+  }
+  .trip-hero-img span {
+    position: relative;
+    z-index: 1;
+    font-family: 'Playfair Display', serif;
+    font-size: 24px;
+  }
+  .trip-hero-body { padding: 16px 20px; }
+  .trip-hero-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  /* List item */
+  .list-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 24px;
+  }
+  .list-item-text { flex: 1; }
+  .list-item-title { font-weight: 600; font-size: 15px; }
+  .list-item-sub { font-size: 13px; color: #888; margin-top: 2px; }
+  .list-chevron { color: #ccc; font-size: 18px; }
+
+  /* Experience card */
+  .exp-card {
+    min-width: 260px;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    flex-shrink: 0;
+  }
+  .exp-card-img {
+    width: 100%;
+    height: 140px;
+    background: linear-gradient(135deg, #d4c5a9, #a89279);
+  }
+  .exp-card-body { padding: 14px; }
+  .exp-card-title { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+  .exp-card-sub { font-size: 12px; color: #888; }
+  .exp-card-price { font-weight: 700; font-size: 14px; margin-top: 8px; }
+
+  /* Destination editorial card */
+  .dest-card {
+    min-width: 280px;
+    border-radius: 20px;
+    overflow: hidden;
+    flex-shrink: 0;
+    position: relative;
+    height: 200px;
+  }
+  .dest-card-bg {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: flex-end;
+    padding: 20px;
+  }
+  .dest-card-text { position: relative; z-index: 1; color: #fff; }
+  .dest-card-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    margin-bottom: 4px;
+  }
+  .dest-card-blurb { font-size: 12px; opacity: 0.85; line-height: 1.4; }
+
+  /* Invite card */
+  .invite-card {
+    margin: 0 24px;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1.5px solid #e8e5e0;
+    background: #fff;
+  }
+  .invite-header {
+    padding: 20px;
+    text-align: center;
+    background: #1a1a1a;
+    color: #f8f6f2;
+  }
+
+  /* Quick actions grid */
+  .quick-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    padding: 0 24px;
+  }
+  .quick-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 8px;
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  }
+  .quick-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: #f0ede8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+  .quick-label { font-size: 11px; color: #666; font-weight: 500; text-align: center; }
+
+  /* Profile stat */
+  .stat-row {
+    display: flex;
+    justify-content: space-around;
+    text-align: center;
+    padding: 20px 24px;
+  }
+  .stat-num { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 600; }
+  .stat-label { font-size: 12px; color: #888; margin-top: 4px; }
+
+  /* AI Chat bubble */
+  .ai-bubble {
+    margin: 0 24px;
+    padding: 20px;
+    background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+    border-radius: 20px;
+    color: #f8f6f2;
+  }
+  .ai-bubble-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .ai-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #c9a96e;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* Traveler row */
+  .traveler-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 24px;
+  }
+  .traveler-info { flex: 1; }
+  .traveler-name { font-weight: 600; font-size: 14px; }
+  .traveler-detail { font-size: 12px; color: #888; margin-top: 2px; }
+  .traveler-status {
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-weight: 500;
+  }
+  .status-going { background: #e8f5e9; color: #2e7d32; }
+  .status-there { background: #fff3e0; color: #e65100; }
+
+  /* Section header */
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 0 24px;
+    margin-bottom: 14px;
+  }
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-weight: 500;
+  }
+  .section-link {
+    font-size: 13px;
+    color: #999;
+    font-weight: 500;
+  }
+
+  /* Gradient overlays for destination images */
+  .grad-istanbul { background: linear-gradient(135deg, #1a3a5c, #2a1a3a); }
+  .grad-marrakech { background: linear-gradient(135deg, #8b4513, #c4722a); }
+  .grad-dubai { background: linear-gradient(135deg, #c9a96e, #8b7355); }
+  .grad-istanbul2 { background: linear-gradient(135deg, #234e70, #1a3a5c); }
+  .grad-andalusia { background: linear-gradient(135deg, #8b0000, #cc5500); }
+  .grad-cairo { background: linear-gradient(135deg, #c4a35a, #8b7355); }
+  .grad-maldives { background: linear-gradient(135deg, #006994, #40bfa0); }
+  .grad-jordan { background: linear-gradient(135deg, #c4722a, #8b4513); }
+  .grad-kualalumpur { background: linear-gradient(135deg, #2d5016, #1a3a1a); }
+
+  /* Onboarding */
+  .onboard-hero {
+    height: 400px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 32px 28px;
+    position: relative;
+  }
+  .onboard-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(transparent 30%, rgba(26,26,26,0.85));
+  }
+  .onboard-hero > * { position: relative; z-index: 1; }
+
+  /* Itinerary day */
+  .itin-day {
+    padding: 16px 24px;
+    border-bottom: 1px solid #f0ede8;
+  }
+  .itin-day-label {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    margin-bottom: 10px;
+    color: #1a1a1a;
+  }
+  .itin-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 8px 0;
+  }
+  .itin-time {
+    font-size: 12px;
+    color: #888;
+    width: 50px;
+    flex-shrink: 0;
+    padding-top: 2px;
+  }
+  .itin-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #1a1a1a;
+    margin-top: 4px;
+    flex-shrink: 0;
+  }
+  .itin-text { font-size: 14px; line-height: 1.4; }
+  .itin-text-sub { font-size: 12px; color: #888; }
+
+  /* Share modal */
+  .share-row {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    padding: 24px;
+  }
+  .share-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .share-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+  }
+  .share-label { font-size: 11px; color: #666; }
+  .share-wa { background: #25d366; color: #fff; }
+  .share-ig { background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045); color: #fff; }
+  .share-link { background: #f0ede8; color: #1a1a1a; }
+  .share-sms { background: #34c759; color: #fff; }
+  .share-more { background: #e8e5e0; color: #666; }
+</style>
+</head>
+<body>
+
+<h1 class="gallery-title">Rihlah — Variant C</h1>
+<p class="gallery-sub">Premium Editorial with Trip Invites &middot; 10 screens</p>
+
+<div class="screen-grid">
+
+<!-- ============================================ -->
+<!-- SCREEN 1: HOME / EXPLORE -->
+<!-- ============================================ -->
+<div class="screen-wrapper">
+  <div class="screen-label">1. Home</div>
+  <div class="screen-desc">The first screen. Greeting, active trip, tools, AI planner CTA, and editorial destination cards.</div>
+  <div class="phone">
+    <div class="status-bar cream">
+      <span>9:41</span>
+      <div class="status-icons">
+        <span>&#9679;</span>
+        <span>&#9679;</span>
+        <span>&#9679;</span>
+      </div>
+    </div>
+    <div class="screen-content">
+      <!-- Greeting -->
+      <div style="padding: 20px 24px 0;">
+        <div style="font-size: 14px; color: #888;">Assalamu Alaykum</div>
+        <div class="serif" style="font-size: 28px; margin-top: 4px;">Zahir</div>
+      </div>
+
+      <!-- Active trip card -->
+      <div style="margin-top: 20px;">
+        <div class="trip-hero">
+          <div class="trip-hero-img grad-istanbul">
+            <span>Istanbul</span>
+          </div>
+          <div class="trip-hero-body">
+            <div style="font-size: 13px; opacity: 0.7;">Jul 12 — Jul 19, 2026</div>
+            <div class="trip-hero-meta" style="margin-top: 10px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <div class="avatar-stack">
+                  <div class="avatar avatar-sm" style="background: #3a3a3a; color: #c9a96e;">Z</div>
+                  <div class="avatar avatar-sm" style="background: #3a3a3a; color: #c9a96e;">A</div>
+                  <div class="avatar avatar-sm" style="background: #3a3a3a; color: #c9a96e;">M</div>
+                </div>
+                <span style="font-size: 13px; opacity: 0.7;">3 travelers</span>
+              </div>
+              <span style="font-size: 13px; color: #c9a96e;">7 days away</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick tools -->
+      <div class="mt-24">
+        <div class="quick-grid">
+          <div class="quick-item">
+            <div class="quick-icon">&#128331;</div>
+            <div class="quick-label">Prayer Times</div>
+          </div>
+          <div class="quick-item">
+            <div class="quick-icon">&#127860;</div>
+            <div class="quick-label">Halal Food</div>
+          </div>
+          <div class="quick-item">
+            <div class="quick-icon">&#128205;</div>
+            <div class="quick-label">Mosques</div>
+          </div>
+          <div class="quick-item">
+            <div class="quick-icon">&#9729;&#65039;</div>
+            <div class="quick-label">Weather</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Planner CTA -->
+      <div class="mt-24">
+        <div class="ai-bubble">
+          <div class="ai-bubble-header">
+            <div class="ai-dot"></div>
+            <span style="font-size: 13px; font-weight: 500;">Rihlah AI</span>
+          </div>
+          <div class="serif" style="font-size: 18px; margin-bottom: 8px;">Plan your next journey</div>
+          <div style="font-size: 13px; opacity: 0.7; line-height: 1.5;">Tell me where you're going and I'll build an itinerary around prayer times, halal dining, and local experiences.</div>
+          <div style="margin-top: 14px; padding: 12px 16px; background: rgba(255,255,255,0.1); border-radius: 10px; font-size: 13px; color: #999;">Where are you headed?</div>
+        </div>
+      </div>
+
+      <!-- Editorial destinations -->
+      <div class="mt-32">
+        <div class="section-header">
+          <div class="section-title">Explore</div>
+          <div class="section-link">See all</div>
+        </div>
+        <div class="h-scroll">
+          <div class="dest-card">
+            <div class="dest-card-bg grad-marrakech">
+              <div class="dest-card-text">
+                <div class="dest-card-name">Marrakech</div>
+                <div class="dest-card-blurb">Medina shadows, rooftop calls to prayer, and the scent of ras el hanout at dusk.</div>
+              </div>
+            </div>
+          </div>
+          <div class="dest-card">
+            <div class="dest-card-bg grad-andalusia">
+              <div class="dest-card-text">
+                <div class="dest-card-name">Andalusia</div>
+                <div class="dest-card-blurb">Where every stone remembers. The Alhambra at golden hour.</div>
+              </div>
+            </div>
+          </div>
+          <div class="dest-card">
+            <div class="dest-card-bg grad-maldives">
+              <div class="dest-card-text">
+                <div class="dest-card-name">Maldives</div>
+                <div class="dest-card-blurb">Overwater villas, private prayer rooms, and halal seafood at tide line.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="height: 24px;"></div>
+    </div>
+    <!-- Tab bar -->
+    <div class="tab-bar">
+      <div class="tab-item active">
+        <div class="tab-icon">&#9673;</div>
+        <span>Explore</span>
+      </div>
+      <div class="tab-item">
+        <div class="tab-icon">&#9726;</div>
+        <span>Trips</span>
+      </div>
+      <div class="tab-item">
+        <div class="tab-center">+</div>
+      </div>
+      <div class="tab-item">
+        <div class="tab-icon">&#9825;</div>
+        <span>Saved</span>
+      </div>
+      <div class="tab-item">
+        <div class="tab-icon">&#9673;</div>
+        <span>Profile</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SCREEN 2: DESTINATION DETAIL -->
+<!-- ============================================ -->
+<div class="screen-wrapper">
+  <div class="screen-label">2. Destination</div>
+  <div class="screen-desc">Editorial destination page. Rich descriptions, curated experiences, and travelers heading there.</div>
+  <div class="phone">
+    <div class="status-bar dark">
+      <span>9:41</span>
+      <div class="status-icons">
+        <span>&#9679;</span>
+        <span>&#9679;</span>
+        <span>&#9679;</span>
+      </div>
+    </div>
+    <div class="screen-content">
+      <!-- Hero image -->
+      <div style="height: 280px; background: linear-gradient(135deg, #1a3a5c, #2a1a3a); display: flex; flex-direction: column; justify-content: flex-end; padding: 24px; position: relative;">
+        <div style="position: absolute; top: 16px; left: 16px; width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 18px; backdrop-filter: blur(10px);">&#8592;</div>
+        <div style="position: absolute; top: 16px; right: 16px; width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 18px; backdrop-filter: blur(10px);">&#9825;</div>
+        <div class="serif" style="font-size: 36px; color: #fff;">Istanbul</div>
+        <div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-top: 4px;">Turkiye</div>
+      </div>
+
+      <!-- Tags -->
+      <div style="padding: 16px 24px; display: flex; gap: 8px; flex-wrap: wrap;">
+        <span class="pill">Halal-Friendly</span>
+        <span class="pill">Historic</span>
+        <span class="pill">Culture</span>
+        <span class="pill">Mosques</span>
+      </div>
+
+      <!-- Editorial blurb -->
+      <div class="section-pad">
+        <p style="font-size: 15px; line-height: 1.65; color: #444;">Where two continents meet and every neighborhood has its own call to prayer. Istanbul isn't a destination you visit — it's one you apprentice yourself to. Start at Sultanahmet at dawn, lose yourself in the Grand Bazaar by midday, and find your way back over cay at sunset on the Bosphorus.</p>
+      </div>
+
+      <!-- Travelers going -->
+      <div class="mt-24">
+        <div class="section-header">
+          <div class="section-title">Travelers</div>
+          <div class="section-link">12 going</div>
+        </div>
+        <div style="padding: 0 24px; display: flex; gap: 12px;">
+          <div style="text-align: center;">
+            <div class="avatar" style="background: #e8e5e0;">A</div>
+            <div style="font-size: 11px; margin-top: 4px; color: #888;">Jul</div>
+          </div>
+          <div style="text-align: center;">
+            <div class="avatar" style="background: #e8e5e0;">S</div>
+            <div style="font-size: 11px; margin-top: 4px; color: #888;">Jul</div>
+          </div>
+          <div style="text-align: center;">
+            <div class="avatar" style="background: #e8e5e0;">K</div>
+            <div style="font-size: 11px; margin-top: 4px; color: #888;">Aug</div>
+          </div>
+          <div style="text-align: center;">
+            <div class="avatar" style="background: #e8e5e0;">R</div>
+            <div style="font-size: 11px; margin-top: 4px; color: #888;">Aug</div>
+          </div>
+          <div style="text-align: center;">
+            <div class="avatar" style="background: #f0ede8; color: #999;">+8</div>
+            <div style="font-size: 11px; margin-top: 4px; color: #888;">&nbsp;</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Experiences -->
+      <div class="mt-24">
+        <div class="section-header">
+          <div class="section-title">Experiences</div>
+          <div class="section-link">14 available</div>
+        </div>
+        <div class="h-scroll">
+          <div class="exp-card">
+            <div class="exp-card-img grad-istanbul2"></div>
+            <div class="exp-card-body">
+              <div class="exp-card-title">Bosphorus Sunset Cruise</div>
+              <div class="exp-card-sub">3 hours &middot; Private boat</div>
+              <div class="exp-card-price">From $45</div>
+            </div>
+          </div>
+          <div class="exp-card">
+            <div class="exp-card-img" style="background: linear-gradient(135deg, #5a3a2a, #8b6914);"></div>
+            <div class="exp-card-body">
+              <div class="exp-card-title">Grand Bazaar Walking Tour</div>
+              <div class="exp-card-sub">2.5 hours &middot; Small group</div>
+              <div class="exp-card-price">From $28</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CTA -->
+      <div style="padding: 24px;">
+        <button class="btn btn-primary">Add Istanbul to a Trip</button>
+      </div>
+
+      <div style="height: 8px;"></div>
+    </div>
+    <div class="tab-bar">
+      <div class="tab-item">
+        <div class="tab-icon">&#9673;</div>
+        <span>Explore</span>
+      </div>
+      <div class="tab-item">
+        <div class="tab-icon">&#9726;</div>
+        <span>Trips</span>
+      </div>
+      <div class="tab-item">
+        <div class="tab-center">+</div>
+      </div>
+      <div class="tab-item">
+        <div class="tab-icon">&#9825;</div>
+        <span>Saved</span>
+      </div>
+      <div class="tab-item">
+        <div class="tab-icon">&#9673;</div>
+        <span>Profile</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SCREEN 3: MY TRIPS -->
+<!-- ============================================ -->
+<div class="screen-wrapper">
+  <div class="screen-label">3. My Trips</div>
+  <div class="screen-desc">All trips — upcoming and past. Each shows destination, dates, who's going, and invite status.</div>
+  <div class="phone">
+    <div class="status-bar cream">
+      <span>9:41</span>
+      <div class="status-icons">
+        <span>&#9679;</span>
+        <span>&#9679;</span>
+        <span>&#9679;</span>
+      </div>
+    </div>
+    <div class="screen-content">
+      <div style="padding: 20px 24px 0;">
+        <div class="serif" style="font-size: 28px;">Journeys</div>
+      </div>
+
+      <!-- Upcoming -->
+      <div class="mt-24">
+        <div style="padding: 0 24px; margin-bottom: 14px;">
+          <span style="font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: #999; font-weight: 600;">Upcoming</span>
+        </div>
+
+        <!-- Trip 1 -->
+        <div style="margin: 0 24px 16px; border-radius: 20px; overflow: hidden; background: #1a1a1a; color: #f8f6f2;">
+          <div style="height: 120px; display: flex; align-items: flex-end; padding: 16px 20px; position: relative;" class="grad-istanbul">
+            <div class="serif" style="font-size: 22px; position: relative; z-index: 1;">Istanbul</div>
+          </div>
+          <div style="padding: 16px 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <div style="font-size: 13px; opacity: 0.7;">Jul 12 — Jul 19</div>
+                <div style="font-size: 13px; color: #c9a96e; margin-top: 4px;">7 days away</div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <div class="avatar-stack">
+                  <div class="avatar avatar-sm" style="background: #3a3a3a; color: #c9a96e;">Z</div>
+                  <div class="avatar avatar-sm" style="background: #3a3a3a; color: #c9a96e;">A</div>
+                  <div class="avatar avatar-sm" style="background: #3a3a3a; color: #c9a96e;">M</div>
+                </div>
+              </div>
+            </div>
+            <div style="margin-top: 12px; display: flex; gap: 8px;">
+              <span style="font-size: 12px; padding: 4px 10px; background: rgba(255,255,255,0.1); border-radius: 8px;">4 experiences</span>
+              <span style="font-size: 12px; padding: 4px 10px; background: rgba(255,255,255,0.1); border-radius: 8px;">1 pending invite</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Trip 2 -->
+        <div style="margin: 0 24px 16px; border-radius: 20px; overflow: hidden; background: #1a1a1a; color: #f8f6f2;">
+          <div style="height: 120px; display: flex; align-items: flex-end; padding: 16px 20px;" class="grad-marrakech">
+            <div class="serif" style="font-size: 22px;">Marrakech</div>
+          </div>
+          <div style="padding: 16px 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <div style="font-size: 13px; opacity: 0.7;">Sep 3 — Sep 10</div>
+                <div style="font-size: 13px; opacity: 0.5; margin-top: 4px;">Planning</div>
+              </div>
+              <div class="avatar avatar-sm" style="background: #3a3a3a; color: #c9a96e;">Z</div>
+            </div>
+            <div style="margin-top: 12px;">
+              <span style="font-size: 12px; padding: 4px 10px; background: rgba(255,255,255,0.1); border-radius: 8px;">Solo trip</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Past -->
+      <div class="mt-24">
+        <div style="padding: 0 24px; margin-bottom: 14px;">
+          <span style="font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: #999; font-weight: 600;">Past Journeys</span>
+        </div>
+        <div style="margin: 0 24px; border-radius: 16px; overflow: hidden; background: #fff; border: 1px solid #e8e5e0;">
+          <div style="display: flex; align-items: center; gap: 14px; padding: 16px;">
+            <div style="width: 60px; height: 60px; border-radius: 12px; flex-shrink: 0;" class="grad-dubai"></div>
+            <div>
+              <div style="font-weight: 600; font-size: 15px;">Dubai</div>
+              <div style="font-size: 13px; color: #888; margin-top: 2px;">Mar 2026 &middot; 5 days</div>
+              <div style="font-size: 12px; color: #b0ab9f; margin-top: 2px;">2 travelers &middot; 6 experiences</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="height: 24px;"></div>
+    </div>
+    <div class="tab-bar">
+      <div class="tab-item">
+        <div class="tab-icon">&#9673;</div>
+        <span>Explore</span>
+      </div>
+      <div class="tab-item active">
+        <div class="tab-icon">&#9726;</div>
+        <span>Trips</span>
+      </div>
+      <div class="tab-item">
+        <div class="tab-center">+</div>
+      </div>
+      <div class="tab-item">
+        <div class="tab-icon">&#9825;</div>
+        <span>Saved</span>
+      </div>
+      <div class="tab-item">
+        <div class="tab-icon">&#9673;</div>
+        <span>Profile</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SCREEN 4: TRIP DETAIL -->
+<!-- ============================================ -->
+<div class="screen-wrapper">
+  <div class="screen-label">4. Trip Detail</div>
+  <div class="screen-desc">Inside a trip. Itinerary, travelers, experiences, and the invite button.</div>
+  <div class="phone">
+    <div class="status-bar dark">
+      <span>9:41</span>
+      <div class="status-icons">
+        <span>&#9679;</span>
+        <span>&#9679;</span>
+        <span>&#9679;</span>
+      </div>
+    </div>
+    <div class="screen-content no-tab">
+      <!-- Trip header -->
+      <div style="background: #1a1a1a; color: #f8f6f2; padding: 0 0 24px;">
+        <div style="height: 200px; position: relative;" class="grad-istanbul">
+          <div style="position: absolute; top: 12px; left: 16px; width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 18px; backdrop-filter: blur(10px);">&#8592;</div>
+          <div style="position: absolute; top: 12px; right: 16px; width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 18px; backdrop-filter: blur(10px);">&#8230;</div>
+          <div style="position: absolute; bottom: 20px; left: 24px;">
+            <div class="serif" style="font-size: 32px;">Istanbul</div>
+            <div style="font-size: 14px; opacity: 0.7; margin-top: 4px;">Jul 12 — Jul 19, 2026</div>
+          </div>
+        </div>
+        <!-- Travelers -->
+        <div style="padding: 16px 24px 0;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div class="avatar-stack">
+                <div class="avatar" style="background: #3a3a3a; color: #c9a96e;">Z</div>
+                <div class="avatar" style="background: #3a3a3a; color: #c9a96e;">A</div>
+                <div class="avatar" style="background: #3a3a3a; color: #c9a96e;">M</div>
+              </div>
+              <span style="font-size: 13px; opacity: 0.7;">3 travelers</span>
+            </div>
+            <button style="background: rgba(255,255,255,0.15); border: none; color: #fff; padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer;">+ Invite</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Content -->
+      <div style="background: #f8f6f2;">
+        <!-- Pending invite -->
+        <div style="margin: 16px 24px; padding: 14px 16px; background: #fff8e7; border-radius: 12px; display: flex; align-items: center; gap: 12px;">
+          <span style="font-size: 20px;">&#128233;</span>
+          <div style="flex: 1;">
+            <div style="font-size: 13px; font-weight: 600;">Omar is invited</div>
+            <div style="font-size: 12px; color: #888;">Waiting for response</div>
+          </div>
+          <span style="font-size: 12px; color: #c9a96e; font-weight: 500;">Pending</span>
+        </div>
+
+        <!-- Itinerary -->
+        <div style="padding: 8px 24px;">
+          <div class="serif" style="font-size: 18px; margin-bottom: 4px;">Itinerary</div>
+          <div style="font-size: 12px; color: #888;">AI-generated &middot; tap to customize</div>
+        </div>
+
+        <div class="itin-day">
+          <div class="itin-day-label">Day 1 &middot; Saturday</div>
+          <div class="itin-item">
+            <div class="itin-time">9:00</div>
+            <div class="itin-dot"></div>
+            <div>
+              <div class="itin-text">Sultanahmet Mosque</div>
+              <div class="itin-text-sub">Blue Mosque &middot; Free entry</div>
+            </div>
+          </div>
+          <div class="itin-item">
+            <div class="itin-time">11:30</div>
+            <div class="itin-dot" style="background: #c9a96e;"></div>
+            <div>
+              <div class="itin-text">Grand Bazaar Walking Tour</div>
+              <div class="itin-text-sub">Booked &middot; $28/person</div>
+            </div>
+          </div>
+          <div class="itin-item">
+            <div class="itin-time">13:15</div>
+            <div class="itin-dot"></div>
+            <div>
+              <div class="itin-text">Dhuhr Prayer</div>
+              <div class="itin-text-sub">Suleymaniye Mosque &middot; 5 min walk</div>
+            </div>
+          </div>
+          <div class="itin-item">
+            <div class="itin-time">14:00</div>
+            <div class="itin-dot"></div>
+            <div>
+              <div class="itin-text">Lunch at Sultanahmet Koftecisi</div>
+              <div class="itin-text-sub">Halal &middot; Traditional &middot; $$</div>
+            </div>
+          </div>
+          <div class="itin-item">
+            <div class="itin-time">17:00</div>
+            <div class="itin-dot" style="background: #c9a96e;"></div>
+            <div>
+              <div class="itin-text">Bosphorus Sunset Cruise</div>
+              <div class="itin-text-sub">Booked &middot; $45/person</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="itin-day">
+          <div class="itin-day-label">Day 2 &middot; Sunday</div>
+          <div class="itin-item">
+            <div class="itin-time">8:30</div>
+            <div class="itin-dot"></div>
+            <div>
+              <div class="itin-text">Hagia Sophia</div>
+              <div class="itin-text-sub">Morning visit &middot; Modest dress</div>
+            </div>
+          </div>
+          <div class="itin-item">
+            <div class="itin-time">12:00</div>
+            <div class="itin-dot"></div>
+            <div>
+              <div class="itin-text">Dhuhr at Hagia Sophia</div>
+              <div class="itin-text-sub">Prayer area on upper level</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="padding: 16px 24px;">
+          <div style="text-align: center; font-size: 13px; color: #999;">5 more days &middot; Tap to expand</div>
+        </div>
+
+        <div style="height: 16px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SCREEN 5: INVITE FLOW -->
+<!-- ============================================ -->
+<div class="screen-wrapper">
+  <div class="screen-label">5. Trip Invite</div>
+  <div class="screen-desc">Share a trip with friends via WhatsApp, iMessage, Instagram, or a link. The trip is the viral loop.</div>
+  <div class="phone">
+    <div class="status-bar cream">
+      <span>9:41</span>
+      <div class="status-icons">
+        <span>&#9679;</span>
+        <span>&#9679;</span>
+        <span>&#9679;</span>
+      </div>
+    </div>
+    <div class="screen-content no-tab">
+      <div style="padding: 20px 24px 0;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div class="serif" style="font-size: 24px;">Invite to Trip</div>
+          <span style="font-size: 28px; color: #999; cursor: pointer;">&#215;</span>
+        </div>
+      </div>
+
+      <!-- Trip preview card -->
+      <div style="margin: 24px;">
+        <div class="invite-card">
+          <div class="invite-header">
+            <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.6; margin-bottom: 8px;">You're invited to</div>
+            <div class="serif" style="font-size: 28px;">Istanbul</div>
+            <div style="font-size: 14px; opacity: 0.7; margin-top: 6px;">Jul 12 — Jul 19, 2026</div>
+            <div style="margin-top: 12px; display: flex; justify-content: center; align-items: center; gap: 8px;">
+              <div class="avatar-stack">
+                <div class="avatar avatar-sm" style="background: #3a3a3a; color: #c9a96e; border-color: #1a1a1a;">Z</div>
+                <div class="avatar avatar-sm" style="background: #3a3a3a; color: #c9a96e; border-color: #1a1a1a;">A</div>
+                <div class="avatar avatar-sm" style="background: #3a3a3a; color: #c9a96e; border-color: #1a1a1a;">M</div>
+              </div>
+              <span style="font-size: 13px; color: rgba(255,255,255,0.6);">3 going</span>
+            </div>
+          </div>
+          <div style="padding: 16px 20px;">
+            <div style="font-size: 13px; color: #888; line-height: 1.5;">4 experiences planned &middot; Bosphorus cruise, Grand Bazaar tour, and more</div>
+            <div style="margin-top: 12px; display: flex; gap: 8px;">
+              <span class="pill" style="font-size: 11px;">7 nights</span>
+              <span class="pill" style="font-size: 11px;">Halal-Friendly</span>
+              <span class="pill" style="font-size: 11px;">Culture</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Share options -->
+      <div style="padding: 0 24px; margin-bottom: 24px;">
+        <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: #999; font-weight: 600; margin-bottom: 16px;">Share via</div>
+        <div class="share-row" style="padding: 0; justify-content: flex-start; gap: 24px;">
+          <div class="share-option">
+            <div class="share-icon share-wa">&#128172;</div>
+            <div class="share-label">WhatsApp</div>
+          </div>
+          <div class="share-option">
+            <div class="share-icon share-sms">&#128172;</div>
+            <div class="share-label">iMessage</div>
+          </div>
+          <div class="share-option">
+            <div class="share-icon share-ig">&#10070;</div>
+            <div class="share-label">Instagram</div>
+          </div>
+          <div class="share-option">
+            <div class="share-icon share-link">&#128279;</div>
+            <div class="share-label">Copy Link</div>
+          </div>
+          <div class="share-option">
+            <div class="share-icon share-more">&#8230;</div>
+            <div class="share-label">More</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Or search existing users -->
+      <div style="padding: 0 24px;">
+        <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: #999; font-weight: 600; margin-bottom: 12px;">Or invite a Rihlah traveler</div>
+        <input class="input-field" placeholder="Search by name or city..." style="margin-bottom: 16px;">
+
+        <div class="traveler-row" style="padding: 12px 0;">
+          <div class="avatar" style="background: #e8e5e0;">O</div>
+          <div class="traveler-info">
+            <div class="traveler-name">Omar Hassan</div>
+            <div class="traveler-detail">New York &middot; 3 mutual trips</div>
+          </div>
+          <button class="btn btn-sm" style="background: #1a1a1a; color: #fff; padding: 8px 16px; width: auto;">Invite</button>
+        </div>
+        <div class="traveler-row" style="padding: 12px 0;">
+          <div class="avatar" style="background: #e8e5e0;">F</div>
+          <div class="traveler-info">
+            <div class="traveler-name">Fatima Kerim</div>
+            <div class="traveler-detail">London &middot; Going to Istanbul in Aug</div>
+          </div>
+          <button class="btn btn-sm" style="background: #1a1a1a; color: #fff; padding: 8px 16px; width: auto;">Invite</button>
+        </div>
+        <div class="traveler-row" style="padding: 12px 0;">
+          <div class="avatar" style="background: #e8e5e0;">Y</div>
+          <div class="traveler-info">
+            <div class="traveler-name">Yusuf Ali</div>
+            <div class="traveler-detail">Toronto &middot; Interested in Istanbul</div>
+          </div>
+          <button class="btn btn-sm" style="background: #1a1a1a; color: #fff; padding: 8px 16px; width: auto;">Invite</button>
+        </div>
+      </div>
+
+      <div style="height: 32px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SCREEN 6: INVITE RECEIVED (RECIPIENT VIEW) -->
+<!-- ============================================ -->
+<div class="screen-wrapper">
+  <div class="screen-label">6. Invite Received</div>
+  <div class="screen-desc">What the recipient sees when they tap the invite link. Clean, aspirational, one-tap join.</div>
+  <div class="phone">
+    <div class="status-bar dark">
+      <span>9:41</span>
+      <div class="status-icons">
+        <span>&#9679;</span>
+        <span>&#9679;</span>
+        <span>&#9679;</span>
+      </div>
+    </div>
+    <div class="screen-content no-tab">
+      <!-- Hero -->
+      <div style="height: 320px; position: relative;" class="grad-istanbul">
+        <div style="position: absolute; inset: 0; background: linear-gradient(transparent 40%, rgba(26,26,26,0.9));"></div>
+        <div style="position: absolute; top: 20px; left: 0; right: 0; text-align: center;">
+          <div style="font-size: 14px; color: rgba(255,255,255,0.6); letter-spacing: 2px; text-transform: uppercase;">Rihlah</div>
+        </div>
+        <div style="position: absolute; bottom: 28px; left: 24px; right: 24px; color: #fff; text-align: center;">
+          <div style="font-size: 13px; opacity: 0.6; margin-bottom: 8px;">Zahir invited you to join</div>
+          <div class="serif" style="font-size: 36px; margin-bottom: 8px;">Istanbul</div>
+          <div style="font-size: 15px; opacity: 0.7;">Jul 12 — Jul 19, 2026</div>
+        </div>
+      </div>
+
+      <!-- Details -->
+      <div style="background: #f8f6f2; padding: 24px;">
+        <!-- Who's going -->
+        <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 24px;">
+          <div class="avatar-stack">
+            <div class="avatar" style="background: #1a1a1a; color: #c9a96e;">Z</div>
+            <div class="avatar" style="background: #1a1a1a; color: #c9a96e;">A</div>
+            <div class="avatar" style="background: #1a1a1a; color: #c9a96e;">M</div>
+          </div>
+          <div>
+            <div style="font-weight: 600; font-size: 14px;">Zahir, Amir & Musa</div>
+            <div style="font-size: 13px; color: #888;">are going</div>
+          </div>
+        </div>
+
+        <!-- Trip highlights -->
+        <div style="margin-bottom: 24px;">
+          <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: #999; font-weight: 600; margin-bottom: 12px;">Planned so far</div>
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: #fff; border-radius: 12px;">
+              <span style="font-size: 20px;">&#128674;</span>
+              <div>
+                <div style="font-size: 14px; font-weight: 500;">Bosphorus Sunset Cruise</div>
+                <div style="font-size: 12px; color: #888;">Day 1 &middot; $45/person</div>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: #fff; border-radius: 12px;">
+              <span style="font-size: 20px;">&#127979;</span>
+              <div>
+                <div style="font-size: 14px; font-weight: 500;">Grand Bazaar Walking Tour</div>
+                <div style="font-size: 12px; color: #888;">Day 1 &middot; $28/person</div>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: #fff; border-radius: 12px;">
+              <span style="font-size: 20px;">&#128332;</span>
+              <div>
+                <div style="font-size: 14px; font-weight: 500;">Hagia Sophia Visit</div>
+                <div style="font-size: 12px; color: #888;">Day 2 &middot; Free</div>
+              </div>
+            </div>
+          </div>
+          <div style="text-align: center; margin-top: 10px; font-size: 13px; color: #999;">+1 more experience</div>
+        </div>
+
+        <!-- Join CTA -->
+        <button class="btn btn-primary" style="font-size: 16px; padding: 16px; border-radius: 14px;">Join This Trip</button>
+        <div style="text-align: center; margin-top: 12px; font-size: 13px; color: #999;">Free &middot; Takes 30 seconds to sign up</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SCREEN 7: AI TRIP PLANNER -->
+<!-- ============================================ -->
+<div class="screen-wrapper">
+  <div class="screen-label">7. AI Trip Planner</div>
+  <div class="screen-desc">Conversational planning. Tell it where you're going, it builds an itinerary around prayer, halal food, and experiences.</div>
+  <div class="phone">
+    <div class="status-bar cream">
+      <span>9:41</span>
+      <div class="status-icons">
+        <span>&#9679;</span>
+        <span>&#9679;</span>
+        <span>&#9679;</span>
+      </div>
+    </div>
+    <div class="screen-content no-tab">
+      <div style="padding: 16px 24px;">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 24px;">
+          <span style="font-size: 24px; cursor: pointer;">&#8592;</span>
+          <div class="serif" style="font-size: 22px;">Plan a Journey</div>
+        </div>
+
+        <!-- AI conversation -->
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          <!-- AI message -->
+          <div style="display: flex; gap: 10px; align-items: flex-start;">
+            <div style="width: 32px; height: 32px; border-radius: 10px; background: #1a1a1a; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <div class="ai-dot" style="animation: none; width: 6px; height: 6px;"></div>
+            </div>
+            <div style="background: #fff; padding: 14px 16px; border-radius: 4px 16px 16px 16px; font-size: 14px; line-height: 1.55; color: #333; max-width: 280px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+              Assalamu Alaykum! Where would you like to go? I'll plan around prayer times, halal dining, and the best local experiences.
+            </div>
+          </div>
+
+          <!-- User message -->
+          <div style="display: flex; justify-content: flex-end;">
+            <div style="background: #1a1a1a; color: #f8f6f2; padding: 14px 16px; border-radius: 16px 4px 16px 16px; font-size: 14px; line-height: 1.55; max-width: 260px;">
+              Istanbul for a week in July. Traveling with 2 friends. We want culture, good food, and time to explore at our own pace.
+            </div>
+          </div>
+
+          <!-- AI response -->
+          <div style="display: flex; gap: 10px; align-items: flex-start;">
+            <div style="width: 32px; height: 32px; border-radius: 10px; background: #1a1a1a; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <div class="ai-dot" style="animation: none; width: 6px; height: 6px;"></div>
+            </div>
+            <div style="background: #fff; padding: 14px 16px; border-radius: 4px 16px 16px 16px; font-size: 14px; line-height: 1.55; color: #333; max-width: 280px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+              Great choice. Istanbul in July — sunrise at 5:31, Fajr at 4:15, and long golden evenings until Maghrib at 20:38. I'll build your days around that rhythm.
+              <br><br>
+              Here's what I'm thinking for your first two days:
+              <br><br>
+              <strong>Day 1: Sultanahmet</strong>
+              <br>Blue Mosque → Grand Bazaar tour → lunch at Sultanahmet Koftecisi (halal, traditional) → Bosphorus sunset cruise
+              <br><br>
+              <strong>Day 2: Fatih & Suleymaniye</strong>
+              <br>Hagia Sophia → Suleymaniye for Dhuhr → street food in Fatih → hammam at Cemberlitas
+              <br><br>
+              <span style="color: #c9a96e;">Want me to continue with all 7 days, or adjust anything?</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Input -->
+      <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 16px 24px; background: #f8f6f2; border-top: 1px solid #e8e5e0;">
+        <div style="display: flex; gap: 10px;">
+          <input class="input-field" placeholder="Type a message..." style="flex: 1;">
+          <button style="width: 44px; height: 44px; border-radius: 12px; background: #1a1a1a; color: #fff; border: none; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;">&#8593;</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SCREEN 8: ADD TRIP -->
+<!-- ============================================ -->
+<div class="screen-wrapper">
+  <div class="screen-label">8. Add Trip</div>
+  <div class="screen-desc">Clean trip creation. Destination, dates, and an option to let AI plan it or build manually.</div>
+  <div class="phone">
+    <div class="status-bar cream">
+      <span>9:41</span>
+      <div class="status-icons">
+        <span>&#9679;</span>
+        <span>&#9679;</span>
+        <span>&#9679;</span>
+      </div>
+    </div>
+    <div class="screen-content no-tab">
+      <div style="padding: 20px 24px 0;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px;">
+          <div class="serif" style="font-size: 28px;">New Journey</div>
+          <span style="font-size: 28px; color: #999; cursor: pointer;">&#215;</span>
+        </div>
+
+        <!-- Destination -->
+        <div style="margin-bottom: 24px;">
+          <label style="font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: #999; font-weight: 600; display: block; margin-bottom: 8px;">Where to?</label>
+          <input class="input-field" placeholder="Search a city or country..." value="Istanbul, Turkiye" style="font-weight: 500;">
+        </div>
+
+        <!-- Dates -->
+        <div style="display: flex; gap: 12px; margin-bottom: 24px;">
+          <div style="flex: 1;">
+            <label style="font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: #999; font-weight: 600; display: block; margin-bottom: 8px;">From</label>
+            <input class="input-field" value="Jul 12, 2026" style="font-weight: 500;">
+          </div>
+          <div style="flex: 1;">
+            <label style="font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: #999; font-weight: 600; display: block; margin-bottom: 8px;">Until</label>
+            <input class="input-field" value="Jul 19, 2026" style="font-weight: 500;">
+          </div>
+        </div>
+
+        <!-- Trip type -->
+        <div style="margin-bottom: 24px;">
+          <label style="font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: #999; font-weight: 600; display: block; margin-bottom: 12px;">Trip Style</label>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <span class="pill" style="border: 1.5px solid #1a1a1a; background: #1a1a1a; color: #fff;">Culture</span>
+            <span class="pill pill-outline">Relaxation</span>
+            <span class="pill pill-outline">Adventure</span>
+            <span class="pill pill-outline">Foodie</span>
+            <span class="pill pill-outline">Family</span>
+            <span class="pill pill-outline">Spiritual</span>
+          </div>
+        </div>
+
+        <div class="divider" style="margin: 28px 0;"></div>
+
+        <!-- AI or manual -->
+        <div style="margin-bottom: 16px;">
+          <div class="ai-bubble" style="margin: 0;">
+            <div class="ai-bubble-header">
+              <div class="ai-dot"></div>
+              <span style="font-size: 13px; font-weight: 500;">AI Planner</span>
+            </div>
+            <div style="font-size: 14px; opacity: 0.85; line-height: 1.5;">Let me build your itinerary — prayer times, halal spots, and experiences included.</div>
+            <button style="margin-top: 14px; width: 100%; padding: 12px; background: rgba(255,255,255,0.15); border: none; border-radius: 10px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer;">Plan with AI</button>
+          </div>
+        </div>
+
+        <button class="btn btn-outline" style="margin-bottom: 16px;">I'll plan it myself</button>
+
+        <div style="height: 32px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SCREEN 9: SAVED -->
+<!-- ============================================ -->
+<div class="screen-wrapper">
+  <div class="screen-label">9. Saved</div>
+  <div class="screen-desc">Saved destinations and experiences. Organized by destination for easy trip planning later.</div>
+  <div class="phone">
+    <div class="status-bar cream">
+      <span>9:41</span>
+      <div class="status-icons">
+        <span>&#9679;</span>
+        <span>&#9679;</span>
+        <span>&#9679;</span>
+      </div>
+    </div>
+    <div class="screen-content">
+      <div style="padding: 20px 24px 0;">
+        <div class="serif" style="font-size: 28px; margin-bottom: 4px;">Saved</div>
+        <div style="font-size: 14px; color: #888;">3 destinations &middot; 8 experiences</div>
+      </div>
+
+      <!-- Saved destination group -->
+      <div class="mt-24">
+        <div style="margin: 0 24px 12px; display: flex; align-items: center; gap: 14px;">
+          <div style="width: 48px; height: 48px; border-radius: 14px; flex-shrink: 0;" class="grad-marrakech"></div>
+          <div>
+            <div style="font-weight: 600; font-size: 16px;">Marrakech</div>
+            <div style="font-size: 13px; color: #888;">4 experiences saved</div>
+          </div>
+        </div>
+        <div class="h-scroll" style="padding-left: 24px;">
+          <div style="min-width: 200px; background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.04); flex-shrink: 0;">
+            <div style="height: 100px;" class="grad-marrakech"></div>
+            <div style="padding: 12px;">
+              <div style="font-size: 13px; font-weight: 600;">Medina Food Tour</div>
+              <div style="font-size: 12px; color: #888; margin-top: 2px;">From $32</div>
+            </div>
+          </div>
+          <div style="min-width: 200px; background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.04); flex-shrink: 0;">
+            <div style="height: 100px; background: linear-gradient(135deg, #c4722a, #a05a1e);"></div>
+            <div style="padding: 12px;">
+              <div style="font-size: 13px; font-weight: 600;">Atlas Mountains Day Trip</div>
+              <div style="font-size: 12px; color: #888; margin-top: 2px;">From $55</div>
+            </div>
+          </div>
+          <div style="min-width: 200px; background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.04); flex-shrink: 0;">
+            <div style="height: 100px; background: linear-gradient(135deg, #8b6914, #c4a35a);"></div>
+            <div style="padding: 12px;">
+              <div style="font-size: 13px; font-weight: 600;">Jardin Majorelle</div>
+              <div style="font-size: 12px; color: #888; margin-top: 2px;">From $12</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Second destination -->
+      <div class="mt-24">
+        <div style="margin: 0 24px 12px; display: flex; align-items: center; gap: 14px;">
+          <div style="width: 48px; height: 48px; border-radius: 14px; flex-shrink: 0;" class="grad-andalusia"></div>
+          <div>
+            <div style="font-weight: 600; font-size: 16px;">Andalusia</div>
+            <div style="font-size: 13px; color: #888;">3 experiences saved</div>
+          </div>
+        </div>
+        <div class="h-scroll" style="padding-left: 24px;">
+          <div style="min-width: 200px; background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.04); flex-shrink: 0;">
+            <div style="height: 100px;" class="grad-andalusia"></div>
+            <div style="padding: 12px;">
+              <div style="font-size: 13px; font-weight: 600;">Alhambra Night Tour</div>
+              <div style="font-size: 12px; color: #888; margin-top: 2px;">From $40</div>
+            </div>
+          </div>
+          <div style="min-width: 200px; background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.04); flex-shrink: 0;">
+            <div style="height: 100px; background: linear-gradient(135deg, #8b0000, #a52a2a);"></div>
+            <div style="padding: 12px;">
+              <div style="font-size: 13px; font-weight: 600;">Cordoba Mosque Walk</div>
+              <div style="font-size: 12px; color: #888; margin-top: 2px;">From $18</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Third destination -->
+      <div class="mt-24">
+        <div style="margin: 0 24px 12px; display: flex; align-items: center; gap: 14px;">
+          <div style="width: 48px; height: 48px; border-radius: 14px; flex-shrink: 0;" class="grad-jordan"></div>
+          <div>
+            <div style="font-weight: 600; font-size: 16px;">Jordan</div>
+            <div style="font-size: 13px; color: #888;">1 experience saved</div>
+          </div>
+        </div>
+        <div style="margin: 0 24px;">
+          <div style="background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.04); display: flex; align-items: center; gap: 14px; padding-right: 14px;">
+            <div style="width: 80px; height: 80px; flex-shrink: 0;" class="grad-jordan"></div>
+            <div>
+              <div style="font-size: 14px; font-weight: 600;">Petra by Night</div>
+              <div style="font-size: 12px; color: #888; margin-top: 2px;">From $68 &middot; 3 hours</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="height: 24px;"></div>
+    </div>
+    <div class="tab-bar">
+      <div class="tab-item">
+        <div class="tab-icon">&#9673;</div>
+        <span>Explore</span>
+      </div>
+      <div class="tab-item">
+        <div class="tab-icon">&#9726;</div>
+        <span>Trips</span>
+      </div>
+      <div class="tab-item">
+        <div class="tab-center">+</div>
+      </div>
+      <div class="tab-item active">
+        <div class="tab-icon">&#9825;</div>
+        <span>Saved</span>
+      </div>
+      <div class="tab-item">
+        <div class="tab-icon">&#9673;</div>
+        <span>Profile</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SCREEN 10: PROFILE -->
+<!-- ============================================ -->
+<div class="screen-wrapper">
+  <div class="screen-label">10. Profile</div>
+  <div class="screen-desc">Minimal, editorial. Travel stats, identity tags, and settings. The serif typography carries it.</div>
+  <div class="phone">
+    <div class="status-bar cream">
+      <span>9:41</span>
+      <div class="status-icons">
+        <span>&#9679;</span>
+        <span>&#9679;</span>
+        <span>&#9679;</span>
+      </div>
+    </div>
+    <div class="screen-content">
+      <!-- Header -->
+      <div style="text-align: center; padding: 24px 24px 0;">
+        <div class="avatar avatar-lg" style="margin: 0 auto; background: #1a1a1a; color: #c9a96e; font-size: 24px; width: 80px; height: 80px;">Z</div>
+        <div class="serif" style="font-size: 24px; margin-top: 14px;">Zahir Veeva</div>
+        <div style="font-size: 14px; color: #888; margin-top: 4px;">Knoxville, Tennessee</div>
+        <div style="font-size: 13px; color: #b0ab9f; margin-top: 8px; line-height: 1.5; max-width: 260px; margin-left: auto; margin-right: auto;">Seeking the batin of every place I visit.</div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stat-row" style="margin-top: 24px;">
+        <div>
+          <div class="stat-num">7</div>
+          <div class="stat-label">Journeys</div>
+        </div>
+        <div>
+          <div class="stat-num">4</div>
+          <div class="stat-label">Countries</div>
+        </div>
+        <div>
+          <div class="stat-num">12</div>
+          <div class="stat-label">Experiences</div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Identity tags -->
+      <div style="padding: 0 24px;">
+        <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: #999; font-weight: 600; margin-bottom: 12px;">Identity</div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <span class="pill">Muslim Traveler</span>
+          <span class="pill">Halal Food</span>
+          <span class="pill">Culture</span>
+          <span class="pill">History</span>
+          <span class="pill">Photography</span>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Places visited -->
+      <div style="padding: 0 24px;">
+        <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: #999; font-weight: 600; margin-bottom: 14px;">Places Visited</div>
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+          <div style="text-align: center;">
+            <div style="width: 56px; height: 56px; border-radius: 14px;" class="grad-dubai"></div>
+            <div style="font-size: 11px; margin-top: 6px; font-weight: 500;">Dubai</div>
+          </div>
+          <div style="text-align: center;">
+            <div style="width: 56px; height: 56px; border-radius: 14px;" class="grad-istanbul"></div>
+            <div style="font-size: 11px; margin-top: 6px; font-weight: 500;">Istanbul</div>
+          </div>
+          <div style="text-align: center;">
+            <div style="width: 56px; height: 56px; border-radius: 14px;" class="grad-kualalumpur"></div>
+            <div style="font-size: 11px; margin-top: 6px; font-weight: 500;">KL</div>
+          </div>
+          <div style="text-align: center;">
+            <div style="width: 56px; height: 56px; border-radius: 14px;" class="grad-cairo"></div>
+            <div style="font-size: 11px; margin-top: 6px; font-weight: 500;">Cairo</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Settings list -->
+      <div>
+        <div class="list-item">
+          <span style="font-size: 20px;">&#9998;</span>
+          <div class="list-item-text">
+            <div class="list-item-title">Edit Profile</div>
+          </div>
+          <span class="list-chevron">&#8250;</span>
+        </div>
+        <div class="list-item">
+          <span style="font-size: 20px;">&#128274;</span>
+          <div class="list-item-text">
+            <div class="list-item-title">Privacy</div>
+            <div class="list-item-sub">Profile visible to women only</div>
+          </div>
+          <span class="list-chevron">&#8250;</span>
+        </div>
+        <div class="list-item">
+          <span style="font-size: 20px;">&#128279;</span>
+          <div class="list-item-text">
+            <div class="list-item-title">Connected Accounts</div>
+            <div class="list-item-sub">Instagram, WhatsApp</div>
+          </div>
+          <span class="list-chevron">&#8250;</span>
+        </div>
+        <div class="list-item">
+          <span style="font-size: 20px;">&#9881;</span>
+          <div class="list-item-text">
+            <div class="list-item-title">Settings</div>
+          </div>
+          <span class="list-chevron">&#8250;</span>
+        </div>
+      </div>
+
+      <div style="height: 24px;"></div>
+    </div>
+    <div class="tab-bar">
+      <div class="tab-item">
+        <div class="tab-icon">&#9673;</div>
+        <span>Explore</span>
+      </div>
+      <div class="tab-item">
+        <div class="tab-icon">&#9726;</div>
+        <span>Trips</span>
+      </div>
+      <div class="tab-item">
+        <div class="tab-center">+</div>
+      </div>
+      <div class="tab-item">
+        <div class="tab-icon">&#9825;</div>
+        <span>Saved</span>
+      </div>
+      <div class="tab-item active">
+        <div class="tab-icon">&#9673;</div>
+        <span>Profile</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- end screen-grid -->
+
+<div style="height: 60px;"></div>
+
+</body>
+</html>

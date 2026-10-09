@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useMemo, useCall
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, collection, getDocs, query, where, updateDoc, deleteDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase';
+import { calculateAge } from '../utils/age';
 
 const UserContext = createContext(null);
 
@@ -13,22 +14,36 @@ export function UserProvider({ children }) {
   const [outgoingRequests, setOutgoingRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [applicationStatus, setApplicationStatus] = useState(null);
+
+  // Current user's blocked list
+  const blockedUsers = useMemo(() => {
+    return currentUserData?.blockedUsers || [];
+  }, [currentUserData]);
+
+  // Filter blocked users out of allUsers
+  const visibleUsers = useMemo(() => {
+    if (blockedUsers.length === 0) return allUsers;
+    const blockedSet = new Set(blockedUsers);
+    return allUsers.filter(u => !blockedSet.has(u.id));
+  }, [allUsers, blockedUsers]);
 
   // Build a map of userId -> userData for quick lookups
   const allUsersMap = useMemo(() => {
     const map = {};
-    allUsers.forEach(u => { map[u.id] = u; });
+    visibleUsers.forEach(u => { map[u.id] = u; });
     return map;
-  }, [allUsers]);
+  }, [visibleUsers]);
 
   // Derive enriched connections from currentUserData + allUsersMap (eliminates N+1)
   // Note: whatsapp/instagram come from the connection record (stored at accept time),
   // not from allUsersMap, since allUsers no longer includes PII fields.
   const connections = useMemo(() => {
     if (!currentUserData || !currentUserData.connections) return [];
-    return currentUserData.connections.map(conn => {
-      const liveUser = allUsersMap[conn.userId];
-      if (liveUser) {
+    return currentUserData.connections
+      .filter(conn => allUsersMap[conn.userId]) // skip deleted users
+      .map(conn => {
+        const liveUser = allUsersMap[conn.userId];
         return {
           ...conn,
           upcomingTrips: liveUser.upcomingTrips || [],
@@ -37,19 +52,17 @@ export function UserProvider({ children }) {
           photoURL: liveUser.photoURL || conn.photoURL,
           name: liveUser.name || conn.name,
           age: liveUser.age || conn.age,
-          // Preserve contact info from connection record (not stripped from allUsers)
           whatsapp: conn.whatsapp,
           instagram: conn.instagram,
         };
-      }
-      return conn;
-    });
+      });
   }, [currentUserData, allUsersMap]);
 
-  // Derive connection request objects with pending status
+  // Derive connection request objects with pending status (filter out blocked users)
   const connectionRequests = useMemo(() => {
+    const blockedSet = new Set(blockedUsers);
     return incomingRequests
-      .filter(r => r.status === 'pending')
+      .filter(r => r.status === 'pending' && !blockedSet.has(r.fromUserId))
       .map(r => ({
         id: r.id,
         userId: r.fromUserId,
@@ -61,7 +74,7 @@ export function UserProvider({ children }) {
         interests: r.fromUserInterests,
         requestedAt: r.createdAt,
       }));
-  }, [incomingRequests]);
+  }, [incomingRequests, blockedUsers]);
 
   // Derive sent request user IDs
   const sentRequestUserIds = useMemo(() => {
@@ -86,15 +99,22 @@ export function UserProvider({ children }) {
   }, []);
 
   // Fetch all users with only public-safe fields (exclude PII like whatsapp, instagram, email)
+  // Only include approved, onboarded users in the public list
   const fetchAllUsers = useCallback(async () => {
     const snapshot = await getDocs(collection(db, 'users'));
     const users = [];
     snapshot.forEach(docSnap => {
       const data = docSnap.data();
+      // Skip non-onboarded or non-approved users from public list
+      if (!data.onboardingComplete) return;
+      const status = data.status || 'approved';
+      if (status !== 'approved') return;
+
       users.push({
         id: docSnap.id,
         name: data.name,
-        age: data.age,
+        age: data.dateOfBirth ? calculateAge(data.dateOfBirth) : data.age,
+        dateOfBirth: data.dateOfBirth,
         gender: data.gender,
         bio: data.bio,
         photoURL: data.photoURL,
@@ -105,6 +125,8 @@ export function UserProvider({ children }) {
         profileVisibility: data.profileVisibility,
         upcomingTrips: data.upcomingTrips,
         onboardingComplete: data.onboardingComplete,
+        travelStyle: data.travelStyle,
+        foundingMember: data.foundingMember,
       });
     });
     return users;
@@ -146,8 +168,10 @@ export function UserProvider({ children }) {
 
     if (userData) {
       setNeedsOnboarding(!userData.onboardingComplete);
+      setApplicationStatus(userData.status || 'approved');
     } else {
       setNeedsOnboarding(true);
+      setApplicationStatus(null);
     }
   }, [fetchCurrentUser, fetchAllUsers, fetchIncomingRequests, fetchOutgoingRequests]);
 
@@ -240,15 +264,12 @@ export function UserProvider({ children }) {
       if (user) {
         try {
           await loadAll(user.uid);
-          // Run cleanup in background (don't block UI)
-          const userData = await fetchCurrentUser(user.uid);
-          runCleanup(user.uid, userData).then(() => {
-            // Refresh after cleanup if trips were archived
-            loadAll(user.uid);
-          });
+          // Run cleanup in background AFTER UI is ready — don't re-fetch unless cleanup changed something
+          runCleanup(user.uid, currentUserData);
         } catch (error) {
           console.error('Error loading user data:', error);
           setNeedsOnboarding(true);
+          setApplicationStatus(null);
         }
       } else {
         setCurrentUserData(null);
@@ -256,6 +277,7 @@ export function UserProvider({ children }) {
         setIncomingRequests([]);
         setOutgoingRequests([]);
         setNeedsOnboarding(false);
+        setApplicationStatus(null);
       }
       setLoading(false);
     });
@@ -265,8 +287,9 @@ export function UserProvider({ children }) {
   const value = useMemo(() => ({
     currentUser,
     currentUserData,
-    allUsers,
+    allUsers: visibleUsers,
     allUsersMap,
+    blockedUsers,
     connections,
     connectionRequests,
     sentRequestUserIds,
@@ -275,14 +298,15 @@ export function UserProvider({ children }) {
     outgoingRequests,
     loading,
     needsOnboarding,
+    applicationStatus,
     refreshCurrentUser,
     refreshConnections,
     refreshAll,
   }), [
-    currentUser, currentUserData, allUsers, allUsersMap,
-    connections, connectionRequests, sentRequestUserIds,
+    currentUser, currentUserData, visibleUsers, allUsersMap, blockedUsers,
+    connections, connectionRequests, sentRequestUserIds, receivedRequestUserIds,
     incomingRequests, outgoingRequests, loading, needsOnboarding,
-    refreshCurrentUser, refreshConnections, refreshAll,
+    applicationStatus, refreshCurrentUser, refreshConnections, refreshAll,
   ]);
 
   return (

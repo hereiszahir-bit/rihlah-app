@@ -16,7 +16,7 @@ function Blog() {
     <div style={styles.page}>
       {/* Header */}
       <header style={styles.header}>
-        <Link to="/" style={styles.wordmark}>RIHLAH</Link>
+        <Link to="/" style={styles.wordmark}>rihlah</Link>
         <nav style={styles.nav}>
           <Link to="/about" style={styles.navLink}>About</Link>
           <Link to="/destinations" style={styles.navLink}>Destinations</Link>
@@ -70,7 +70,7 @@ function Blog() {
       {/* Footer */}
       <footer style={styles.footer}>
         <div style={styles.footerInner}>
-          <div style={styles.footerWordmark}>RIHLAH</div>
+          <div style={styles.footerWordmark}>rihlah</div>
           <div style={styles.footerCopy}>Travel with your people.</div>
         </div>
       </footer>

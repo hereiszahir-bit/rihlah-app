@@ -37,7 +37,7 @@ function BlogPost() {
     <div style={styles.page}>
       {/* Header */}
       <header style={styles.header}>
-        <Link to="/" style={styles.wordmark}>RIHLAH</Link>
+        <Link to="/" style={styles.wordmark}>rihlah</Link>
         <Link to="/blog" style={styles.journalLink}>Journal</Link>
       </header>
 
@@ -101,7 +101,7 @@ function BlogPost() {
       {/* Footer */}
       <footer style={styles.footer}>
         <div style={styles.footerInner}>
-          <div style={styles.footerWordmark}>RIHLAH</div>
+          <div style={styles.footerWordmark}>rihlah</div>
           <div style={styles.footerCopy}>Travel with your people.</div>
         </div>
       </footer>

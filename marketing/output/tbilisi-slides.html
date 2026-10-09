@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rihlah Slides — tbilisi</title>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #111; font-family: 'DM Sans', sans-serif; color: #f5f1ea; padding: 40px 20px; }
+  .controls { max-width: 1200px; margin: 0 auto 20px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .controls button { padding: 12px 24px; border-radius: 10px; border: 1.5px solid #333; background: #1a1a1a; color: #f5f1ea; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .controls button:hover { border-color: #c4956a; color: #c4956a; }
+  .controls button.primary { background: #c4956a; color: #0a0a0a; border-color: #c4956a; }
+  .status { font-size: 13px; color: #c4956a; margin-left: 12px; }
+  .title { max-width: 1200px; margin: 0 auto 8px; font-size: 20px; font-weight: 700; }
+  .caption-block { max-width: 1200px; margin: 0 auto 24px; padding: 16px 20px; background: #141414; border: 1px solid #1e1c1a; border-radius: 10px; }
+  .caption-label { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #6b6560; font-weight: 700; margin-bottom: 8px; }
+  .caption-text { font-size: 14px; color: #a8a29e; line-height: 1.6; user-select: all; }
+  .carousel-row { max-width: 1200px; margin: 0 auto; display: flex; gap: 16px; overflow-x: auto; padding-bottom: 16px; scroll-snap-type: x mandatory; }
+  .carousel-row::-webkit-scrollbar { height: 4px; }
+  .carousel-row::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+  .slide { width: 1080px; height: 1080px; flex-shrink: 0; position: relative; overflow: hidden; }
+  .slide-wrapper { transform: scale(0.33); transform-origin: top left; width: 1080px; height: 1080px; }
+  .slide-container { width: 356px; height: 356px; overflow: hidden; flex-shrink: 0; border-radius: 10px; border: 1px solid #222; position: relative; scroll-snap-align: start; }
+  .slide-container .sn { position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.8); color: #888; font-size: 10px; padding: 3px 7px; border-radius: 4px; z-index: 10; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="title">Tbilisi</div>
+
+<div class="caption-block">
+  <div class="caption-label">Caption (click to select)</div>
+  <div class="caption-text">Tbilisi smells like sulfur, tastes like spiced meat folded in dough, and looks like four centuries could not agree on a plan. It is one of the most quietly disorienting cities on earth. The full guide is at rihlah.io — link in bio</div>
+</div>
+
+<div class="controls">
+  <button class="primary" onclick="downloadAll()">Download All Slides</button>
+  <span class="status" id="status"></span>
+</div>
+
+
+
+<div class="carousel-row">
+
+  <div class="slide-container"><div class="sn">1</div><div class="slide-wrapper">
+    <div class="slide" data-set="slide" style="background:radial-gradient(ellipse at 20% 80%,rgba(196,149,106,0.25) 0%,transparent 50%),radial-gradient(ellipse at 80% 20%,rgba(122,80,40,0.12) 0%,transparent 50%),#0a0a0a;display:flex;flex-direction:column;justify-content:flex-end;padding:80px 90px;">
+      <div style="position:absolute;top:-80px;right:-80px;width:500px;height:500px;border-radius:50%;border:1px solid rgba(196,149,106,0.08);"></div>
+      <div style="position:absolute;top:60px;left:90px;width:6px;height:6px;border-radius:50%;background:#c4956a;opacity:0.4;"></div>
+      <div style="position:absolute;top:200px;right:120px;width:4px;height:4px;border-radius:50%;background:#c4956a;opacity:0.25;"></div>
+      <div style="font-family:'DM Sans', sans-serif;font-size:60px;font-weight:800;color:#f5f1ea;letter-spacing:-2px;line-height:1.08;margin-bottom:28px;">Tbilisi will rearrange something in you.</div>
+      <div style="font-size:30px;color:#a8a29e;line-height:1.5;max-width:850px;">You just won't know what until you're home.</div>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:36px;">
+        <div style="font-family:'EB Garamond', serif;font-size:20px;letter-spacing:4px;color:#6b6560;"><span style="color:#c4956a;">r</span>ihlah</div>
+      </div>
+    </div>
+  </div></div>
+
+  <div class="slide-container"><div class="sn">2</div><div class="slide-wrapper">
+    <div class="slide" data-set="slide" style="background:#0a0a0a;display:flex;flex-direction:column;justify-content:flex-end;padding:70px 80px;">
+      <div style="position:absolute;inset:0;overflow:hidden;">
+        <img src="tbilisi-photos/slide-2.jpg" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);min-width:100%;min-height:100%;width:auto;height:auto;">
+      </div>
+      <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(10,10,10,0.82) 0%,rgba(10,10,10,0.3) 35%,transparent 55%);"></div>
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;position:relative;z-index:1;">
+        <div style="font-size:14px;font-weight:800;color:#c4956a;letter-spacing:3px;">02</div>
+        <div style="flex:1;height:1px;background:rgba(196,149,106,0.3);"></div>
+      </div>
+      <div style="font-family:'DM Sans', sans-serif;font-size:44px;font-weight:800;color:#f5f1ea;letter-spacing:-1.5px;line-height:1.12;margin-bottom:20px;position:relative;z-index:1;">The city smells like sulfur and woodsmoke.</div>
+      <div style="font-size:26px;color:#a8a29e;line-height:1.5;max-width:850px;position:relative;z-index:1;">The baths beneath Abanotubani have been running since the 5th century. You soak in water that comes out of the earth hot. It costs almost nothing. It feels ancient because it is.</div>
+      <div style="position:absolute;bottom:20px;right:24px;font-size:10px;color:rgba(245,241,234,0.2);z-index:1;">Genadi Yakovlev / Pexels</div>
+    </div>
+  </div></div>
+
+  <div class="slide-container"><div class="sn">3</div><div class="slide-wrapper">
+    <div class="slide" data-set="slide" style="background:#0a0a0a;display:flex;flex-direction:column;justify-content:flex-end;padding:70px 80px;">
+      <div style="position:absolute;inset:0;overflow:hidden;">
+        <img src="tbilisi-photos/slide-3.jpg" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);min-width:100%;min-height:100%;width:auto;height:auto;">
+      </div>
+      <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(10,10,10,0.82) 0%,rgba(10,10,10,0.3) 35%,transparent 55%);"></div>
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;position:relative;z-index:1;">
+        <div style="font-size:14px;font-weight:800;color:#c4956a;letter-spacing:3px;">03</div>
+        <div style="flex:1;height:1px;background:rgba(196,149,106,0.3);"></div>
+      </div>
+      <div style="font-family:'DM Sans', sans-serif;font-size:44px;font-weight:800;color:#f5f1ea;letter-spacing:-1.5px;line-height:1.12;margin-bottom:20px;position:relative;z-index:1;">Soviet concrete and medieval churches share the same block.</div>
+      <div style="font-size:26px;color:#a8a29e;line-height:1.5;max-width:850px;position:relative;z-index:1;">Tbilisi never resolved the contradiction. It just lived with it. That tension — between eras, between empires, between identities — is what makes the city feel real.</div>
+      <div style="position:absolute;bottom:20px;right:24px;font-size:10px;color:rgba(245,241,234,0.2);z-index:1;">Maria Loznevaya / Pexels</div>
+    </div>
+  </div></div>
+
+  <div class="slide-container"><div class="sn">4</div><div class="slide-wrapper">
+    <div class="slide" data-set="slide" style="background:#0a0a0a;display:flex;flex-direction:column;justify-content:flex-end;padding:70px 80px;">
+      <div style="position:absolute;inset:0;overflow:hidden;">
+        <img src="tbilisi-photos/slide-4.jpg" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);min-width:100%;min-height:100%;width:auto;height:auto;">
+      </div>
+      <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(10,10,10,0.82) 0%,rgba(10,10,10,0.3) 35%,transparent 55%);"></div>
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;position:relative;z-index:1;">
+        <div style="font-size:14px;font-weight:800;color:#c4956a;letter-spacing:3px;">04</div>
+        <div style="flex:1;height:1px;background:rgba(196,149,106,0.3);"></div>
+      </div>
+      <div style="font-family:'DM Sans', sans-serif;font-size:44px;font-weight:800;color:#f5f1ea;letter-spacing:-1.5px;line-height:1.12;margin-bottom:20px;position:relative;z-index:1;">Order the khinkali. Order more than you think you need.</div>
+      <div style="font-size:26px;color:#a8a29e;line-height:1.5;max-width:850px;position:relative;z-index:1;">Soup dumplings twisted at the top, filled with spiced meat and broth. You eat them with your hands. The technique takes about thirty seconds to learn and the rest of your life to forget.</div>
+      <div style="position:absolute;bottom:20px;right:24px;font-size:10px;color:rgba(245,241,234,0.2);z-index:1;">Nadin Sh / Pexels</div>
+    </div>
+  </div></div>
+
+  <div class="slide-container"><div class="sn">5</div><div class="slide-wrapper">
+    <div class="slide" data-set="slide" style="background:#0a0a0a;display:flex;flex-direction:column;justify-content:flex-end;padding:70px 80px;">
+      <div style="position:absolute;inset:0;overflow:hidden;">
+        <img src="tbilisi-photos/slide-5.jpg" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);min-width:100%;min-height:100%;width:auto;height:auto;">
+      </div>
+      <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(10,10,10,0.82) 0%,rgba(10,10,10,0.3) 35%,transparent 55%);"></div>
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;position:relative;z-index:1;">
+        <div style="font-size:14px;font-weight:800;color:#c4956a;letter-spacing:3px;">05</div>
+        <div style="flex:1;height:1px;background:rgba(196,149,106,0.3);"></div>
+      </div>
+      <div style="font-family:'DM Sans', sans-serif;font-size:44px;font-weight:800;color:#f5f1ea;letter-spacing:-1.5px;line-height:1.12;margin-bottom:20px;position:relative;z-index:1;">You will pray in a city that does not pause for you.</div>
+      <div style="font-size:26px;color:#a8a29e;line-height:1.5;max-width:850px;position:relative;z-index:1;">No call to prayer echoing through the streets. No halal sign on every corner. But the Jumah Mosque anchors the old town — Sunni and Shia under one roof — and the city holds space without making a show of it. You figure it out. You always do.</div>
+      <div style="position:absolute;bottom:20px;right:24px;font-size:10px;color:rgba(245,241,234,0.2);z-index:1;">Netlenka / Pexels</div>
+    </div>
+  </div></div>
+
+  <div class="slide-container"><div class="sn">6</div><div class="slide-wrapper">
+    <div class="slide" data-set="slide" style="background:#0a0a0a;display:flex;flex-direction:column;justify-content:flex-end;padding:70px 80px;">
+      <div style="position:absolute;inset:0;overflow:hidden;">
+        <img src="tbilisi-photos/slide-6.jpg" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);min-width:100%;min-height:100%;width:auto;height:auto;">
+      </div>
+      <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(10,10,10,0.82) 0%,rgba(10,10,10,0.3) 35%,transparent 55%);"></div>
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;position:relative;z-index:1;">
+        <div style="font-size:14px;font-weight:800;color:#c4956a;letter-spacing:3px;">06</div>
+        <div style="flex:1;height:1px;background:rgba(196,149,106,0.3);"></div>
+      </div>
+      <div style="font-family:'DM Sans', sans-serif;font-size:44px;font-weight:800;color:#f5f1ea;letter-spacing:-1.5px;line-height:1.12;margin-bottom:20px;position:relative;z-index:1;">The wine is everywhere and the grapes are 8,000 years old.</div>
+      <div style="font-size:26px;color:#a8a29e;line-height:1.5;max-width:850px;position:relative;z-index:1;">Georgia invented winemaking. They age it in clay vessels underground. You don't have to drink it to understand what it means to a people — that a culture built something this old and kept it alive. That is worth paying attention to.</div>
+      <div style="position:absolute;bottom:20px;right:24px;font-size:10px;color:rgba(245,241,234,0.2);z-index:1;">Anna Romanova / Pexels</div>
+    </div>
+  </div></div>
+
+  <div class="slide-container"><div class="sn">7</div><div class="slide-wrapper">
+    <div class="slide" data-set="slide" style="background:radial-gradient(ellipse at 20% 80%,rgba(196,149,106,0.2) 0%,transparent 50%),#0a0a0a;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:100px;">
+      <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:500px;height:500px;border-radius:50%;border:1px solid rgba(196,149,106,0.06);"></div>
+      <div style="font-family:'EB Garamond', serif;font-size:120px;font-weight:600;color:#f5f1ea;line-height:1;position:relative;z-index:1;">R<span style="color:#c4956a;">.</span></div>
+      <div style="font-family:'EB Garamond', serif;font-size:28px;letter-spacing:10px;color:#6b6560;margin-top:12px;margin-bottom:48px;position:relative;z-index:1;">rihlah</div>
+      <div style="font-family:'DM Sans', sans-serif;font-size:38px;font-weight:800;color:#f5f1ea;letter-spacing:-0.5px;max-width:700px;line-height:1.2;position:relative;z-index:1;">Tbilisi is not on everyone's list yet. Go before it is.</div>
+      <div style="font-size:24px;color:#a8a29e;line-height:1.5;max-width:600px;margin-top:20px;position:relative;z-index:1;"> — link in bio</div>
+      <div style="padding:18px 52px;border:2px solid #c4956a;border-radius:999px;font-size:16px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#c4956a;margin-top:40px;position:relative;z-index:1;">rihlah.io</div>
+    </div>
+  </div></div>
+</div>
+
+<script>
+async function renderSlide(el) {
+  const wrapper = el.parentElement;
+  const container = wrapper.parentElement;
+  const origT = wrapper.style.transform;
+  const origW = container.style.width;
+  const origH = container.style.height;
+  const origO = container.style.overflow;
+  wrapper.style.transform = 'none';
+  container.style.width = '1080px';
+  container.style.height = '1080px';
+  container.style.overflow = 'visible';
+  await new Promise(r => setTimeout(r, 100));
+  const canvas = await html2canvas(el, { width: 1080, height: 1080, scale: 1, backgroundColor: '#0a0a0a' });
+  wrapper.style.transform = origT;
+  container.style.width = origW;
+  container.style.height = origH;
+  container.style.overflow = origO;
+  return canvas;
+}
+function dl(canvas, name) { const a = document.createElement('a'); a.download = name; a.href = canvas.toDataURL('image/png'); a.click(); }
+async function downloadAll() {
+  const s = document.getElementById('status');
+  const slides = document.querySelectorAll('[data-set="slide"]');
+  s.textContent = 'Rendering...';
+  for (let i = 0; i < slides.length; i++) {
+    s.textContent = (i+1) + '/' + slides.length + '...';
+    dl(await renderSlide(slides[i]), 'rihlah-tbilisi-' + (i+1) + '.png');
+    await new Promise(r => setTimeout(r, 400));
+  }
+  s.textContent = 'Done.';
+  setTimeout(() => s.textContent = '', 2000);
+}
+</script>
+</body>
+</html>

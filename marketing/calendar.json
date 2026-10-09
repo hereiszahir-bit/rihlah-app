@@ -1,0 +1,125 @@
+{
+  "timezone": "America/Chicago",
+  "default_times": {
+    "carousel": "11:00",
+    "reel": "18:00"
+  },
+  "posts": [
+    {
+      "slug": "istanbul-breakfast",
+      "type": "carousel",
+      "date": "2026-09-20",
+      "time": "11:00",
+      "status": "failed",
+      "caption": null,
+      "hashtags": [
+        "muslimtraveler",
+        "istanbul",
+        "turkishbreakfast",
+        "kahvalti",
+        "rihlah"
+      ]
+    },
+    {
+      "slug": "istanbul-breakfast",
+      "type": "reel",
+      "date": "2026-09-21",
+      "time": "18:00",
+      "status": "ready",
+      "caption": null,
+      "hashtags": [
+        "istanbul",
+        "turkishbreakfast",
+        "foodtravel",
+        "rihlah"
+      ]
+    },
+    {
+      "slug": "fez",
+      "type": "carousel",
+      "date": "2026-09-23",
+      "time": "11:00",
+      "status": "published",
+      "caption": null,
+      "hashtags": [
+        "fez",
+        "morocco",
+        "medina",
+        "muslimtravel",
+        "rihlah"
+      ]
+    },
+    {
+      "slug": "fez",
+      "type": "reel",
+      "date": "2026-09-24",
+      "time": "18:00",
+      "status": "ready",
+      "caption": null,
+      "hashtags": [
+        "fez",
+        "morocco",
+        "travelmorocco",
+        "rihlah"
+      ]
+    },
+    {
+      "slug": "oaxaca",
+      "type": "carousel",
+      "date": "2026-09-27",
+      "time": "11:00",
+      "status": "published",
+      "caption": null,
+      "hashtags": [
+        "oaxaca",
+        "mexicotravel",
+        "muslimtraveler",
+        "zapotec",
+        "rihlah"
+      ]
+    },
+    {
+      "slug": "oaxaca",
+      "type": "reel",
+      "date": "2026-09-28",
+      "time": "18:00",
+      "status": "ready",
+      "caption": null,
+      "hashtags": [
+        "oaxaca",
+        "mexico",
+        "travelmexico",
+        "rihlah"
+      ]
+    },
+    {
+      "slug": "tbilisi",
+      "type": "carousel",
+      "date": "2026-10-01",
+      "time": "11:00",
+      "status": "ready",
+      "caption": null,
+      "hashtags": [
+        "tbilisi",
+        "georgia",
+        "muslimtravel",
+        "caucasus",
+        "rihlah"
+      ]
+    },
+    {
+      "slug": "tbilisi",
+      "type": "reel",
+      "date": "2026-10-02",
+      "time": "18:00",
+      "status": "ready",
+      "caption": null,
+      "hashtags": [
+        "tbilisi",
+        "georgia",
+        "travelgeorgia",
+        "rihlah"
+      ]
+    }
+  ]
+}

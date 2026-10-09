@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Rihlah - Variant B: Travel Companion</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: #faf9f7;
+    max-width: 390px;
+    margin: 0 auto;
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* Header with search */
+  .header {
+    padding: 56px 20px 12px;
+    background: #fff;
+  }
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .header h1 {
+    font-size: 26px;
+    font-weight: 900;
+    color: #1a1a1a;
+    letter-spacing: -0.5px;
+  }
+  .header-right {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  .header-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #f5f3f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #374151;
+  }
+  .search-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: #f5f3f0;
+    border-radius: 14px;
+    color: #9ca3af;
+    font-size: 15px;
+  }
+
+  /* Active trip banner */
+  .active-trip {
+    margin: 12px 20px;
+    padding: 16px;
+    background: linear-gradient(135deg, #065f46 0%, #047857 100%);
+    border-radius: 16px;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+  }
+  .active-trip::before {
+    content: '';
+    position: absolute;
+    top: -20px;
+    right: -20px;
+    width: 80px;
+    height: 80px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 50%;
+  }
+  .active-trip-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #6ee7b7;
+    margin-bottom: 6px;
+  }
+  .active-trip-dest {
+    font-size: 22px;
+    font-weight: 900;
+    margin-bottom: 4px;
+  }
+  .active-trip-dates {
+    font-size: 13px;
+    color: rgba(255,255,255,0.8);
+    margin-bottom: 12px;
+  }
+  .active-trip-actions {
+    display: flex;
+    gap: 8px;
+  }
+  .trip-action {
+    padding: 8px 14px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .trip-action-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #6ee7b7;
+  }
+
+  /* Quick actions */
+  .quick-actions {
+    display: flex;
+    gap: 10px;
+    padding: 16px 20px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .quick-actions::-webkit-scrollbar { display: none; }
+  .quick-action {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    width: 72px;
+  }
+  .quick-action-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+  }
+  .quick-action-icon.green { background: #f0fdf4; }
+  .quick-action-icon.amber { background: #fffbeb; }
+  .quick-action-icon.blue { background: #eff6ff; }
+  .quick-action-icon.rose { background: #fff1f2; }
+  .quick-action-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #374151;
+    text-align: center;
+  }
+
+  /* Destination detail - guide tabs */
+  .guide-section {
+    padding: 0 20px;
+    margin-bottom: 20px;
+  }
+  .guide-tabs {
+    display: flex;
+    gap: 4px;
+    background: #f5f3f0;
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 16px;
+  }
+  .guide-tab {
+    flex: 1;
+    padding: 10px 8px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    text-align: center;
+    color: #6b7280;
+    transition: all 0.2s;
+  }
+  .guide-tab.active {
+    background: #fff;
+    color: #047857;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+
+  /* Halal food cards */
+  .food-card {
+    display: flex;
+    gap: 12px;
+    padding: 14px;
+    background: #fff;
+    border-radius: 14px;
+    margin-bottom: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06);
+  }
+  .food-img {
+    width: 72px;
+    height: 72px;
+    border-radius: 12px;
+    background: #e5e7eb;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+  }
+  .food-info { flex: 1; }
+  .food-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 2px;
+  }
+  .food-meta {
+    font-size: 12px;
+    color: #6b7280;
+    margin-bottom: 6px;
+  }
+  .food-tags {
+    display: flex;
+    gap: 6px;
+  }
+  .food-tag {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .food-tag.halal { background: #f0fdf4; color: #047857; }
+  .food-tag.verified { background: #eff6ff; color: #1d4ed8; }
+
+  /* Prayer times widget */
+  .prayer-widget {
+    margin: 0 20px 20px;
+    padding: 16px;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06);
+  }
+  .prayer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .prayer-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1a1a1a;
+  }
+  .prayer-location {
+    font-size: 12px;
+    color: #047857;
+    font-weight: 600;
+  }
+  .prayer-times {
+    display: flex;
+    justify-content: space-between;
+  }
+  .prayer-time {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .prayer-time-name {
+    font-size: 10px;
+    font-weight: 600;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .prayer-time-value {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1a1a1a;
+  }
+  .prayer-time.next .prayer-time-value {
+    color: #047857;
+  }
+  .prayer-time.next .prayer-time-name {
+    color: #047857;
+  }
+
+  /* Community preview */
+  .community-preview {
+    margin: 0 20px 20px;
+    padding: 16px;
+    background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+    border: 1.5px solid #bbf7d0;
+    border-radius: 16px;
+  }
+  .community-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .community-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #047857;
+  }
+  .community-count {
+    font-size: 12px;
+    color: #059669;
+    font-weight: 600;
+  }
+  .community-avatars {
+    display: flex;
+    gap: 10px;
+  }
+  .community-person {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .community-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #d1fae5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 16px;
+    color: #047857;
+    border: 2px solid #fff;
+  }
+  .community-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: #374151;
+  }
+
+  /* Section titles */
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    margin-bottom: 12px;
+  }
+  .section-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: #1a1a1a;
+  }
+  .section-link {
+    font-size: 13px;
+    font-weight: 600;
+    color: #047857;
+  }
+
+  /* Experience cards */
+  .exp-scroll {
+    display: flex;
+    gap: 12px;
+    padding: 0 20px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin-bottom: 20px;
+  }
+  .exp-scroll::-webkit-scrollbar { display: none; }
+  .exp-card {
+    width: 240px;
+    flex-shrink: 0;
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06);
+  }
+  .exp-img {
+    height: 120px;
+    background: linear-gradient(135deg, #e5e7eb, #d1d5db);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+  }
+  .exp-content {
+    padding: 12px;
+  }
+  .exp-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 4px;
+    line-height: 1.3;
+  }
+  .exp-meta {
+    font-size: 12px;
+    color: #6b7280;
+    margin-bottom: 8px;
+  }
+  .exp-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .exp-price {
+    font-size: 16px;
+    font-weight: 800;
+    color: #047857;
+  }
+  .exp-rating {
+    font-size: 12px;
+    color: #6b7280;
+    font-weight: 600;
+  }
+
+  /* Tab bar */
+  .tab-bar {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 390px;
+    background: #fff;
+    border-top: 1px solid #f0eeeb;
+    display: flex;
+    justify-content: space-around;
+    padding: 8px 0 24px;
+    z-index: 100;
+  }
+  .tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    font-size: 10px;
+    color: #a3a3a3;
+    font-weight: 500;
+  }
+  .tab.active { color: #047857; }
+
+  .label {
+    padding: 4px 20px 100px;
+    text-align: center;
+  }
+  .label-tag {
+    display: inline-block;
+    padding: 8px 16px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+
+<!-- This mockup shows a DESTINATION DETAIL view (Istanbul) -->
+<!-- to illustrate the companion/utility concept -->
+
+<div class="header">
+  <div class="header-top">
+    <h1>Istanbul</h1>
+    <div class="header-right">
+      <div class="header-icon">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Active trip context -->
+<div class="active-trip">
+  <div class="active-trip-label">You're here now</div>
+  <div class="active-trip-dest">Istanbul, Turkey</div>
+  <div class="active-trip-dates">May 24 - Jun 2, 2026</div>
+  <div class="active-trip-actions">
+    <div class="trip-action"><div class="trip-action-dot"></div> 6 travelers here</div>
+    <div class="trip-action">4 planning</div>
+  </div>
+</div>
+
+<!-- Quick actions -->
+<div class="quick-actions">
+  <div class="quick-action">
+    <div class="quick-action-icon green">&#127860;</div>
+    <div class="quick-action-label">Halal Food</div>
+  </div>
+  <div class="quick-action">
+    <div class="quick-action-icon amber">&#128332;</div>
+    <div class="quick-action-label">Prayer Times</div>
+  </div>
+  <div class="quick-action">
+    <div class="quick-action-icon blue">&#128205;</div>
+    <div class="quick-action-label">Mosques</div>
+  </div>
+  <div class="quick-action">
+    <div class="quick-action-icon rose">&#127775;</div>
+    <div class="quick-action-label">Experiences</div>
+  </div>
+</div>
+
+<!-- Prayer times widget -->
+<div class="prayer-widget">
+  <div class="prayer-header">
+    <div class="prayer-title">Prayer Times</div>
+    <div class="prayer-location">Istanbul, Turkey</div>
+  </div>
+  <div class="prayer-times">
+    <div class="prayer-time">
+      <div class="prayer-time-name">Fajr</div>
+      <div class="prayer-time-value">4:12</div>
+    </div>
+    <div class="prayer-time">
+      <div class="prayer-time-name">Dhuhr</div>
+      <div class="prayer-time-value">12:58</div>
+    </div>
+    <div class="prayer-time next">
+      <div class="prayer-time-name">Asr</div>
+      <div class="prayer-time-value">4:47</div>
+    </div>
+    <div class="prayer-time">
+      <div class="prayer-time-name">Maghrib</div>
+      <div class="prayer-time-value">8:23</div>
+    </div>
+    <div class="prayer-time">
+      <div class="prayer-time-name">Isha</div>
+      <div class="prayer-time-value">10:02</div>
+    </div>
+  </div>
+</div>
+
+<!-- Community preview (subtle, not dominant) -->
+<div class="community-preview">
+  <div class="community-header">
+    <div class="community-title">Travelers here now</div>
+    <div class="community-count">View all ></div>
+  </div>
+  <div class="community-avatars">
+    <div class="community-person">
+      <div class="community-avatar">A</div>
+      <div class="community-name">Amira</div>
+    </div>
+    <div class="community-person">
+      <div class="community-avatar">K</div>
+      <div class="community-name">Khalid</div>
+    </div>
+    <div class="community-person">
+      <div class="community-avatar">M</div>
+      <div class="community-name">Mariam</div>
+    </div>
+    <div class="community-person">
+      <div class="community-avatar">O</div>
+      <div class="community-name">Omar</div>
+    </div>
+    <div class="community-person">
+      <div class="community-avatar" style="background: #e5e7eb; color: #6b7280;">+2</div>
+      <div class="community-name"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Halal food section -->
+<div class="section-header">
+  <div class="section-title">Halal Dining</div>
+  <div class="section-link">See map</div>
+</div>
+<div class="guide-section">
+  <div class="food-card">
+    <div class="food-img">&#127858;</div>
+    <div class="food-info">
+      <div class="food-name">Fatih Damak Pide</div>
+      <div class="food-meta">Turkish pide & kebab -- Fatih district -- $</div>
+      <div class="food-tags">
+        <span class="food-tag halal">Halal certified</span>
+        <span class="food-tag verified">Verified</span>
+      </div>
+    </div>
+  </div>
+  <div class="food-card">
+    <div class="food-img">&#127846;</div>
+    <div class="food-info">
+      <div class="food-name">Sultanahmet Koftecisi</div>
+      <div class="food-meta">Historic kofte house -- Sultanahmet -- $$</div>
+      <div class="food-tags">
+        <span class="food-tag halal">Halal certified</span>
+      </div>
+    </div>
+  </div>
+  <div class="food-card">
+    <div class="food-img">&#127849;</div>
+    <div class="food-info">
+      <div class="food-name">Hafiz Mustafa 1864</div>
+      <div class="food-meta">Ottoman desserts & baklava -- Eminonu -- $$</div>
+      <div class="food-tags">
+        <span class="food-tag halal">Halal</span>
+        <span class="food-tag verified">Community pick</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Experiences -->
+<div class="section-header">
+  <div class="section-title">Experiences</div>
+  <div class="section-link">See all</div>
+</div>
+<div class="exp-scroll">
+  <div class="exp-card">
+    <div class="exp-img">&#128332;</div>
+    <div class="exp-content">
+      <div class="exp-name">Ottoman Mosques Walking Tour</div>
+      <div class="exp-meta">3 hours -- Cultural</div>
+      <div class="exp-footer">
+        <div class="exp-price">$45</div>
+        <div class="exp-rating">4.9 (324)</div>
+      </div>
+    </div>
+  </div>
+  <div class="exp-card">
+    <div class="exp-img">&#127860;</div>
+    <div class="exp-content">
+      <div class="exp-name">Halal Food Tour</div>
+      <div class="exp-meta">4 hours -- Food</div>
+      <div class="exp-footer">
+        <div class="exp-price">$65</div>
+        <div class="exp-rating">5.0 (189)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="label">
+  <div class="label-tag">Variant B: Travel Companion</div>
+  <p style="margin-top: 12px; font-size: 13px; color: #6b7280; line-height: 1.6;">
+    Utility-first. This is the destination detail when you're on a trip. Prayer times, halal food, mosques, experiences -- all in one place. Community is a natural layer, not the whole product. Value from day one, even with 1 user.
+  </p>
+</div>
+
+<!-- Tab bar -->
+<div class="tab-bar">
+  <div class="tab active">
+    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="9"/><path d="M11 7v4l2.5 2.5"/></svg>
+    Explore
+  </div>
+  <div class="tab">
+    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+    Guide
+  </div>
+  <div class="tab">
+    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+    Travelers
+  </div>
+  <div class="tab">
+    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+    My Trips
+  </div>
+  <div class="tab">
+    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    Profile
+  </div>
+</div>
+
+</body>
+</html>

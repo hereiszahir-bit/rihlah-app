@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rihlah — Brand Logos</title>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    gap: 40px;
+    padding: 60px 40px;
+  }
+  .label {
+    color: #666;
+    font-family: -apple-system, sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: -28px;
+  }
+  .sublabel {
+    color: #444;
+    font-family: -apple-system, sans-serif;
+    font-size: 11px;
+    margin-top: -28px;
+  }
+
+  .pic {
+    width: 1080px;
+    height: 1080px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  /* App Icon — R with gold period */
+  .pic-app { background: #1a1917; }
+  .pic-app .letter-wrap {
+    display: flex;
+    align-items: baseline;
+  }
+  .pic-app .letter {
+    font-family: 'EB Garamond', serif;
+    font-size: 480px;
+    font-weight: 600;
+    color: #f8f6f2;
+    line-height: 1;
+  }
+  .pic-app .dot {
+    font-family: 'EB Garamond', serif;
+    font-size: 480px;
+    font-weight: 600;
+    color: #c4956a;
+    line-height: 1;
+  }
+
+  /* Social Profile — wordmark, gold r */
+  .pic-social { background: #1a1917; }
+  .pic-social .wordmark {
+    font-family: 'EB Garamond', serif;
+    font-size: 160px;
+    font-weight: 500;
+    color: #f8f6f2;
+    letter-spacing: 4px;
+  }
+  .pic-social .wordmark .gold { color: #c4956a; }
+</style>
+</head>
+<body>
+
+<div class="label">App Icon</div>
+<div class="pic pic-app" id="logo-app">
+  <div class="letter-wrap">
+    <div class="letter">R</div>
+    <div class="dot">.</div>
+  </div>
+</div>
+<div class="sublabel">Home screen, PWA manifest, app stores</div>
+
+<div class="label">Social Profile</div>
+<div class="pic pic-social" id="logo-social">
+  <div class="wordmark"><span class="gold">r</span>ihlah</div>
+</div>
+<div class="sublabel">Instagram, Facebook, X</div>
+
+<div style="position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; align-items: flex-end;">
+  <button onclick="downloadAll()" style="padding: 10px 20px; background: #c4956a; color: #0a0a0a; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: -apple-system, sans-serif;">Download both</button>
+</div>
+
+<script>
+async function downloadAll() {
+  const btn = document.querySelector('button');
+  const logos = [
+    { el: document.getElementById('logo-app'), name: 'rihlah-app-icon.png' },
+    { el: document.getElementById('logo-social'), name: 'rihlah-social-profile.png' },
+  ];
+  btn.textContent = 'Exporting...';
+  for (const logo of logos) {
+    const canvas = await html2canvas(logo.el, {
+      width: 1080, height: 1080, scale: 1,
+      useCORS: true, backgroundColor: null,
+    });
+    const link = document.createElement('a');
+    link.download = logo.name;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    await new Promise(r => setTimeout(r, 400));
+  }
+  btn.textContent = 'Done!';
+  setTimeout(() => btn.textContent = 'Download both', 2000);
+}
+</script>
+
+</body>
+</html>

@@ -3,8 +3,9 @@ import { auth, db } from '../firebase';
 import { doc, deleteDoc, runTransaction } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../context/UserContext';
-import { FiX, FiMapPin, FiNavigation, FiMessageCircle, FiCamera } from 'react-icons/fi';
+import { FiX, FiMapPin, FiNavigation, FiMessageCircle, FiCamera, FiAlertTriangle, FiSlash } from 'react-icons/fi';
 import { colors, fonts, radius, components, type } from '../design';
+import { blockUser, reportUser, deleteOwnAccount } from '../utils/safety';
 
 
 const parseDate = (dateStr) => {
@@ -19,6 +20,10 @@ function Profile() {
   const [showConnections, setShowConnections] = useState(false);
   const [previewUser, setPreviewUser] = useState(null);
   const [profilePhotoIndex, setProfilePhotoIndex] = useState(0);
+  const [showReportModal, setShowReportModal] = useState(null);
+  const [reportReason, setReportReason] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
   const handleAccept = async (request) => {
     try {
@@ -131,6 +136,46 @@ function Profile() {
     }
   };
 
+  const handleBlockUser = async (user) => {
+    const confirmed = window.confirm(`Block ${user.name}? They won't be able to see your profile or send you requests.`);
+    if (!confirmed) return;
+    try {
+      await blockUser(user.userId);
+      setPreviewUser(null);
+      refreshAll();
+    } catch (error) {
+      console.error('Error blocking user:', error);
+    }
+  };
+
+  const handleReportUser = async (user) => {
+    setShowReportModal(user);
+    setReportReason('');
+  };
+
+  const submitReport = async () => {
+    if (!reportReason.trim()) return;
+    try {
+      await reportUser(showReportModal.userId, showReportModal.name, reportReason.trim());
+      setShowReportModal(null);
+      setReportReason('');
+      alert('Report submitted. Our team will review it.');
+    } catch (error) {
+      console.error('Error reporting user:', error);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== 'DELETE') return;
+    try {
+      await deleteOwnAccount();
+      navigate('/');
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      alert('Could not delete account. You may need to sign in again before deleting.');
+    }
+  };
+
   const handleLogout = async () => {
     try {
       await auth.signOut();
@@ -211,7 +256,13 @@ function Profile() {
           )}
         </div>
         <h2 style={styles.name}>{userData.name}{userData.age ? `, ${userData.age}` : ''}</h2>
+        {userData.foundingMember && (
+          <div style={styles.foundingBadge}>Founding Member</div>
+        )}
         {userData.city && <div style={styles.city}>{userData.city}</div>}
+        {userData.travelStyle && (
+          <div style={styles.travelStyle}>{userData.travelStyle} traveler</div>
+        )}
         {userData.bio && <div style={styles.bio}>{userData.bio}</div>}
       </div>
 
@@ -274,6 +325,9 @@ function Profile() {
         </button>
         <button style={styles.logoutBtn} onClick={handleLogout}>
           Sign Out
+        </button>
+        <button style={styles.deleteAccountBtn} onClick={() => { setShowDeleteConfirm(true); setDeleteConfirmText(''); }}>
+          Delete Account
         </button>
       </div>
 
@@ -456,6 +510,68 @@ function Profile() {
             >
               Remove Connection
             </button>
+
+            <div style={styles.safetyActions}>
+              <button style={styles.safetyBtn} onClick={() => handleReportUser(previewUser)}>
+                <FiAlertTriangle size={13} style={{ marginRight: '4px', verticalAlign: '-2px' }} /> Report
+              </button>
+              <button style={styles.safetyBtn} onClick={() => handleBlockUser(previewUser)}>
+                <FiSlash size={13} style={{ marginRight: '4px', verticalAlign: '-2px' }} /> Block
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Report Modal */}
+      {showReportModal && (
+        <div style={styles.modalOverlay} onClick={() => setShowReportModal(null)}>
+          <div style={styles.reportModal} onClick={(e) => e.stopPropagation()}>
+            <button style={styles.modalClose} onClick={() => setShowReportModal(null)}><FiX size={20} /></button>
+            <h3 style={styles.reportTitle}>Report {showReportModal.name}</h3>
+            <p style={styles.reportDesc}>Tell us what happened. Reports are reviewed by our team and kept confidential.</p>
+            <textarea
+              style={styles.reportTextarea}
+              value={reportReason}
+              onChange={(e) => setReportReason(e.target.value)}
+              placeholder="Describe the issue..."
+              maxLength={1000}
+              rows={4}
+            />
+            <button
+              style={{ ...styles.reportSubmitBtn, opacity: reportReason.trim() ? 1 : 0.4 }}
+              onClick={submitReport}
+              disabled={!reportReason.trim()}
+            >
+              Submit Report
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Account Confirmation */}
+      {showDeleteConfirm && (
+        <div style={styles.modalOverlay} onClick={() => setShowDeleteConfirm(false)}>
+          <div style={styles.deleteModal} onClick={(e) => e.stopPropagation()}>
+            <button style={styles.modalClose} onClick={() => setShowDeleteConfirm(false)}><FiX size={20} /></button>
+            <h3 style={styles.deleteTitle}>Delete Account</h3>
+            <p style={styles.deleteDesc}>
+              This will permanently delete your profile, all connections, conversations, and trip data. This cannot be undone.
+            </p>
+            <p style={styles.deleteConfirmLabel}>Type DELETE to confirm:</p>
+            <input
+              style={styles.deleteInput}
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              placeholder="DELETE"
+            />
+            <button
+              style={{ ...styles.deleteConfirmBtn, opacity: deleteConfirmText === 'DELETE' ? 1 : 0.4 }}
+              onClick={handleDeleteAccount}
+              disabled={deleteConfirmText !== 'DELETE'}
+            >
+              Permanently Delete Account
+            </button>
           </div>
         </div>
       )}
@@ -505,7 +621,9 @@ const styles = {
     background: colors.terracotta, width: '18px', borderRadius: '3px',
   },
   name: { fontFamily: fonts.serif, fontSize: '22px', fontWeight: '500', margin: '0 0 2px 0', color: colors.text },
-  city: { fontSize: '14px', color: colors.textSecondary, marginBottom: '8px' },
+  foundingBadge: { fontSize: '10px', fontWeight: '700', letterSpacing: '3px', textTransform: 'uppercase', color: colors.terracotta, marginBottom: '6px' },
+  city: { fontSize: '14px', color: colors.textSecondary, marginBottom: '4px' },
+  travelStyle: { fontSize: '13px', color: colors.textTertiary, marginBottom: '8px' },
   bio: { fontSize: '14px', color: colors.textSecondary, fontStyle: 'italic', lineHeight: 1.5, maxWidth: '300px', margin: '0 auto' },
 
   // Stats Row
@@ -582,6 +700,28 @@ const styles = {
   previewSocials: { display: 'flex', gap: '8px', marginTop: '8px' },
   socialBtn: { flex: 1, padding: '12px', background: colors.lightGray, color: colors.text, border: 'none', borderRadius: radius.sm, fontSize: '14px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   removeConnectionBtn: { background: 'none', border: 'none', color: colors.textMuted, fontSize: '13px', fontWeight: '500', cursor: 'pointer', padding: '16px 0 0', margin: '0 auto', display: 'block' },
+
+  // Safety actions
+  safetyActions: { display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '12px', paddingTop: '12px', borderTop: `1px solid ${colors.lightGray}` },
+  safetyBtn: { background: 'none', border: 'none', color: colors.textMuted, fontSize: '12px', fontWeight: '500', cursor: 'pointer', padding: '4px 8px', display: 'flex', alignItems: 'center' },
+
+  // Delete account
+  deleteAccountBtn: { background: 'none', border: 'none', color: colors.textMuted, fontSize: '13px', fontWeight: '500', cursor: 'pointer', padding: '12px', margin: '0 auto', display: 'block', marginTop: '8px' },
+
+  // Report modal
+  reportModal: { background: colors.surface, borderRadius: `${radius.lg} ${radius.lg} 0 0`, padding: '24px', width: '100%', maxWidth: '500px', position: 'relative' },
+  reportTitle: { fontFamily: fonts.serif, fontSize: '20px', fontWeight: '500', color: colors.text, margin: '0 0 8px 0' },
+  reportDesc: { fontSize: '13px', color: colors.textSecondary, lineHeight: 1.5, margin: '0 0 16px 0' },
+  reportTextarea: { width: '100%', padding: '12px', border: `1px solid ${colors.warmGray}`, borderRadius: radius.sm, fontSize: '14px', fontFamily: 'inherit', resize: 'vertical', minHeight: '100px', boxSizing: 'border-box' },
+  reportSubmitBtn: { ...components.btnPrimary, marginTop: '12px' },
+
+  // Delete account modal
+  deleteModal: { background: colors.surface, borderRadius: `${radius.lg} ${radius.lg} 0 0`, padding: '24px', width: '100%', maxWidth: '500px', position: 'relative' },
+  deleteTitle: { fontFamily: fonts.serif, fontSize: '20px', fontWeight: '500', color: colors.text, margin: '0 0 8px 0' },
+  deleteDesc: { fontSize: '13px', color: colors.textSecondary, lineHeight: 1.5, margin: '0 0 16px 0' },
+  deleteConfirmLabel: { fontSize: '14px', fontWeight: '600', color: colors.text, margin: '0 0 8px 0' },
+  deleteInput: { width: '100%', padding: '12px', border: `1px solid ${colors.warmGray}`, borderRadius: radius.sm, fontSize: '14px', fontFamily: 'inherit', boxSizing: 'border-box', marginBottom: '12px' },
+  deleteConfirmBtn: { width: '100%', padding: '14px', background: '#c0392b', color: '#fff', border: 'none', borderRadius: radius.sm, fontSize: '14px', fontWeight: '600', cursor: 'pointer', fontFamily: 'inherit' },
 };
 
 export default Profile;

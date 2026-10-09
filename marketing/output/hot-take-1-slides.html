@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rihlah Slides — hot-take-1</title>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #111; font-family: 'DM Sans', sans-serif; color: #f5f1ea; padding: 40px 20px; }
+  .controls { max-width: 1200px; margin: 0 auto 20px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .controls button { padding: 12px 24px; border-radius: 10px; border: 1.5px solid #333; background: #1a1a1a; color: #f5f1ea; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .controls button:hover { border-color: #c4956a; color: #c4956a; }
+  .controls button.primary { background: #c4956a; color: #0a0a0a; border-color: #c4956a; }
+  .status { font-size: 13px; color: #c4956a; margin-left: 12px; }
+  .title { max-width: 1200px; margin: 0 auto 8px; font-size: 20px; font-weight: 700; }
+  .caption-block { max-width: 1200px; margin: 0 auto 24px; padding: 16px 20px; background: #141414; border: 1px solid #1e1c1a; border-radius: 10px; }
+  .caption-label { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #6b6560; font-weight: 700; margin-bottom: 8px; }
+  .caption-text { font-size: 14px; color: #a8a29e; line-height: 1.6; user-select: all; }
+  .carousel-row { max-width: 1200px; margin: 0 auto; display: flex; gap: 16px; overflow-x: auto; padding-bottom: 16px; scroll-snap-type: x mandatory; }
+  .carousel-row::-webkit-scrollbar { height: 4px; }
+  .carousel-row::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+  .slide { width: 1080px; height: 1080px; flex-shrink: 0; position: relative; overflow: hidden; }
+  .slide-wrapper { transform: scale(0.33); transform-origin: top left; width: 1080px; height: 1080px; }
+  .slide-container { width: 356px; height: 356px; overflow: hidden; flex-shrink: 0; border-radius: 10px; border: 1px solid #222; position: relative; scroll-snap-align: start; }
+  .slide-container .sn { position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.8); color: #888; font-size: 10px; padding: 3px 7px; border-radius: 4px; z-index: 10; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="title">Hot Take 1</div>
+
+<div class="caption-block">
+  <div class="caption-label">Caption (click to select)</div>
+  <div class="caption-text">Dubai is convenient. Istanbul is consistent. But the best halal food city in the world is the one where halal is not a category — it is just how everyone eats.
+
+Drop your answer. We are keeping score.
+
+#halalfood #muslimtraveler #foodtravel #halal #rihlah</div>
+</div>
+
+<div class="controls">
+  <button class="primary" onclick="downloadAll()">Download All Slides</button>
+  <span class="status" id="status"></span>
+</div>
+
+
+
+<div class="carousel-row">
+
+  <div class="slide-container"><div class="sn">1</div><div class="slide-wrapper">
+    <div class="slide" data-set="slide" style="background:radial-gradient(ellipse at 20% 80%,rgba(196,149,106,0.25) 0%,transparent 50%),radial-gradient(ellipse at 80% 20%,rgba(122,80,40,0.12) 0%,transparent 50%),#0a0a0a;display:flex;flex-direction:column;justify-content:flex-end;padding:80px 90px;">
+      <div style="position:absolute;top:-80px;right:-80px;width:500px;height:500px;border-radius:50%;border:1px solid rgba(196,149,106,0.08);"></div>
+      <div style="position:absolute;top:60px;left:90px;width:6px;height:6px;border-radius:50%;background:#c4956a;opacity:0.4;"></div>
+      <div style="position:absolute;top:200px;right:120px;width:4px;height:4px;border-radius:50%;background:#c4956a;opacity:0.25;"></div>
+      <div style="font-family:'DM Sans', sans-serif;font-size:60px;font-weight:800;color:#f5f1ea;letter-spacing:-2px;line-height:1.08;margin-bottom:28px;">The best halal food city in the world is not Dubai.</div>
+      <div style="font-size:30px;color:#a8a29e;line-height:1.5;max-width:850px;">It is not even close.</div>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:36px;">
+        <div style="font-family:'EB Garamond', serif;font-size:20px;letter-spacing:4px;color:#6b6560;"><span style="color:#c4956a;">r</span>ihlah</div>
+      </div>
+    </div>
+  </div></div>
+</div>
+
+<script>
+async function renderSlide(el) {
+  const wrapper = el.parentElement;
+  const container = wrapper.parentElement;
+  const origT = wrapper.style.transform;
+  const origW = container.style.width;
+  const origH = container.style.height;
+  const origO = container.style.overflow;
+  wrapper.style.transform = 'none';
+  container.style.width = '1080px';
+  container.style.height = '1080px';
+  container.style.overflow = 'visible';
+  await new Promise(r => setTimeout(r, 100));
+  const canvas = await html2canvas(el, { width: 1080, height: 1080, scale: 1, backgroundColor: '#0a0a0a' });
+  wrapper.style.transform = origT;
+  container.style.width = origW;
+  container.style.height = origH;
+  container.style.overflow = origO;
+  return canvas;
+}
+function dl(canvas, name) { const a = document.createElement('a'); a.download = name; a.href = canvas.toDataURL('image/png'); a.click(); }
+async function downloadAll() {
+  const s = document.getElementById('status');
+  const slides = document.querySelectorAll('[data-set="slide"]');
+  s.textContent = 'Rendering...';
+  for (let i = 0; i < slides.length; i++) {
+    s.textContent = (i+1) + '/' + slides.length + '...';
+    dl(await renderSlide(slides[i]), 'rihlah-hot-take-1-' + (i+1) + '.png');
+    await new Promise(r => setTimeout(r, 400));
+  }
+  s.textContent = 'Done.';
+  setTimeout(() => s.textContent = '', 2000);
+}
+</script>
+</body>
+</html>

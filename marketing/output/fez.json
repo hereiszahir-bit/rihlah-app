@@ -1,0 +1,286 @@
+{
+  "carousel": [
+    {
+      "type": "hook",
+      "headline": "Fez will make you feel like you took a wrong turn into the 12th century.",
+      "body": "That is exactly the point.",
+      "photo": false,
+      "photo_search": []
+    },
+    {
+      "type": "body",
+      "headline": "The medina has 9,000 streets.",
+      "body": "Only a handful are on any map. The rest belong to you — and whoever has been walking them for the last 800 years.",
+      "photo": true,
+      "photo_search": [
+        "fez medina alley morocco narrow street",
+        "fez el bali medina crowd morocco",
+        "fez morocco medina doorway architecture"
+      ],
+      "photo_local": "fez-photos/slide-2.jpg",
+      "photo_credit": "Miguel Cuenca / Pexels"
+    },
+    {
+      "type": "body",
+      "headline": "The tanneries don't smell like a postcard.",
+      "body": "They smell like pigeon dung and possibility. Stand on a rooftop above Chouara and watch men move through vats of saffron and indigo and just try to explain what you're seeing to someone who wasn't there.",
+      "photo": true,
+      "photo_search": [
+        "chouara tannery fez morocco aerial rooftop",
+        "fez tannery leather dye vats morocco",
+        "tannerie chouara fes maroc workers leather"
+      ],
+      "photo_local": "fez-photos/slide-3.jpg",
+      "photo_credit": "Halil Cihat Darıcıoğlu / Pexels"
+    },
+    {
+      "type": "body",
+      "headline": "Al-Qarawiyyin was a university before Oxford existed.",
+      "body": "Founded in 859 CE. Still functioning. The oldest continuously operating university on earth — and it is sitting quietly inside a medina that most people walk past without knowing.",
+      "photo": true,
+      "photo_search": [
+        "al qarawiyyin mosque fez morocco courtyard",
+        "university of al qarawiyyin fez interior",
+        "fes el bali mosque architecture morocco historic"
+      ],
+      "photo_local": "fez-photos/slide-4.jpg",
+      "photo_credit": "Emre Koşak / Pexels"
+    },
+    {
+      "type": "body",
+      "headline": "The riad is the whole point.",
+      "body": "Chaos outside. Silence inside. A fountain, a courtyard, the sound of your own breathing. You understand immediately why every medina house is built turned inward.",
+      "photo": true,
+      "photo_search": [
+        "riad fez morocco courtyard fountain",
+        "riad interior fes morocco zellige tiles",
+        "fez riad morocco traditional architecture interior"
+      ],
+      "photo_local": "fez-photos/slide-5.jpg",
+      "photo_credit": "Jgcachafeiro / Pexels"
+    },
+    {
+      "type": "body",
+      "headline": "Getting lost is not the risk. It is the itinerary.",
+      "body": "Nobody finds the good part of Fez by following a route. You find it by turning left when the alley narrows, by accepting tea from a stranger, by walking until the city decides to show you something.",
+      "photo": true,
+      "photo_search": [
+        "fez morocco medina street life local",
+        "fes el bali narrow alley donkey morocco",
+        "fez morocco souq market traditional"
+      ],
+      "photo_local": "fez-photos/slide-6.jpg",
+      "photo_credit": "Miguel Cuenca / Pexels"
+    },
+    {
+      "type": "cta",
+      "headline": "Fez is not a destination. It is a confrontation with time.",
+      "body": "Go before you are ready. You will never be ready.\n\nrihlah.io — link in bio",
+      "photo": false,
+      "photo_search": []
+    }
+  ],
+  "caption": "Fez has 9,000 streets and most of them will swallow you whole. That is not a warning. That is the recommendation. rihlah.io — link in bio",
+  "blog": {
+    "title": "You Are Not Lost in Fez. Fez Is Showing You Something.",
+    "subtitle": "The medina does not reward planning. It rewards surrender.",
+    "category": "The City",
+    "readTime": "6 min read",
+    "body": [
+      {
+        "type": "text",
+        "content": "Every city has a logic. Paris radiates outward from its grands boulevards. New York is a numbered grid. Tokyo has its train lines. You can learn the logic of most cities in an afternoon and move through them efficiently for the rest of your trip."
+      },
+      {
+        "type": "text",
+        "content": "Fez has no logic. Or rather, it has a logic that is 1,200 years old and was not built for you. The medina of Fez el-Bali — the old city, a UNESCO World Heritage site, one of the largest car-free urban areas on earth — operates according to its own internal order. Streets narrow without warning. Dead ends appear where the map swore there was a passage. Lanes split and converge and split again. Donkeys have right of way. So do the men carrying cedar planks on their shoulders. So does everybody except you."
+      },
+      {
+        "type": "pullquote",
+        "content": "The medina does not reward planning. It rewards surrender."
+      },
+      {
+        "type": "text",
+        "content": "Most travelers fight this. They grip their phones, follow the blue dot, take the efficient route between landmarks. They see the tanneries, they see the Bou Inania madrasa, they eat their tagine, they leave. They have been to Fez the way you have been to a museum — present, but not inside it."
+      },
+      {
+        "type": "text",
+        "content": "The other approach is harder to justify on a schedule but easier to justify in retrospect: put the phone away. Turn down the alley that is too narrow to be on any route. Accept when you have no idea where you are. Wait. The city will show you something."
+      },
+      {
+        "type": "heading",
+        "content": "The Tanneries"
+      },
+      {
+        "type": "text",
+        "content": "They will tell you about the smell before you arrive. What they will not tell you is that you stop noticing it after four minutes, and what replaces it is something closer to awe. The Chouara tannery — the largest and oldest in the city, operating since the 11th century — is best seen from the rooftops of the surrounding leather shops. You stand above a honeycomb of stone vats, each one a different color: saffron yellow, poppy red, woad blue, the natural white of the lime pits where hides are soaked to remove the hair. Men move through this color with the casualness of people who have been doing this their whole lives, which most of them have."
+      },
+      {
+        "type": "text",
+        "content": "The leather from Chouara ends up in fashion houses in Paris and Milan. The men dyeing it are earning a few hundred dirhams a day. This is not a comfortable thought. It is an honest one. Fez does not let you be a tourist for long before it starts asking you harder questions."
+      },
+      {
+        "type": "heading",
+        "content": "The Oldest University in the World"
+      },
+      {
+        "type": "text",
+        "content": "The University of al-Qarawiyyin was founded in 859 CE by Fatima al-Fihri, the daughter of a Tunisian merchant who settled in Fez. It predates Oxford by more than two centuries. It predates the Magna Carta. It has been in continuous operation since the 9th century, which means there has been structured learning happening in this city since before most of Europe had proper cities."
+      },
+      {
+        "type": "text",
+        "content": "Non-Muslims cannot enter the mosque complex itself, but you can stand at the entrance gates and understand, from the architecture alone, what kind of civilization built this. The carved cedar, the zellige tilework, the proportions of the arches — this is not ornamentation for its own sake. It is the physical expression of a culture that believed knowledge was sacred and space should honor it."
+      },
+      {
+        "type": "pullquote",
+        "content": "There has been structured learning happening in this city since before most of Europe had proper cities."
+      },
+      {
+        "type": "text",
+        "content": "Walk through the medina knowing this and something shifts. The crowd you are navigating, the streets you keep getting lost in — this is not chaos. This is one of the oldest continuously inhabited cities on earth, functioning more or less as it always has. The man selling argan oil in the souq and the student walking to class and the woman carrying bread on her head are all part of the same unbroken line."
+      },
+      {
+        "type": "heading",
+        "content": "The Riad Logic"
+      },
+      {
+        "type": "text",
+        "content": "At some point in the medina, you will pass a door that looks like nothing from the outside — plain wood, iron knocker, a wall with no windows — and behind it is a riad. A courtyard, a fountain, mosaic tile on every surface, carved plaster reaching toward a sky framed into a perfect square above you."
+      },
+      {
+        "type": "text",
+        "content": "The architecture is not accidental. In a city this dense, this loud, this alive, privacy is achieved not by separation but by inversion. Everything faces inward. The street gets the wall. The family gets the garden. You understand Islamic architecture differently when you see it from the inside. It is not about what it looks like to the world. It is about what it feels like to be home."
+      },
+      {
+        "type": "text",
+        "content": "Stay inside the medina if you can. The riads in Fez el-Bali — the ones that have been restored by families, not hotel groups — are among the best places to sleep in Morocco. Some of the best cost less than a budget hotel in Casablanca. Ask around. The good ones do not advertise."
+      },
+      {
+        "type": "heading",
+        "content": "How to Be in Fez"
+      },
+      {
+        "type": "text",
+        "content": "One morning. No map, no route, no obligations until lunch. Walk in any direction from your riad. When something looks interesting, go toward it. When an alley narrows, follow it. When someone offers you tea, sit down."
+      },
+      {
+        "type": "text",
+        "content": "You will get lost. That is not a failure of navigation. That is the morning working as intended."
+      },
+      {
+        "type": "note",
+        "content": "Fez works best with three full days minimum. One day to orient. One day to get properly lost. One day to go back to the things you found while lost. Anything less and you are just passing through."
+      },
+      {
+        "type": "short",
+        "content": "Fly into Fez-Saïss or train from Casablanca (approximately 4.5 hours). The medina is not walkable from the new city — take a petit taxi. Dress for a city, not a beach resort. The medina is not a performance for visitors. It is where people live."
+      }
+    ]
+  },
+  "newsletter": "The Brief — The City\n\nFez is the city that makes you feel like a bad traveler for the first six hours and a grateful one for the rest of your life. The medina of Fez el-Bali has 9,000 streets, most of which are not on any map that will actually help you. The tanneries at Chouara have been operating since the 11th century. Al-Qarawiyyin — sitting quietly inside all of this — is the oldest continuously operating university on earth, founded in 859 CE by a woman. The right approach to all of it is the same: put the phone away, turn down the alley that looks too narrow, and let the city decide what you are going to find. It always has an opinion.",
+  "reel_hooks": [
+    "The oldest university on earth is inside a maze.",
+    "9,000 streets. Zero of them go where you think.",
+    "Fez smells like the 12th century and it is worth every second."
+  ],
+  "story_ideas": [
+    {
+      "type": "poll",
+      "text": "Would you travel somewhere specifically to get lost?",
+      "options": [
+        "That is the whole point",
+        "I need a plan to function"
+      ]
+    },
+    {
+      "type": "question",
+      "text": "Tell us your most disorienting travel moment. The kind where you had no idea where you were and it turned out to be the best part of the trip.",
+      "options": []
+    },
+    {
+      "type": "slider",
+      "text": "Rate your tolerance for getting completely, genuinely lost in a foreign city. No map. No data. Just walking.",
+      "options": [
+        "I would panic immediately",
+        "I live for this"
+      ]
+    }
+  ],
+  "qa": {
+    "score": 8,
+    "pass": true,
+    "issues": [
+      {
+        "severity": "warning",
+        "category": "accuracy",
+        "slide": null,
+        "issue": "Chouara tannery founding date inconsistent: blog says '11th century,' carousel slide 3 says nothing but newsletter also says '11th century' — Wikipedia cites 11th century which is defensible, but verify against primary sources before publishing.",
+        "fix": "Confirm founding date; '11th century' appears accurate but pin to a specific source."
+      },
+      {
+        "severity": "warning",
+        "category": "accuracy",
+        "slide": null,
+        "issue": "Fez medina '9,000 streets' figure is widely repeated but originates from tourism copy, not a verified census or urban study.",
+        "fix": "Soften to 'thousands of streets' or attribute to local lore to avoid a verifiable factual challenge."
+      },
+      {
+        "severity": "warning",
+        "category": "accuracy",
+        "slide": null,
+        "issue": "Blog states non-Muslims cannot enter the al-Qarawiyyin mosque complex — this is accurate for the mosque but the library has had periods of limited public access; the blanket statement may mislead.",
+        "fix": "Specify 'the mosque itself is closed to non-Muslims' and omit or separately note the library situation."
+      },
+      {
+        "severity": "note",
+        "category": "photos",
+        "slide": 6,
+        "issue": "Search term 'fes el bali narrow alley donkey morocco' could return generic Moroccan medina results from Marrakech or Chefchaouen, not specifically Fez.",
+        "fix": "Add 'fez el bali' and remove generic 'morocco' to tighten to correct city."
+      },
+      {
+        "severity": "note",
+        "category": "photos",
+        "slide": 5,
+        "issue": "Search term 'fez riad morocco traditional architecture interior' is generic enough to return Marrakech riads, which have a visually distinct style.",
+        "fix": "Add 'fes medina riad' and consider specifying zellige or carved plaster to filter correctly."
+      },
+      {
+        "severity": "note",
+        "category": "quality",
+        "slide": null,
+        "issue": "Blog transition 'This is not a comfortable thought. It is an honest one.' is strong but the paragraph before it edges toward editorial moralizing that slightly overreaches the brand's light-touch voice.",
+        "fix": "Cut the second sentence; let the observation stand without the meta-commentary on discomfort."
+      },
+      {
+        "severity": "note",
+        "category": "quality",
+        "slide": null,
+        "issue": "Reel hook 3 — 'Fez smells like the 12th century and it is worth every second' — is 14 words; guideline is under 10.",
+        "fix": "Trim to: 'Fez smells like the 12th century. Go anyway.'"
+      },
+      {
+        "severity": "note",
+        "category": "design",
+        "slide": 3,
+        "issue": "Slide body copy — 'Stand on a rooftop above Chouara and watch men move through vats of saffron and indigo and just try to explain what you're seeing to someone who wasn't there' — is long for a 1080x1080 carousel body.",
+        "fix": "Cut the trailing clause; end at 'woad blue, the natural white of the lime pits' equivalent — stop at the image, not the instruction."
+      },
+      {
+        "severity": "note",
+        "category": "voice",
+        "slide": null,
+        "issue": "Caption ends correctly without a period after 'bio' — passes — but 'swallow you whole' reads slightly dramatic compared to the carousel's quieter confidence.",
+        "fix": "Consider: 'Fez has 9,000 streets and most of them will undo you. That is not a warning.' to stay within the brand's register."
+      },
+      {
+        "severity": "note",
+        "category": "accuracy",
+        "slide": null,
+        "issue": "Train journey Casablanca to Fez listed as 'approximately 4.5 hours' — ONCF scheduled time is closer to 3h45m to 4h10m depending on service.",
+        "fix": "Change to 'approximately 4 hours' or 'under four hours on the direct service.'"
+      }
+    ],
+    "summary": "Solid, on-brand package with confident editorial voice and no critical failures; minor factual imprecision on travel time and sourcing of the 9,000-streets figure are the only items requiring correction before publish."
+  }
+}

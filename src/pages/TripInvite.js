@@ -4,7 +4,7 @@ import { db } from '../firebase';
 import { collection, addDoc } from 'firebase/firestore';
 import { useUser } from '../context/UserContext';
 import { FiArrowLeft, FiCopy, FiCheck } from 'react-icons/fi';
-import { getDestinationImage } from '../data/destinations';
+import { getPlaceImage } from '../data/places';
 import { colors, fonts, radius } from '../design';
 
 function TripInvite() {
@@ -41,7 +41,10 @@ function TripInvite() {
       if (!Array.isArray(u.upcomingTrips)) return;
 
       u.upcomingTrips.forEach(ut => {
-        if (ut.destination !== trip.destination) return;
+        const destMatch = trip.destinationId
+          ? ut.destinationId === trip.destinationId
+          : ut.destination?.split(',')[0]?.toLowerCase() === trip.destination?.split(',')[0]?.toLowerCase();
+        if (!destMatch) return;
         const uStart = parseDate(ut.startDate);
         const uEnd = parseDate(ut.endDate);
         if (uStart <= myEnd && uEnd >= myStart) {
@@ -76,6 +79,7 @@ function TripInvite() {
           inviterName: currentUserData.name || '',
           inviterPhotoURL: currentUserData.photoURL || '',
           destination: trip.destination,
+          destinationId: trip.destinationId || '',
           startDate: trip.startDate,
           endDate: trip.endDate,
           experiences,
@@ -148,7 +152,7 @@ function TripInvite() {
   }
 
   const destCity = trip.destination.split(',')[0];
-  const destImage = getDestinationImage(trip.destination);
+  const destImage = getPlaceImage(trip.destination);
 
   return (
     <div style={styles.page}>

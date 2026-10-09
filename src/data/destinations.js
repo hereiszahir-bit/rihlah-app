@@ -199,4 +199,10 @@ export const getDestinationImage = (name) => {
   return dest?.image || 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80';
 };
 
+// Helper: get destination ID from a name string (for backfill / legacy trips)
+export const getDestinationId = (name) => {
+  const dest = getDestinationByName(name);
+  return dest?.id || name?.split(',')[0]?.toLowerCase().replace(/\s+/g, '-') || '';
+};
+
 export default CURATED_DESTINATIONS;

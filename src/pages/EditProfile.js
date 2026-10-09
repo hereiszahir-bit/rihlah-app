@@ -6,6 +6,7 @@ import { auth, db, storage } from '../firebase';
 import { useUser } from '../context/UserContext';
 import { FiArrowLeft, FiBriefcase, FiCamera, FiMessageCircle, FiPlus, FiX } from 'react-icons/fi';
 import { colors, fonts, radius, components } from '../design';
+import { calculateAge } from '../utils/age';
 
 function EditProfile() {
   const navigate = useNavigate();
@@ -15,7 +16,7 @@ function EditProfile() {
 
   const [name, setName] = useState('');
   const [bio, setBio] = useState('');
-  const [age, setAge] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
   const [gender, setGender] = useState('');
   const [city, setCity] = useState('');
   const [instagram, setInstagram] = useState('');
@@ -94,7 +95,7 @@ function EditProfile() {
       const data = currentUserData;
       setName(data.name || '');
       setBio(data.bio === 'No bio yet' ? '' : (data.bio || ''));
-      setAge(data.age?.toString() || '');
+      setDateOfBirth(data.dateOfBirth || '');
       setGender(data.gender || '');
       setCity(data.city || '');
       setInstagram(data.instagram || '');
@@ -150,12 +151,62 @@ function EditProfile() {
       }
       return updated;
     });
+    // If removing main photo, also clear any pending new photo
+    if (index === 0) {
+      setNewPhotoFile(null);
+      setNewPhotoPreview(null);
+    }
   };
 
+  // Re-upload any Google-hosted photos to Firebase Storage on load
+  useEffect(() => {
+    const migrateGooglePhotos = async () => {
+      const user = auth.currentUser;
+      if (!user || !photos.length) return;
+
+      const googlePhotos = photos.filter(url => url && url.includes('googleusercontent.com'));
+      if (!googlePhotos.length) return;
+
+      const updatedPhotos = [...photos];
+      let changed = false;
+
+      for (let i = 0; i < updatedPhotos.length; i++) {
+        if (updatedPhotos[i] && updatedPhotos[i].includes('googleusercontent.com')) {
+          try {
+            const res = await fetch(updatedPhotos[i]);
+            const blob = await res.blob();
+            const photoRef = ref(storage, `profilePhotos/${user.uid}_migrated_${i}`);
+            await uploadBytes(photoRef, blob);
+            const newUrl = await getDownloadURL(photoRef);
+            updatedPhotos[i] = newUrl;
+            changed = true;
+          } catch {
+            // Google photo expired/inaccessible — remove it
+            updatedPhotos[i] = null;
+            changed = true;
+          }
+        }
+      }
+
+      if (changed) {
+        const cleaned = updatedPhotos.filter(Boolean);
+        setPhotos(cleaned);
+        setPhotoURL(cleaned[0] || '');
+        // Save immediately so the migration persists
+        await updateDoc(doc(db, 'users', user.uid), {
+          photos: cleaned,
+          photoURL: cleaned[0] || '',
+        });
+      }
+    };
+
+    migrateGooglePhotos();
+  }, []);
+
   const handleSave = async () => {
-    if (age) {
-      const ageNum = parseInt(age);
-      if (isNaN(ageNum) || ageNum < 13 || ageNum > 120) return;
+    if (dateOfBirth) {
+      const age = calculateAge(dateOfBirth);
+      if (age === null || age < 13 || age > 120) return;
     }
 
     setSaving(true);
@@ -185,7 +236,8 @@ function EditProfile() {
       await updateDoc(doc(db, 'users', user.uid), {
         name: name.trim(),
         bio: bio.trim() || 'No bio yet',
-        age: age ? parseInt(age) : null,
+        dateOfBirth: dateOfBirth || null,
+        age: dateOfBirth ? calculateAge(dateOfBirth) : null,
         gender: gender || '',
         city: city.trim(),
         interests: interests,
@@ -196,6 +248,7 @@ function EditProfile() {
         photoURL: updatedPhotoURL,
         photos: updatedPhotos,
         profileVisibility: profileVisibility,
+        onboardingComplete: true,
       });
 
       refreshCurrentUser();
@@ -241,7 +294,16 @@ function EditProfile() {
                 onClick={() => document.getElementById('photoInput').click()}
               >
                 {(newPhotoPreview || (photos.length > 0 ? photos[0] : photoURL)) ? (
-                  <img src={newPhotoPreview || photos[0] || photoURL} alt="Profile" style={styles.photoPreview} />
+                  <>
+                    <img src={newPhotoPreview || photos[0] || photoURL} alt="Profile" style={styles.photoPreview} />
+                    <button
+                      type="button"
+                      style={styles.photoRemoveBtn}
+                      onClick={(e) => { e.stopPropagation(); removePhoto(0); }}
+                    >
+                      <FiX size={12} />
+                    </button>
+                  </>
                 ) : (
                   <div style={styles.photoPlaceholder}>
                     <FiCamera size={28} color={colors.textTertiary} />
@@ -284,8 +346,9 @@ function EditProfile() {
           </div>
 
           <div style={styles.fieldGroup}>
-            <label style={styles.label}>Age</label>
-            <input type="number" style={styles.input} value={age} onChange={(e) => setAge(e.target.value)} placeholder="25" min="13" max="120" />
+            <label style={styles.label}>Date of Birth</label>
+            <input type="date" style={styles.input} value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} max={new Date(new Date().setFullYear(new Date().getFullYear() - 13)).toISOString().split('T')[0]} />
+            {dateOfBirth && <div style={{ fontSize: '13px', color: colors.textMuted, marginTop: '6px' }}>Age: {calculateAge(dateOfBirth)}</div>}
           </div>
 
           <div style={styles.fieldGroup}>

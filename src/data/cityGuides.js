@@ -21,19 +21,19 @@ const CITY_GUIDES = [
         name: 'Condesa',
         vibe: 'Parks, runners, brunch.',
         description: 'Parque Mexico and Parque Espana anchor the neighborhood. The architecture is 1920s art deco at its best. More polished than Roma, less edge. Good for a long walk.',
-        image: 'https://images.unsplash.com/photo-1613160717888-faa82ccc3048?auto=format&fit=crop&w=800&q=80',
+        image: 'https://images.unsplash.com/photo-1604014237256-11d475e2a2d8?auto=format&fit=crop&w=800&q=80',
       },
       {
         name: 'Coyoacan',
         vibe: 'Frida. Cobblestones. Churros in the plaza.',
         description: 'A village swallowed by the city but still feels apart. The Frida Kahlo museum is here. So is the Mercado de Coyoacan. Walk the streets around the church and let it slow you down.',
-        image: 'https://images.unsplash.com/photo-1574492351621-f0eb0e37c5d7?auto=format&fit=crop&w=800&q=80',
+        image: 'https://images.unsplash.com/photo-1568402102990-bc541580b59f?auto=format&fit=crop&w=800&q=80',
       },
       {
         name: 'Centro Historico',
         vibe: 'The original city. Dense, loud, alive.',
         description: 'The Zocalo, the Templo Mayor, the Palacio de Bellas Artes — all within walking distance. Come early. The light in the morning hits the colonial buildings differently. Madero Street is pedestrian-only and packed.',
-        image: 'https://images.unsplash.com/photo-1529690840038-2e0e0e0e0e0e?auto=format&fit=crop&w=800&q=80',
+        image: 'https://images.unsplash.com/photo-1518105779142-d975f22f1b0a?auto=format&fit=crop&w=800&q=80',
       },
       {
         name: 'Polanco',
@@ -101,7 +101,7 @@ const CITY_GUIDES = [
         name: 'Balat',
         vibe: 'Colors, cobblestones, coffee.',
         description: 'The most photogenic neighborhood in the city. Wander without a plan. The Greek Orthodox Patriarchate is here. So is some of the best street art.',
-        image: 'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?auto=format&fit=crop&w=800&q=80',
+        image: 'https://images.unsplash.com/photo-1570939274717-7eda259b50ed?auto=format&fit=crop&w=800&q=80',
       },
       {
         name: 'Besiktas',
@@ -151,7 +151,7 @@ const CITY_GUIDES = [
     prayerNote: 'Morocco follows the Maliki school. The adhan is distinctive and beautiful. Mosques are closed to non-Muslims nationwide (the only exception is Hassan II Mosque in Casablanca). The Ben Youssef Madrasa — a historic theological college, not a mosque — is open to all visitors as a heritage site.',
     neighborhoods: [
       { name: 'Medina', vibe: 'The old city. Get lost on purpose.', description: 'Nine thousand alleyways. No GPS will save you. Ask for directions and enjoy the journey. The riads are hidden behind unmarked doors.', image: 'https://images.unsplash.com/photo-1489749798305-4fea3ae63d43?auto=format&fit=crop&w=800&q=80' },
-      { name: 'Gueliz', vibe: 'New town. French colonial.', description: 'Wider streets, galleries, French-Moroccan fusion restaurants. This is where the art scene lives.', image: 'https://images.unsplash.com/photo-1560095633-6858ab1e0a0e?auto=format&fit=crop&w=800&q=80' },
+      { name: 'Gueliz', vibe: 'New town. French colonial.', description: 'Wider streets, galleries, French-Moroccan fusion restaurants. This is where the art scene lives.', image: 'https://images.unsplash.com/photo-1542282088-fe8426682b8f?auto=format&fit=crop&w=800&q=80' },
     ],
     dining: [
       { name: 'Nomad', type: 'Modern Moroccan', area: 'Medina', note: 'Rooftop with a view. The lamb tangia is worth the visit alone.', halal: true },
@@ -265,8 +265,8 @@ const CITY_GUIDES = [
     intro: 'Ottoman bridges, bullet-scarred walls, and a resilience that hums in every cobblestone. The ummah feels Sarajevo differently — because Sarajevo remembers what was lost and what survived.',
     prayerNote: 'Bosnia has the largest Muslim population in southeastern Europe — roughly half the country identifies as Muslim. The adhan echoes through the old town. Mosques are everywhere in Bascarsija. Halal food is the default in Bosnian restaurants.',
     neighborhoods: [
-      { name: 'Bascarsija', vibe: 'Ottoman old town. The heart.', description: 'The Sebilj fountain, copper workshops, and cevapi shops. This is where Sarajevo began. Walk the Ferhadija pedestrian street from Austrian Sarajevo into Ottoman Sarajevo — you cross centuries in 500 meters.', image: 'https://images.unsplash.com/photo-1590074072786-a66914d668f1?auto=format&fit=crop&w=800&q=80' },
-      { name: 'Latin Bridge area', vibe: 'History. Weight. Memory.', description: 'Where World War I started. The bridge is small. The consequences were not. The War Childhood Museum nearby is devastating and essential.', image: 'https://images.unsplash.com/photo-1592425535498-5cc5e2b7e94c?auto=format&fit=crop&w=800&q=80' },
+      { name: 'Bascarsija', vibe: 'Ottoman old town. The heart.', description: 'The Sebilj fountain, copper workshops, and cevapi shops. This is where Sarajevo began. Walk the Ferhadija pedestrian street from Austrian Sarajevo into Ottoman Sarajevo — you cross centuries in 500 meters.', image: 'https://images.unsplash.com/photo-1592906209472-a36b1f3782ef?auto=format&fit=crop&w=800&q=80' },
+      { name: 'Latin Bridge area', vibe: 'History. Weight. Memory.', description: 'Where World War I started. The bridge is small. The consequences were not. The War Childhood Museum nearby is devastating and essential.', image: 'https://images.unsplash.com/photo-1598890777032-bde835ba27c2?auto=format&fit=crop&w=800&q=80' },
     ],
     dining: [
       { name: 'Zeljo', type: 'Cevapi', area: 'Bascarsija', note: 'The great cevapi debate in Sarajevo is between Zeljo and Petica. Zeljo wins on consistency. The somun bread is perfect. This is the national dish.', halal: true },
@@ -301,7 +301,7 @@ const CITY_GUIDES = [
     intro: 'Home of the world\'s oldest university. The medina swallows you whole — nine thousand alleyways, tanneries stained in saffron, and the Qarawiyyin standing quiet at the center of it all.',
     prayerNote: 'Fez is deeply traditional. The Qarawiyyin Mosque (founded 859 CE) is the oldest university in the world. Mosques are on every corner of the medina. Non-Muslims cannot enter most mosques in Morocco.',
     neighborhoods: [
-      { name: 'Fes el-Bali', vibe: 'The old medina. The largest car-free zone in the world.', description: 'Nine thousand alleyways. Donkeys carry goods because no vehicle fits. The tanneries, the Qarawiyyin, the madrasas — all here. Get a guide for the first visit. Get lost on the second.', image: 'https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=800&q=80' },
+      { name: 'Fes el-Bali', vibe: 'The old medina. The largest car-free zone in the world.', description: 'Nine thousand alleyways. Donkeys carry goods because no vehicle fits. The tanneries, the Qarawiyyin, the madrasas — all here. Get a guide for the first visit. Get lost on the second.', image: 'https://images.unsplash.com/photo-1539635278303-d4002c07eae3?auto=format&fit=crop&w=800&q=80' },
       { name: 'Ville Nouvelle', vibe: 'French-built new town.', description: 'Wide boulevards, cafes, and the train station. The contrast with the medina is striking. Good restaurants and a calmer pace.', image: 'https://images.unsplash.com/photo-1569383746724-6f1b882b8f46?auto=format&fit=crop&w=800&q=80' },
     ],
     dining: [
@@ -338,7 +338,7 @@ const CITY_GUIDES = [
     intro: 'The Petronas Towers frame a city where the adhan echoes between street food stalls and Islamic art galleries. KL feeds you first and asks questions later. Halal is the default, not the exception.',
     prayerNote: 'Malaysia is a Muslim-majority country. Halal certification is government-regulated and everywhere. Prayer rooms in every mall and public building. You will feel completely at home.',
     neighborhoods: [
-      { name: 'Bukit Bintang', vibe: 'The center. Shopping. Street food.', description: 'Jalan Alor is the street food artery — the best hawker food in KL. Pavilion Mall for air-conditioned luxury. The contrast is the point.', image: 'https://images.unsplash.com/photo-1596422846543-75c6fc197f07?auto=format&fit=crop&w=800&q=80' },
+      { name: 'Bukit Bintang', vibe: 'The center. Shopping. Street food.', description: 'Jalan Alor is the street food artery — the best hawker food in KL. Pavilion Mall for air-conditioned luxury. The contrast is the point.', image: 'https://images.unsplash.com/photo-1508062878650-88b52897f298?auto=format&fit=crop&w=800&q=80' },
       { name: 'Kampung Baru', vibe: 'Malay village. Heritage. Preserved.', description: 'A traditional Malay village in the shadow of the Petronas Towers. Wooden stilt houses, the best nasi lemak in the city, and a community that has resisted development. Walk it with respect.', image: 'https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?auto=format&fit=crop&w=800&q=80' },
     ],
     dining: [
@@ -370,12 +370,12 @@ const CITY_GUIDES = [
     id: 'doha',
     city: 'Doha',
     country: 'Qatar',
-    heroImage: 'https://images.unsplash.com/photo-1569551698535-af5c2a9003b1?auto=format&fit=crop&w=1200&q=80',
+    heroImage: 'https://images.unsplash.com/photo-1562183241-b937e95585b6?auto=format&fit=crop&w=1200&q=80',
     tagline: 'Built on ambition. Anchored by the Museum of Islamic Art.',
     intro: 'Where the Gulf\'s future takes shape. World Cup legacy stadiums, the corniche at sunset, and a desert that starts where the skyline ends. Doha is small enough to know in three days and ambitious enough to surprise you.',
     prayerNote: 'Qatar is a Muslim country. Everything is halal. Prayer rooms everywhere. The State Grand Mosque (Imam Abdul Wahhab Mosque) is enormous and open to visitors.',
     neighborhoods: [
-      { name: 'Souq Waqif', vibe: 'The old market. Restored. Alive.', description: 'Spices, falcons, perfume, and shisha. The restoration preserved the atmosphere without Disney-fying it. Come in the evening when it fills up.', image: 'https://images.unsplash.com/photo-1569551698535-af5c2a9003b1?auto=format&fit=crop&w=800&q=80' },
+      { name: 'Souq Waqif', vibe: 'The old market. Restored. Alive.', description: 'Spices, falcons, perfume, and shisha. The restoration preserved the atmosphere without Disney-fying it. Come in the evening when it fills up.', image: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?auto=format&fit=crop&w=800&q=80' },
       { name: 'The Pearl', vibe: 'Artificial island. Mediterranean fantasy.', description: 'Luxury apartments, marinas, and restaurants on a man-made island. Walk the Qanat Quartier (Venice-inspired canals). The excess is the experience.', image: 'https://images.unsplash.com/photo-1577717903315-1691ae25ab3f?auto=format&fit=crop&w=800&q=80' },
     ],
     dining: [

@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rihlah Carousel</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #111;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+    gap: 40px;
+    font-family: 'Inter', sans-serif;
+  }
+  .slide-label {
+    color: #666;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: -24px;
+  }
+  .slide {
+    width: 1080px;
+    height: 1350px;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  /* --- SLIDE 1: HOOK --- */
+  .slide-1 {
+    background: #1a1917;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 100px 120px;
+  }
+  .slide-1 .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: #c4956a;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    margin-bottom: 80px;
+  }
+  .slide-1 h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 82px;
+    font-weight: 600;
+    color: #f8f6f2;
+    line-height: 1.15;
+    margin-bottom: 48px;
+    letter-spacing: -1px;
+  }
+  .slide-1 p {
+    font-size: 28px;
+    color: #a8a29e;
+    line-height: 1.6;
+    max-width: 700px;
+  }
+  .slide-1 .line {
+    width: 60px;
+    height: 2px;
+    background: #c4956a;
+    margin: 48px auto 0;
+  }
+
+  /* --- SLIDE 2: WHO IT'S FOR --- */
+  .slide-2 {
+    background: #f5f1ea;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 100px 110px;
+  }
+  .slide-2 .eyebrow {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #c4956a;
+    margin-bottom: 48px;
+  }
+  .slide-2 h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 64px;
+    font-weight: 600;
+    color: #1c1917;
+    line-height: 1.2;
+    margin-bottom: 48px;
+    letter-spacing: -0.5px;
+  }
+  .slide-2 .people-list {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .slide-2 .person {
+    font-size: 26px;
+    color: #57534e;
+    line-height: 1.5;
+    padding-left: 32px;
+    border-left: 3px solid #c4956a;
+  }
+
+  /* --- SLIDE 3: THE PROBLEM --- */
+  .slide-3 {
+    background: #1a1917;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 100px 110px;
+    text-align: center;
+  }
+  .slide-3 h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 62px;
+    font-weight: 600;
+    color: #f8f6f2;
+    line-height: 1.2;
+    margin-bottom: 56px;
+  }
+  .slide-3 .items {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    text-align: left;
+  }
+  .slide-3 .item {
+    font-size: 26px;
+    color: #a8a29e;
+    line-height: 1.5;
+    padding: 28px 36px;
+    border: 1.5px solid #2a2825;
+    border-radius: 16px;
+  }
+  .slide-3 .item strong {
+    color: #f8f6f2;
+    font-weight: 600;
+  }
+
+  /* --- SLIDE 4: WHAT RIHLAH IS --- */
+  .slide-4 {
+    background: #f5f1ea;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 100px 110px;
+  }
+  .slide-4 .eyebrow {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #c4956a;
+    margin-bottom: 40px;
+  }
+  .slide-4 h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 58px;
+    font-weight: 600;
+    color: #1c1917;
+    line-height: 1.2;
+    margin-bottom: 56px;
+  }
+  .slide-4 .features {
+    display: flex;
+    flex-direction: column;
+    gap: 36px;
+  }
+  .slide-4 .feature-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 30px;
+    font-weight: 600;
+    color: #1c1917;
+    margin-bottom: 8px;
+  }
+  .slide-4 .feature-desc {
+    font-size: 22px;
+    color: #78716c;
+    line-height: 1.5;
+  }
+
+  /* --- SLIDE 5: WHAT IT'S NOT --- */
+  .slide-5 {
+    background: #1a1917;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 100px 110px;
+  }
+  .slide-5 h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 58px;
+    font-weight: 600;
+    color: #f8f6f2;
+    line-height: 1.2;
+    margin-bottom: 56px;
+  }
+  .slide-5 .nots {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
+  .slide-5 .not-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 24px;
+  }
+  .slide-5 .x-mark {
+    font-family: 'Playfair Display', serif;
+    font-size: 36px;
+    font-weight: 600;
+    color: #c4956a;
+    line-height: 1;
+    flex-shrink: 0;
+    margin-top: 4px;
+  }
+  .slide-5 .not-text {
+    font-size: 28px;
+    color: #a8a29e;
+    line-height: 1.4;
+  }
+
+  /* --- SLIDE 6: AI CONCIERGE --- */
+  .slide-6 {
+    background: #f5f1ea;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 100px 110px;
+  }
+  .slide-6 .eyebrow {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #c4956a;
+    margin-bottom: 40px;
+  }
+  .slide-6 h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 54px;
+    font-weight: 600;
+    color: #1c1917;
+    line-height: 1.2;
+    margin-bottom: 48px;
+  }
+  .slide-6 .chat-mock {
+    background: #1a1917;
+    border-radius: 24px;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .slide-6 .chat-user {
+    align-self: flex-end;
+    background: #2a2825;
+    color: #f8f6f2;
+    padding: 18px 28px;
+    border-radius: 24px 24px 6px 24px;
+    font-size: 22px;
+    max-width: 80%;
+    line-height: 1.5;
+  }
+  .slide-6 .chat-ai {
+    align-self: flex-start;
+    background: #222018;
+    border: 1px solid #2a2825;
+    color: #d6d3d1;
+    padding: 18px 28px;
+    border-radius: 24px 24px 24px 6px;
+    font-size: 22px;
+    max-width: 85%;
+    line-height: 1.5;
+  }
+  .slide-6 .chat-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #c4956a;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+
+  /* --- SLIDE 7: THE LINE --- */
+  .slide-7 {
+    background: #1a1917;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 100px 120px;
+  }
+  .slide-7 .quote {
+    font-family: 'Playfair Display', serif;
+    font-size: 56px;
+    font-weight: 500;
+    font-style: italic;
+    color: #f8f6f2;
+    line-height: 1.3;
+    margin-bottom: 48px;
+  }
+  .slide-7 .attr {
+    font-size: 20px;
+    color: #78716c;
+    line-height: 1.5;
+  }
+
+  /* --- SLIDE 8: CTA --- */
+  .slide-8 {
+    background: #f5f1ea;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 100px 120px;
+  }
+  .slide-8 .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 72px;
+    font-weight: 600;
+    color: #1c1917;
+    margin-bottom: 32px;
+    letter-spacing: -1px;
+  }
+  .slide-8 .tagline {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px;
+    font-weight: 500;
+    font-style: italic;
+    color: #78716c;
+    margin-bottom: 64px;
+  }
+  .slide-8 .cta-box {
+    background: #1a1917;
+    color: #f8f6f2;
+    padding: 32px 64px;
+    border-radius: 16px;
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: 24px;
+  }
+  .slide-8 .url {
+    font-size: 22px;
+    color: #a8a29e;
+    font-weight: 500;
+  }
+</style>
+</head>
+<body>
+
+<!-- SLIDE 1: HOOK -->
+<div class="slide-label">Slide 1</div>
+<div class="slide slide-1">
+  <div class="logo">RIHLAH</div>
+  <h1>You were not planning to go.<br>That is exactly why you should.</h1>
+  <p>A private travel community for Muslims who move with intention.</p>
+  <div class="line"></div>
+</div>
+
+<!-- SLIDE 2: WHO IT'S FOR -->
+<div class="slide-label">Slide 2</div>
+<div class="slide slide-2">
+  <div class="eyebrow">Who it's for</div>
+  <h2>You already know who you are.</h2>
+  <div class="people-list">
+    <div class="person">The one in Chicago who wants to explore Istanbul but has no one to go with.</div>
+    <div class="person">The one in London who travels solo and is tired of figuring out the Muslim-specific parts alone.</div>
+    <div class="person">The couple in Toronto who want to take their kids somewhere meaningful.</div>
+    <div class="person">The digital nomad who prays in parks and eats seafood because finding halal is exhausting.</div>
+  </div>
+</div>
+
+<!-- SLIDE 3: THE PROBLEM -->
+<div class="slide-label">Slide 3</div>
+<div class="slide slide-3">
+  <h2>Every trip, the same questions.</h2>
+  <div class="items">
+    <div class="item"><strong>Where do I pray?</strong> You land somewhere new and the first thing you search is the nearest mosque. Every single time.</div>
+    <div class="item"><strong>Where do I eat?</strong> Halal options exist, but no one has curated them for someone with taste.</div>
+    <div class="item"><strong>Who do I go with?</strong> Your friends are busy. Your family does not want to go. You go alone or you do not go.</div>
+  </div>
+</div>
+
+<!-- SLIDE 4: WHAT RIHLAH IS -->
+<div class="slide-label">Slide 4</div>
+<div class="slide slide-4">
+  <div class="eyebrow">What Rihlah is</div>
+  <h2>The travel app that already gets you.</h2>
+  <div class="features">
+    <div>
+      <div class="feature-title">City guides built for you</div>
+      <div class="feature-desc">Neighborhoods, dining, mosques, coffee, insider tips. Curated by people who actually travel like you do.</div>
+    </div>
+    <div>
+      <div class="feature-title">Find your crew</div>
+      <div class="feature-desc">See who is going where you are going. Connect before you land. Travel with your people.</div>
+    </div>
+    <div>
+      <div class="feature-title">AI travel concierge</div>
+      <div class="feature-desc">Ask it anything. It knows the city, your prayer times, your crew's plans, and where to eat tonight.</div>
+    </div>
+    <div>
+      <div class="feature-title">Any city, any trip</div>
+      <div class="feature-desc">200+ cities worldwide. Curated guides for major destinations. Community pages for everywhere else.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 5: WHAT IT'S NOT -->
+<div class="slide-label">Slide 5</div>
+<div class="slide slide-5">
+  <h2>What Rihlah is not.</h2>
+  <div class="nots">
+    <div class="not-item">
+      <div class="x-mark">&times;</div>
+      <div class="not-text">Not a halal travel agency. We do not book flights or organize tours.</div>
+    </div>
+    <div class="not-item">
+      <div class="x-mark">&times;</div>
+      <div class="not-text">Not a dating app. But if you find your person in Marrakech, we are not mad about it.</div>
+    </div>
+    <div class="not-item">
+      <div class="x-mark">&times;</div>
+      <div class="not-text">Not intensely religious. No one should feel like they need to prove how Muslim they are to belong here.</div>
+    </div>
+    <div class="not-item">
+      <div class="x-mark">&times;</div>
+      <div class="not-text">Not a generic travel app with a halal filter bolted on.</div>
+    </div>
+    <div class="not-item">
+      <div class="x-mark">&times;</div>
+      <div class="not-text">Not a tour group with matching t-shirts.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6: AI CONCIERGE -->
+<div class="slide-label">Slide 6</div>
+<div class="slide slide-6">
+  <div class="eyebrow">New</div>
+  <h2>An AI concierge that actually knows Muslim travel.</h2>
+  <div class="chat-mock">
+    <div class="chat-user">I land in Istanbul at 3pm. Asr is at 5:15. What should I do?</div>
+    <div class="chat-ai">
+      <div class="chat-label">RIHLAH CONCIERGE</div>
+      Head straight to Sultanahmet. You have two hours before Asr — enough time to walk the Hippodrome and see the Blue Mosque from outside. Pray at Sultanahmet Camii, then walk down to the Bosphorus for sunset. Dinner at the fish market in Karakoy after Maghrib.
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 7: THE LINE -->
+<div class="slide-label">Slide 7</div>
+<div class="slide slide-7">
+  <div class="quote">"You should not have to choose between being a good Muslim and being a curious human. They are the same thing."</div>
+  <div class="attr">Curiosity is an act of faith.</div>
+</div>
+
+<!-- SLIDE 8: CTA -->
+<div class="slide-label">Slide 8</div>
+<div class="slide slide-8">
+  <div class="logo">Rihlah</div>
+  <div class="tagline">Travel with your people.</div>
+  <div class="cta-box">Join the community</div>
+  <div class="url">rihlah.io</div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,266 @@
+{
+  "carousel": [
+    {
+      "type": "hook",
+      "headline": "The best Muslim travel destination in Europe is not Istanbul.",
+      "body": "It's Sarajevo.",
+      "photo": false,
+      "photo_search": []
+    },
+    {
+      "type": "body",
+      "headline": "Two empires. One city.",
+      "body": "Walk east and you're in the Ottoman quarter. Walk west and you're in Habsburg Vienna. The line between them is a single street corner — and you feel it when you cross it.",
+      "photo": true,
+      "photo_search": [
+        "sarajevo baščaršija ottoman old town",
+        "sarajevo old town street corner east west",
+        "sarajevo bascarsija cobblestone alley bosnia"
+      ],
+      "photo_local": "sarajevo-photos/slide-2.jpg",
+      "photo_credit": "Drago Rapovac / Pexels"
+    },
+    {
+      "type": "body",
+      "headline": "You will eat cevapi at Željo.",
+      "body": "Not because it's famous. Because nothing else makes sense after an hour in Baščaršija. Flatbread, raw onion, a cold Cockta. That's the meal.",
+      "photo": true,
+      "photo_search": [
+        "sarajevo cevapi zeljo restaurant bosnia",
+        "bosnian cevapi flatbread onion sarajevo",
+        "sarajevo street food cevapi grilled bosnia"
+      ],
+      "photo_local": "sarajevo-photos/slide-3.jpg",
+      "photo_credit": "Büsra / Pexels"
+    },
+    {
+      "type": "body",
+      "headline": "Bosnian coffee is not espresso. It's not Turkish coffee. It's its own argument.",
+      "body": "It arrives in a džezva with a sugar cube and a glass of water. You don't rush it. The city doesn't rush. That's the whole point.",
+      "photo": true,
+      "photo_search": [
+        "bosnian coffee dzezva sarajevo copper",
+        "sarajevo coffee ritual traditional bosnia",
+        "bosnian coffee sugar cube glass sarajevo cafe"
+      ],
+      "photo_local": "sarajevo-photos/slide-4.jpg",
+      "photo_credit": "irembeyzay / Pexels"
+    },
+    {
+      "type": "body",
+      "headline": "Sarajevo survived a siege. It didn't close.",
+      "body": "The bullet holes in some buildings are still there. So are the mosques, the cathedral, the synagogue, and the orthodox church — four blocks from each other. The city chose memory over erasure.",
+      "photo": true,
+      "photo_search": [
+        "sarajevo gazi husrev beg mosque minaret",
+        "sarajevo four religions street old town",
+        "sarajevo war memorial tunnel museum bosnia"
+      ],
+      "photo_local": "sarajevo-photos/slide-5.jpg",
+      "photo_credit": "Sandin Redzo / Pexels"
+    },
+    {
+      "type": "body",
+      "headline": "Nobody is performing for you here.",
+      "body": "Sarajevo hasn't been optimized for tourists. The hospitality is real because it's old — a culture that fed strangers before it asked their names.",
+      "photo": true,
+      "photo_search": [
+        "sarajevo local cafe people bosnia authentic",
+        "sarajevo market bascarsija locals bosnia",
+        "sarajevo neighborhood residential street evening"
+      ],
+      "photo_local": "sarajevo-photos/slide-6.jpg",
+      "photo_credit": "Salih Zeqiri / Pexels"
+    },
+    {
+      "type": "cta",
+      "headline": "Some cities you visit. Some cities stay with you.",
+      "body": "Sarajevo is the second kind. Rihlah — travel with your people.",
+      "photo": false,
+      "photo_search": []
+    }
+  ],
+  "caption": "Everyone says Istanbul. Go to Sarajevo first. Ottoman minarets, Habsburg facades, the best cevapi you will ever eat, and a coffee ritual that makes you slow down whether you planned to or not. rihlah.io — link in bio",
+  "blog": {
+    "title": "Sarajevo Is the Best Muslim Travel Destination in Europe",
+    "subtitle": "And it's not even close.",
+    "category": "The City",
+    "readTime": "6 min read",
+    "body": [
+      {
+        "type": "text",
+        "content": "Everyone says Istanbul. Istanbul is magnificent — nobody is disputing that. But if you are a Muslim traveler looking for the European city that will actually change something in you, the answer is Sarajevo. It has been the answer for a while. Most people just haven't caught up yet."
+      },
+      {
+        "type": "heading",
+        "content": "The city that two empires built"
+      },
+      {
+        "type": "text",
+        "content": "Sarajevo sits in a valley in the Dinaric Alps, which is the first thing that surprises you — you expect a flat Balkan city and you get something that feels more like a city folded into a mountain range. The second thing that surprises you is the street corner on Sarači, the old bazaar street in Baščaršija, where the Ottoman city ends and the Austro-Hungarian city begins. Not gradually. At a corner. One side: copper workshops, minarets, a fountain built in the 1500s. Other side: coffee houses with wrought-iron facades, a Catholic cathedral, a building that could have been teleported from Graz. The Habsburgs and the Ottomans both wanted this city. They both left something permanent. The result is a place that doesn't feel like anywhere else."
+      },
+      {
+        "type": "pullquote",
+        "content": "Walk east and you're in the Ottoman quarter. Walk west and you're in Habsburg Vienna. The line between them is a single street corner — and you feel it when you cross it."
+      },
+      {
+        "type": "heading",
+        "content": "You will eat cevapi at Željo"
+      },
+      {
+        "type": "text",
+        "content": "There is no point pretending otherwise. You will walk into Baščaršija, you will smell the smoke from the grill, and you will end up at Željo — the small restaurant on Kundurdžiluk Street that has been serving the same thing since 1961. Ten small sausages of minced beef, a flatbread called somun, raw white onion, and kaymak if you want it. That is the menu. You eat them standing up or at a cramped table, with a Cockta — the old Yugoslav cola that Sarajevans drink with an affection that borders on nationalism. This is not a meal you Instagram. It is a meal you think about on the flight home and for some time after."
+      },
+      {
+        "type": "note",
+        "content": "Željo has two locations on Kundurdžiluk Street. Both are the real one. Order ten pieces, not five. You will regret five."
+      },
+      {
+        "type": "heading",
+        "content": "The coffee ritual is the whole point"
+      },
+      {
+        "type": "text",
+        "content": "Bosnian coffee is not Turkish coffee with a rebrand. It is made differently, served differently, and understood differently. It arrives at your table in a small copper džezva, still on the heat, alongside a small cup, a glass of water, and a sugar cube. You pour slowly. You drink slowly. The water is not a palate cleanser — it comes first, to prepare you. The sugar cube goes in whole or gets bitten and held between the teeth while you sip. Nobody at the table is looking at their phone. This is not an accident of culture. It is the whole architecture of how Sarajevans relate to time and to each other. You cannot rush Bosnian coffee. The city will not let you."
+      },
+      {
+        "type": "short",
+        "content": "The best place to understand this: any of the old kafanas in Baščaršija on a weekday morning. Order one. Sit. Watch the city move at its own pace."
+      },
+      {
+        "type": "heading",
+        "content": "Memory without performance"
+      },
+      {
+        "type": "text",
+        "content": "Sarajevo survived a siege — 1,425 days, the longest siege of a capital city in the history of modern warfare. Some buildings still carry the evidence: pockmarked facades, rose-shaped shrapnel scars in the pavement filled with red resin. The city did not erase this. It also did not turn it into a theme park. The Tunnel of Hope — the underground passage that connected the city to the outside world during the siege — sits under a family's house on the edge of the city. The family still lives there. You walk through the tunnel and then you have tea. That is Sarajevo's relationship with its own history: present, unperformed, offered without dramatics."
+      },
+      {
+        "type": "text",
+        "content": "Four blocks in the old town contain a mosque, a Catholic cathedral, an Orthodox church, and a synagogue — all functioning, all within sight of each other, all built when the city was deciding what kind of place it wanted to be. That answer was: all of them. The city has been paying for that ambition and defending it ever since. It is still standing."
+      },
+      {
+        "type": "heading",
+        "content": "Why it belongs on your list before everywhere else"
+      },
+      {
+        "type": "text",
+        "content": "Sarajevo has not been optimized for tourists. The restaurants don't have menus in twelve languages. The servers at the old kafanas are not performing warmth — they are warm, which is different and rarer. Accommodation is cheap enough that you can stay in a boutique hotel in the old town for what you'd pay for a mid-range room in Lisbon. The city is compact — you can walk its entire heart in an afternoon — but it rewards staying longer. Every neighborhood past Baščaršija has its own rhythm. Vratnik, the old Ottoman residential quarter climbing up the hill, feels like a city secret nobody told you about."
+      },
+      {
+        "type": "pullquote",
+        "content": "Sarajevo hasn't been optimized for tourists. The hospitality is real because it's old — a culture that fed strangers before it asked their names."
+      },
+      {
+        "type": "text",
+        "content": "Go before the crowds figure it out. Go for the cevapi and stay for the coffee. Go because the city will ask something of you — attention, slowness, the willingness to sit with a complicated history — and give back something that most cities no longer have. Go because everyone keeps saying Istanbul, and you already know Istanbul, and Sarajevo is waiting."
+      }
+    ]
+  },
+  "newsletter": "The city everyone overlooks is Sarajevo — and the margin is narrowing. Ottoman minarets and Habsburg facades occupy the same blocks, separated by a single street corner that genuinely feels like crossing between centuries. Eat cevapi at Željo on Kundurdžiluk Street: ten pieces, flatbread, raw onion, done. Then find a kafana in Baščaršija and order Bosnian coffee, which arrives in a copper džezva with a sugar cube and no urgency whatsoever. The city runs on a different clock. Four functioning religious buildings — mosque, cathedral, Orthodox church, synagogue — sit within four blocks of each other in the old town. That proximity is not a coincidence. It is the city's thesis. Go before anyone else in your circle does.",
+  "reel_hooks": [
+    "Nobody talks about Sarajevo. That ends now.",
+    "The European city Muslims sleep on.",
+    "Two empires. One street corner. One meal."
+  ],
+  "story_ideas": [
+    {
+      "type": "poll",
+      "text": "Be honest. Have you ever seriously considered Sarajevo for a trip?",
+      "options": [
+        "It's been on my list",
+        "Never thought about it"
+      ]
+    },
+    {
+      "type": "question",
+      "text": "Istanbul or Sarajevo — we have an opinion. Do you? Drop it below.",
+      "options": []
+    },
+    {
+      "type": "slider",
+      "text": "How much do you know about Sarajevo before today?",
+      "options": [
+        "Nothing",
+        "I've been there"
+      ]
+    }
+  ],
+  "qa": {
+    "score": 8,
+    "pass": true,
+    "issues": [
+      {
+        "severity": "warning",
+        "category": "accuracy",
+        "slide": 3,
+        "issue": "Željo's founding year (1961) and exact street address (Kundurdžiluk) should be verified — high specificity creates high liability if wrong.",
+        "fix": "Confirm founding year and street name against a primary source before publishing."
+      },
+      {
+        "severity": "warning",
+        "category": "accuracy",
+        "slide": null,
+        "issue": "\"Longest siege of a capital city in the history of modern warfare\" is a strong superlative — phrasing varies across sources and is contested.",
+        "fix": "Soften to \"one of the longest sieges of a capital city in modern warfare\" or cite a specific source."
+      },
+      {
+        "severity": "warning",
+        "category": "accuracy",
+        "slide": null,
+        "issue": "Cockta is Slovenian in origin, not Yugoslav — describing it as something \"Sarajevans drink\" is culturally accurate but the framing edges toward misattribution.",
+        "fix": "Add one word: \"the old Yugoslav-era cola\" or drop the origin framing entirely."
+      },
+      {
+        "severity": "warning",
+        "category": "photos",
+        "slide": 2,
+        "issue": "\"sarajevo baščaršija ottoman old town\" will reliably surface Istanbul results on stock platforms — highly ambiguous search term.",
+        "fix": "Add \"bosnia\" and \"not istanbul\" qualifier; use photo_local slide-2.jpg if verified correct."
+      },
+      {
+        "severity": "warning",
+        "category": "photos",
+        "slide": 5,
+        "issue": "\"sarajevo four religions street old town\" is not a standard search term and may return zero or irrelevant results.",
+        "fix": "Replace with \"sarajevo cathedral mosque synagogue old town bosnia\" for better stock photo retrieval."
+      },
+      {
+        "severity": "note",
+        "category": "accuracy",
+        "slide": null,
+        "issue": "Bosnian coffee sugar cube ritual description (bite and hold between teeth) is folk practice, not universal — presenting it as the method overstates consensus.",
+        "fix": "Add \"some Sarajevans\" or frame as one of two common approaches."
+      },
+      {
+        "severity": "note",
+        "category": "quality",
+        "slide": 5,
+        "issue": "Slide 5 carries two distinct ideas — the siege/bullet holes AND the four-religions proximity — which competes for a single carousel frame.",
+        "fix": "Split into two slides or lead with only one idea; the four-religions detail is strong enough to own a slide."
+      },
+      {
+        "severity": "note",
+        "category": "voice",
+        "slide": null,
+        "issue": "Caption ends with a period after \"link in bio\" — brand standard requires no terminal period there.",
+        "fix": "Remove the period: \"rihlah.io — link in bio\""
+      },
+      {
+        "severity": "note",
+        "category": "quality",
+        "slide": null,
+        "issue": "Reel hook two (\"The European city Muslims sleep on\") uses \"sleep on\" — colloquial but edges toward the cliché territory the brand avoids.",
+        "fix": "Consider \"The European city nobody is talking about yet\" or cut in favor of hooks one and three."
+      },
+      {
+        "severity": "note",
+        "category": "design",
+        "slide": 4,
+        "issue": "Slide 4 body copy is the longest in the carousel — three sentences plus procedural detail risks exceeding comfortable 1080x1080 text load.",
+        "fix": "Cut to two sentences maximum; the water-comes-first detail can move to the blog only."
+      }
+    ],
+    "summary": "Solid, on-brand package with strong editorial voice — clear to publish after verifying the Željo founding year, softening the siege superlative, and fixing the caption period."
+  }
+}

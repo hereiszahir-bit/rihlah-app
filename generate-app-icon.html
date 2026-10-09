@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Generate App Icons</title>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #000; display: flex; flex-direction: column; align-items: center; padding: 40px; gap: 20px; }
+  .label { color: #666; font-family: sans-serif; font-size: 12px; margin-top: 20px; }
+
+  .icon {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    background: #1a1917;
+  }
+  .icon .r { font-family: 'EB Garamond', serif; font-weight: 600; color: #f8f6f2; line-height: 1; }
+  .icon .dot { font-family: 'EB Garamond', serif; font-weight: 600; color: #c4956a; line-height: 1; }
+
+  #icon-1024 { width: 1024px; height: 1024px; border-radius: 180px; }
+  #icon-1024 .r { font-size: 640px; padding-top: 120px; }
+  #icon-1024 .dot { font-size: 640px; padding-top: 120px; }
+
+  #icon-512 { width: 512px; height: 512px; border-radius: 96px; }
+  #icon-512 .r { font-size: 320px; padding-top: 60px; }
+  #icon-512 .dot { font-size: 320px; padding-top: 60px; }
+
+  #icon-192 { width: 192px; height: 192px; border-radius: 36px; }
+  #icon-192 .r { font-size: 120px; padding-top: 22px; }
+  #icon-192 .dot { font-size: 120px; padding-top: 22px; }
+
+  #icon-180 { width: 180px; height: 180px; border-radius: 36px; }
+  #icon-180 .r { font-size: 112px; padding-top: 20px; }
+  #icon-180 .dot { font-size: 112px; padding-top: 20px; }
+</style>
+</head>
+<body>
+
+<div class="label">1024x1024 (App Store)</div>
+<div class="icon" id="icon-1024"><span class="r">R</span><span class="dot">.</span></div>
+
+<div class="label">512x512 (PWA)</div>
+<div class="icon" id="icon-512"><span class="r">R</span><span class="dot">.</span></div>
+
+<div class="label">192x192 (PWA)</div>
+<div class="icon" id="icon-192"><span class="r">R</span><span class="dot">.</span></div>
+
+<div class="label">180x180 (Apple Touch)</div>
+<div class="icon" id="icon-180"><span class="r">R</span><span class="dot">.</span></div>
+
+<button onclick="downloadAll()" style="margin-top: 30px; padding: 12px 24px; background: #c4956a; color: #0a0a0a; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">Download all sizes</button>
+
+<script>
+async function downloadAll() {
+  const btn = document.querySelector('button');
+  const icons = [
+    { id: 'icon-1024', name: 'app-icon-1024.png', w: 1024, h: 1024 },
+    { id: 'icon-512', name: 'logo512.png', w: 512, h: 512 },
+    { id: 'icon-192', name: 'logo192.png', w: 192, h: 192 },
+    { id: 'icon-180', name: 'apple-touch-icon.png', w: 180, h: 180 },
+  ];
+  btn.textContent = 'Exporting...';
+  for (const icon of icons) {
+    const el = document.getElementById(icon.id);
+    const canvas = await html2canvas(el, {
+      width: icon.w, height: icon.h, scale: 1,
+      useCORS: true, backgroundColor: null,
+    });
+    const link = document.createElement('a');
+    link.download = icon.name;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    await new Promise(r => setTimeout(r, 400));
+  }
+  btn.textContent = 'Done!';
+  setTimeout(() => btn.textContent = 'Download all sizes', 2000);
+}
+</script>
+</body>
+</html>

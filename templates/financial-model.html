@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Rihlah — Financial Model</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #1c1917; background: #fff; padding: 48px; line-height: 1.5; }
+  h1 { font-size: 24px; font-weight: 600; margin-bottom: 4px; }
+  .subtitle { font-size: 14px; color: #78716c; margin-bottom: 48px; }
+  h2 { font-size: 16px; font-weight: 600; margin: 48px 0 16px; text-transform: uppercase; letter-spacing: 1.5px; color: #b87a56; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 32px; font-size: 13px; }
+  th { text-align: left; padding: 10px 12px; background: #f5f1ea; border: 1px solid #e7e2da; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #57534e; }
+  td { padding: 10px 12px; border: 1px solid #e7e2da; }
+  .section-row td { background: #f5f1ea; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #57534e; }
+  .total-row td { font-weight: 600; background: #faf8f5; }
+  .note { font-size: 12px; color: #a8a29e; margin-top: 8px; }
+  .empty { color: #d6d3d1; }
+  @media print { body { padding: 24px; } }
+</style>
+</head>
+<body>
+
+<h1>Rihlah — Financial Model</h1>
+<p class="subtitle">Copy each section into a separate Google Sheets tab.</p>
+
+<!-- TAB 1: UNIT ECONOMICS -->
+<h2>Tab 1: Unit Economics</h2>
+<table>
+  <tr><th style="width:35%">Metric</th><th style="width:20%">Current</th><th style="width:20%">Target</th><th style="width:25%">Notes</th></tr>
+  <tr><td>Cost to acquire a member (CAC)</td><td class="empty">$0</td><td>$15-25</td><td>Instagram organic + paid</td></tr>
+  <tr><td>Monthly subscription price</td><td>$12</td><td>$12</td><td></td></tr>
+  <tr><td>Annual subscription price</td><td>$120</td><td>$120</td><td>$24 discount vs monthly</td></tr>
+  <tr><td>Average revenue per user (ARPU) / month</td><td class="empty">$0</td><td>$8-10</td><td>Blended free + paid</td></tr>
+  <tr><td>Customer lifetime (months)</td><td class="empty">-</td><td>18+</td><td></td></tr>
+  <tr><td>Customer lifetime value (LTV)</td><td class="empty">$0</td><td>$180+</td><td>$12 x 18 months + marketplace</td></tr>
+  <tr><td>LTV:CAC ratio</td><td class="empty">-</td><td>7:1+</td><td>Healthy = 3:1 minimum</td></tr>
+  <tr><td>Free-to-paid conversion rate</td><td class="empty">0%</td><td>15-25%</td><td></td></tr>
+  <tr><td>Monthly churn rate</td><td class="empty">-</td><td>&lt;5%</td><td></td></tr>
+  <tr><td>Affiliate commission per click</td><td class="empty">$0</td><td>$0.50-2.00</td><td>GetYourGuide / Booking.com</td></tr>
+  <tr><td>Affiliate conversion rate</td><td class="empty">0%</td><td>3-5%</td><td></td></tr>
+  <tr><td>Avg affiliate commission per booking</td><td class="empty">$0</td><td>$8-15</td><td>8-12% of booking value</td></tr>
+</table>
+
+<!-- TAB 2: MONTHLY CASH FLOW -->
+<h2>Tab 2: Monthly Cash Flow (2027)</h2>
+<table>
+  <tr><th style="width:20%">Category</th><th>Jan</th><th>Feb</th><th>Mar</th><th>Apr</th><th>May</th><th>Jun</th><th>Jul</th><th>Aug</th><th>Sep</th><th>Oct</th><th>Nov</th><th>Dec</th></tr>
+  <tr class="section-row"><td colspan="13">Revenue</td></tr>
+  <tr><td>Subscription MRR</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td></tr>
+  <tr><td>Marketplace commissions</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td></tr>
+  <tr><td>Affiliate revenue</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td></tr>
+  <tr><td>B2B partnerships</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td></tr>
+  <tr class="total-row"><td>Total Revenue</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td></tr>
+  <tr class="section-row"><td colspan="13">Costs</td></tr>
+  <tr><td>Firebase / hosting</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td></tr>
+  <tr><td>Claude API (AI concierge)</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td></tr>
+  <tr><td>Domain / email tools</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td></tr>
+  <tr><td>Stripe fees (2.9% + $0.30)</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td></tr>
+  <tr><td>Design / contractors</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td></tr>
+  <tr><td>Marketing / ads</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td></tr>
+  <tr class="total-row"><td>Total Costs</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td></tr>
+  <tr class="section-row"><td colspan="13"></td></tr>
+  <tr class="total-row"><td>Net (Revenue - Costs)</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td></tr>
+  <tr class="total-row"><td>Cumulative Net</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td></tr>
+</table>
+
+<!-- TAB 3: PROJECTIONS -->
+<h2>Tab 3: 12-Month Projections</h2>
+<table>
+  <tr><th style="width:22%">Metric</th><th>M1</th><th>M2</th><th>M3</th><th>M4</th><th>M5</th><th>M6</th><th>M7</th><th>M8</th><th>M9</th><th>M10</th><th>M11</th><th>M12</th></tr>
+  <tr><td>Total members</td><td class="empty">0</td><td class="empty">0</td><td class="empty">0</td><td class="empty">0</td><td class="empty">0</td><td class="empty">0</td><td class="empty">0</td><td class="empty">0</td><td class="empty">0</td><td class="empty">0</td><td class="empty">0</td><td class="empty">0</td></tr>
+  <tr><td>New members (this month)</td><td class="empty">0</td><td class="empty">0</td><td class="empty">0</td><td class="empty">0</td><td class="empty">0</td><td class="empty">0</td><td class="empty">0</td><td class="empty">0</td><td class="empty">0</td><td class="empty">0</td><td class="empty">0</td><td class="empty">0</td></tr>
+  <tr><td>Paid members</td><td class="empty">0</td><td class="empty">0</td><td class="empty">0</td><td class="empty">0</td><td class="empty">0</td><td class="empty">0</td><td class="empty">0</td><td class="empty">0</td><td class="empty">0</td><td class="empty">0</td><td class="empty">0</td><td class="empty">0</td></tr>
+  <tr><td>Free-to-paid conversion %</td><td class="empty">0%</td><td class="empty">0%</td><td class="empty">0%</td><td class="empty">0%</td><td class="empty">0%</td><td class="empty">0%</td><td class="empty">0%</td><td class="empty">0%</td><td class="empty">0%</td><td class="empty">0%</td><td class="empty">0%</td><td class="empty">0%</td></tr>
+  <tr><td>MRR (subscriptions)</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td></tr>
+  <tr><td>Marketplace bookings</td><td class="empty">0</td><td class="empty">0</td><td class="empty">0</td><td class="empty">0</td><td class="empty">0</td><td class="empty">0</td><td class="empty">0</td><td class="empty">0</td><td class="empty">0</td><td class="empty">0</td><td class="empty">0</td><td class="empty">0</td></tr>
+  <tr><td>Marketplace commission rev</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td></tr>
+  <tr><td>Affiliate revenue</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td></tr>
+  <tr><td>B2B revenue</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td></tr>
+  <tr class="total-row"><td>Total monthly revenue</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td></tr>
+  <tr><td>Total monthly costs</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td><td class="empty">$0</td></tr>
+  <tr class="total-row"><td>Net</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td></tr>
+  <tr class="total-row"><td>Cumulative revenue</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td></tr>
+</table>
+
+<p class="note">Last updated: ___________</p>
+</body>
+</html>

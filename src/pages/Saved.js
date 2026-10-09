@@ -5,7 +5,7 @@ import { doc, updateDoc, addDoc, collection } from 'firebase/firestore';
 import { useUser } from '../context/UserContext';
 import { FiArrowLeft, FiX, FiEdit2, FiTrash2, FiChevronDown, FiMapPin, FiNavigation, FiMessageCircle, FiCamera, FiSend, FiMap } from 'react-icons/fi';
 import { colors, fonts, radius, components, type } from '../design';
-import { getDestinationImage } from '../data/destinations';
+import { getPlaceImage } from '../data/places';
 
 
 function Saved() {
@@ -19,6 +19,7 @@ function Saved() {
   const [expandedTrips, setExpandedTrips] = useState({});
   const [previewUser, setPreviewUser] = useState(null);
   const [localSentRequests, setLocalSentRequests] = useState([]);
+  const [photoIndex, setPhotoIndex] = useState(0);
 
   const trips = currentUserData?.upcomingTrips || [];
   const allSentRequests = useMemo(() => [...new Set([...sentRequestUserIds, ...receivedRequestUserIds, ...localSentRequests])], [sentRequestUserIds, receivedRequestUserIds, localSentRequests]);
@@ -57,7 +58,10 @@ function Saved() {
         }
 
         u.upcomingTrips.forEach(ut => {
-          if (ut.destination !== trip.destination) return;
+          const destMatch = trip.destinationId
+            ? ut.destinationId === trip.destinationId
+            : ut.destination?.split(',')[0]?.toLowerCase() === trip.destination?.split(',')[0]?.toLowerCase();
+          if (!destMatch) return;
           const uStart = parseDate(ut.startDate);
           const uEnd = parseDate(ut.endDate);
           if (uStart <= myEnd && uEnd >= myStart) {
@@ -254,7 +258,7 @@ function Saved() {
         <div
           style={{
             ...styles.tripHeader,
-            backgroundImage: `linear-gradient(rgba(26,26,26,0.3), rgba(26,26,26,0.8)), url(${getDestinationImage(trip.destination)})`,
+            backgroundImage: `linear-gradient(rgba(26,26,26,0.3), rgba(26,26,26,0.8)), url(${getPlaceImage(trip.destination)})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
           }}
@@ -320,14 +324,23 @@ function Saved() {
             color: colors.textTertiary,
           }}><FiChevronDown size={18} /></span>
         </div>
-        {isExpanded && expCount > 0 && (
+        {isExpanded && (
           <div style={styles.pastTripBody}>
-            {trip.experiences.map((exp, i) => (
+            {expCount > 0 && trip.experiences.map((exp, i) => (
               <div key={i} style={styles.pastExpItem}>
                 <span>{exp.name}</span>
                 <span style={styles.pastExpPrice}>${exp.price}</span>
               </div>
             ))}
+            <button
+              style={styles.pastGuideLink}
+              onClick={() => {
+                const tripCityId = trip.destinationId || trip.destination?.split(',')[0]?.toLowerCase().replace(/\s+/g, '-');
+                navigate(`/city/${tripCityId}`);
+              }}
+            >
+              View city guide
+            </button>
           </div>
         )}
       </div>
@@ -398,12 +411,12 @@ function Saved() {
 
   return (
     <div style={styles.container}>
-      {/* Page header with back */}
+      {/* Page header */}
       <div style={styles.pageHeader}>
-        <button style={styles.backBtn} onClick={() => navigate('/profile')}>
-          <FiArrowLeft size={20} color={colors.text} />
-        </button>
         <h1 style={styles.pageTitle}>Journeys</h1>
+        <button style={styles.addTripBtn} onClick={() => navigate('/add-trip')}>
+          + New
+        </button>
       </div>
 
       {/* Sub-tabs */}
@@ -440,15 +453,39 @@ function Saved() {
               <button style={styles.modalCloseBtn} onClick={() => setPreviewUser(null)}><FiX size={18} /></button>
 
               <div style={styles.modalContent}>
-                <div style={styles.modalAvatarWrap}>
-                  {previewUser.photoURL ? (
-                    <img src={previewUser.photoURL} alt={previewUser.name} style={styles.modalAvatar} />
-                  ) : (
-                    <div style={styles.modalAvatarPlaceholder}>
-                      {previewUser.name?.charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                </div>
+                {(() => {
+                  const photos = previewUser.photos || (previewUser.photoURL ? [previewUser.photoURL] : []);
+                  if (photos.length > 1) {
+                    return (
+                      <div style={styles.carouselWrap}>
+                        <div style={styles.carouselImageWrap}>
+                          <img src={photos[photoIndex]} alt={`${previewUser.name} ${photoIndex + 1}`} style={styles.carouselImage} />
+                          <div style={styles.carouselTapLeft} onClick={() => setPhotoIndex(i => i > 0 ? i - 1 : photos.length - 1)} />
+                          <div style={styles.carouselTapRight} onClick={() => setPhotoIndex(i => i < photos.length - 1 ? i + 1 : 0)} />
+                        </div>
+                        <div style={styles.carouselDots}>
+                          {photos.map((_, i) => (
+                            <div key={i} style={{ ...styles.carouselDot, ...(i === photoIndex ? styles.carouselDotActive : {}) }} onClick={() => setPhotoIndex(i)} />
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  } else if (photos.length === 1) {
+                    return (
+                      <div style={styles.carouselWrap}>
+                        <div style={styles.carouselImageWrap}>
+                          <img src={photos[0]} alt={previewUser.name} style={styles.carouselImage} />
+                        </div>
+                      </div>
+                    );
+                  } else {
+                    return (
+                      <div style={styles.modalAvatarWrap}>
+                        <div style={styles.modalAvatarPlaceholder}>{previewUser.name?.charAt(0).toUpperCase()}</div>
+                      </div>
+                    );
+                  }
+                })()}
                 <div style={styles.modalName}>{previewUser.name}{previewUser.age ? `, ${previewUser.age}` : ''}</div>
 
                 {previewUser.bio && <p style={styles.modalBio}>{previewUser.bio}</p>}
@@ -524,9 +561,10 @@ const styles = {
   loadingState: { display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', color: colors.textTertiary, fontSize: '16px' },
 
   // Page header
-  pageHeader: { padding: '20px 24px 0', display: 'flex', alignItems: 'center', gap: '12px' },
+  pageHeader: { padding: '20px 24px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' },
   backBtn: { background: 'none', border: 'none', padding: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center' },
   pageTitle: { fontFamily: fonts.serif, fontSize: '28px', fontWeight: '500', color: colors.text, margin: 0, letterSpacing: '-0.3px' },
+  addTripBtn: { padding: '8px 16px', background: colors.terracotta, color: '#0a0a0a', border: 'none', borderRadius: radius.full, fontSize: '13px', fontWeight: '600', cursor: 'pointer', fontFamily: fonts.sans },
 
   // Sub-tabs
   subTabsWrapper: { padding: '16px 24px 0' },
@@ -578,6 +616,17 @@ const styles = {
   pastTripBody: { padding: '0 20px 16px', display: 'flex', flexDirection: 'column', gap: '6px' },
   pastExpItem: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '14px', color: colors.textSecondary, padding: '8px 0', borderBottom: `1px solid ${colors.lightGray}` },
   pastExpPrice: { color: colors.textTertiary, fontWeight: '500' },
+  pastGuideLink: { background: 'none', border: 'none', fontSize: '13px', fontWeight: '600', color: colors.terracotta, cursor: 'pointer', padding: '10px 0 2px', fontFamily: fonts.sans, textAlign: 'left' },
+
+  // Photo carousel
+  carouselWrap: { position: 'relative', marginBottom: '4px' },
+  carouselImageWrap: { position: 'relative', width: '100%', aspectRatio: '4/5', borderRadius: `${radius.lg} ${radius.lg} 0 0`, overflow: 'hidden' },
+  carouselImage: { width: '100%', height: '100%', objectFit: 'cover', transition: 'opacity 0.2s ease' },
+  carouselTapLeft: { position: 'absolute', top: 0, left: 0, width: '40%', height: '100%', cursor: 'pointer' },
+  carouselTapRight: { position: 'absolute', top: 0, right: 0, width: '60%', height: '100%', cursor: 'pointer' },
+  carouselDots: { display: 'flex', justifyContent: 'center', gap: '6px', padding: '12px 0 4px' },
+  carouselDot: { width: '6px', height: '6px', borderRadius: '50%', background: colors.warmGray, cursor: 'pointer', transition: 'all 0.2s' },
+  carouselDotActive: { background: colors.terracotta, width: '18px', borderRadius: '3px' },
 
   // Modal
   modalOverlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' },
